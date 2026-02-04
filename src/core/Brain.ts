@@ -30,12 +30,10 @@ export abstract class Brain {
     // Lifecycle methods
     public async init(): Promise<void> {
         console.log(`[${this.name}] Initializing...`);
-        // Setup hooks, load memory, etc.
     }
 
-    public async wake(): Promise<void> {
-        // Check for queued tasks or ready state
-    }
+    // Called when a user types in this brain's channel
+    public abstract handleUserMessage(message: string): Promise<void>;
 
     // Core execution hook called by heartbeat
     public async onHeartbeat(): Promise<void> {
@@ -57,8 +55,6 @@ export abstract class Brain {
         await this.graph.updateTaskStatus(task.id, 'EXECUTING' as any);
 
         try {
-            // Actual execution logic would go here (or be abstract)
-            // For now, we simulate success
             await this.sendMessage(`✅ Executed Task: **${task.title}**`);
             
             // Mark as COMPLETED

@@ -73,21 +73,9 @@ export class CerebroRuntime {
             const brain = this.brains.get(brainId);
             console.log(`Routing message from ${message.author.username} to ${brain?.name}`);
             
-            // Test: Creating a dummy task on message for verification
-            if (message.content.startsWith('!task')) {
-                const title = message.content.replace('!task', '').trim() || 'Manual Task';
-                await this.graph.createTask({
-                    id: Date.now().toString(),
-                    brainId: brainId,
-                    status: 'READY' as any, // Immediate execution
-                    title: title,
-                    payload: {},
-                    dependencies: [],
-                    createdAt: Date.now(),
-                    updatedAt: Date.now(),
-                    attempts: 0
-                });
-                await message.reply(`✅ Task "${title}" created and set to READY.`);
+            // Delegate to the specific brain implementation
+            if (brain) {
+                await brain.handleUserMessage(message.content);
             }
         }
     }
