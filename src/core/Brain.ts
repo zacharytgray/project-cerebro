@@ -8,6 +8,7 @@ export interface BrainConfig {
     name: string;
     discordChannelId: string;
     description: string;
+    openClawAgentId?: string; // The ID of the specialized agent in OpenClaw
 }
 
 export abstract class Brain {
@@ -15,15 +16,18 @@ export abstract class Brain {
     public name: string;
     protected discordChannelId: string;
     protected description: string;
+    protected openClawAgentId?: string;
     protected client: Client;
     protected graph: ExecutionGraph;
     public status: 'IDLE' | 'EXECUTING' = 'IDLE';
+    public autoMode: boolean = false;
 
     constructor(config: BrainConfig, client: Client, graph: ExecutionGraph) {
         this.id = config.id;
         this.name = config.name;
         this.discordChannelId = config.discordChannelId;
         this.description = config.description;
+        this.openClawAgentId = config.openClawAgentId;
         this.client = client;
         this.graph = graph;
     }
@@ -33,16 +37,35 @@ export abstract class Brain {
         console.log(`[${this.name}] Initializing...`);
     }
 
+    public toggleAutoMode(enabled: boolean) {
+        this.autoMode = enabled;
+        console.log(`[${this.name}] AutoMode set to ${enabled}`);
+    }
+
     // Called when a user types in this brain's channel
     public abstract handleUserMessage(message: string): Promise<void>;
 
     // Core execution hook called by heartbeat
     public async onHeartbeat(): Promise<void> {
+        await this.processTasks(false);
+    }
+
+    public async forceRun(): Promise<void> {
+        console.log(`[${this.name}] Force run triggered.`);
+        await this.processTasks(true);
+    }
+
+    protected async processTasks(force: boolean): Promise<void> {
+        // Only execute if AutoMode is ON or Forced
+        if (!this.autoMode && !force) {
+            return;
+        }
+
         // 1. Get READY tasks for this brain
         const tasks = await this.graph.getReadyTasks(this.id);
         
         if (tasks.length > 0) {
-            console.log(`[${this.name}] Found ${tasks.length} ready tasks.`);
+            console.log(`[${this.name}] Found ${tasks.length} ready tasks (Auto: ${this.autoMode}, Force: ${force}).`);
             for (const task of tasks) {
                 await this.executeTask(task);
             }
@@ -57,12 +80,37 @@ export abstract class Brain {
         await this.graph.updateTaskStatus(task.id, 'EXECUTING' as any);
 
         try {
-            await this.sendMessage(`✅ Executed Task: **${task.title}**`);
+            await this.sendMessage(`🤖 **${this.name}** is processing task: "${task.title}"...`);
+
+            // Handoff to OpenClaw Sub-Agent via tool invocation
+            const response = await fetch('http://localhost:18789/tools/invoke', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.GATEWAY_TOKEN}`
+                },
+                body: JSON.stringify({
+                    tool: 'sessions_spawn',
+                    args: {
+                        task: `You are the ${this.name}. \n\nContext: ${this.description}. \n\nPlease perform this task and reply in this channel: ${task.title}`,
+                        agentId: this.openClawAgentId || 'main',
+                        label: `Cerebro: ${this.name}`,
+                        thinking: 'low'
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Gateway returned ${response.status}: ${await response.text()}`);
+            }
             
             // Mark as COMPLETED
+            // Note: The sub-agent will deliver the actual content to Discord independently
             await this.graph.updateTaskStatus(task.id, 'COMPLETED' as any);
+
         } catch (error) {
             console.error(`[${this.name}] Task failed:`, error);
+            await this.sendMessage(`❌ **Task Failed:** ${String(error)}`);
             await this.graph.updateTaskStatus(task.id, 'FAILED' as any, String(error));
         } finally {
             this.status = 'IDLE';
