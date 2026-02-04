@@ -110,6 +110,56 @@ export class ApiServer {
             const tasks = await this.runtime.graph.getAllTasks();
             return { tasks };
         });
+
+        // Recurring Tasks
+        this.server.post<{ Body: { brainId: string; title: string; description?: string; modelOverride?: string; intervalMinutes: number } }>('/api/recurring-tasks', async (request, reply) => {
+            const { brainId, title, description, modelOverride, intervalMinutes } = request.body || {} as any;
+            if (!brainId || !title || !intervalMinutes || intervalMinutes <= 0) {
+                reply.code(400);
+                return { error: 'brainId, title, and intervalMinutes (>0) are required' };
+            }
+
+            const brain = this.runtime.getBrains().find(b => b.id === brainId);
+            const brainName = brain ? brain.name : brainId;
+            const now = Date.now();
+            const intervalMs = Math.floor(intervalMinutes * 60 * 1000);
+
+            await this.runtime.graph.createRecurringTask({
+                id: now.toString(),
+                brainId,
+                brainName,
+                title,
+                description,
+                modelOverride,
+                scheduleType: 'INTERVAL',
+                intervalMs,
+                nextRunAt: now + intervalMs,
+                lastRunAt: undefined,
+                enabled: true,
+                createdAt: now,
+                updatedAt: now
+            });
+
+            return { success: true };
+        });
+
+        this.server.get('/api/recurring-tasks', async (request, reply) => {
+            const recurringTasks = await this.runtime.graph.getRecurringTasks();
+            return { recurringTasks };
+        });
+
+        this.server.post<{ Params: { id: string }, Body: { enabled: boolean } }>('/api/recurring-tasks/:id/toggle', async (request, reply) => {
+            const { id } = request.params;
+            const { enabled } = request.body || {} as any;
+            await this.runtime.graph.toggleRecurringTask(id, !!enabled);
+            return { success: true };
+        });
+
+        this.server.delete<{ Params: { id: string } }>('/api/recurring-tasks/:id', async (request, reply) => {
+            const { id } = request.params;
+            await this.runtime.graph.deleteRecurringTask(id);
+            return { success: true };
+        });
         
         // Jobs (Direct DB access via graph wrapper)
         this.server.get('/api/jobs', async (request, reply) => {

@@ -58,7 +58,10 @@ export class CerebroRuntime {
             // 1. Evaluate Graph (Promote Waiting -> Ready)
             await this.graph.evaluateGraph();
 
-            // 2. Tick Brains
+            // 2. Spawn due recurring tasks
+            await this.evaluateRecurringTasks();
+
+            // 3. Tick Brains
             this.brains.forEach(async (brain) => {
                 try {
                     await brain.onHeartbeat();
@@ -67,6 +70,33 @@ export class CerebroRuntime {
                 }
             });
         }, 30000); // 30s heartbeat
+    }
+
+    private async evaluateRecurringTasks(): Promise<void> {
+        const now = Date.now();
+        const due = await this.graph.getDueRecurringTasks(now);
+
+        for (const recurring of due) {
+            const taskId = now.toString() + '-' + Math.floor(Math.random() * 1000).toString();
+            await this.graph.createTask({
+                id: taskId,
+                brainId: recurring.brainId,
+                brainName: recurring.brainName,
+                status: 'READY' as any,
+                title: recurring.title,
+                description: recurring.description,
+                payload: { recurringTaskId: recurring.id },
+                modelOverride: recurring.modelOverride,
+                dependencies: [],
+                executeAt: now,
+                createdAt: now,
+                updatedAt: now,
+                attempts: 0
+            });
+
+            const nextRunAt = now + recurring.intervalMs;
+            await this.graph.updateRecurringTaskNextRun(recurring.id, nextRunAt, now);
+        }
     }
 
     private async handleMessage(message: Message) {

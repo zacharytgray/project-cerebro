@@ -13,6 +13,22 @@ export interface JobApplication {
     updatedAt: number;
 }
 
+export interface RecurringTask {
+    id: string;
+    brainId: string;
+    brainName?: string;
+    title: string;
+    description?: string;
+    modelOverride?: string;
+    scheduleType: 'INTERVAL';
+    intervalMs: number;
+    nextRunAt: number;
+    lastRunAt?: number;
+    enabled: boolean;
+    createdAt: number;
+    updatedAt: number;
+}
+
 export class ExecutionGraph {
     private db: Database;
 
@@ -57,6 +73,26 @@ export class ExecutionGraph {
                     updatedAt INTEGER
                 )
             `);
+
+            // Recurring Tasks Table
+            this.db.run(`
+                CREATE TABLE IF NOT EXISTS recurring_tasks (
+                    id TEXT PRIMARY KEY,
+                    brainId TEXT NOT NULL,
+                    brainName TEXT,
+                    title TEXT NOT NULL,
+                    description TEXT,
+                    modelOverride TEXT,
+                    scheduleType TEXT NOT NULL,
+                    intervalMs INTEGER NOT NULL,
+                    nextRunAt INTEGER NOT NULL,
+                    lastRunAt INTEGER,
+                    enabled INTEGER DEFAULT 1,
+                    createdAt INTEGER,
+                    updatedAt INTEGER
+                )
+            `);
+
 
             // Lightweight migrations (best-effort, safe on existing DBs)
             const ensureColumn = (table: string, column: string, type: string) => {
@@ -157,6 +193,83 @@ export class ExecutionGraph {
        });
    }
 
+    // --- Recurring Tasks ---
+
+    public async createRecurringTask(task: RecurringTask): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const query = `
+                INSERT INTO recurring_tasks (id, brainId, brainName, title, description, modelOverride, scheduleType, intervalMs, nextRunAt, lastRunAt, enabled, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+            const params = [
+                task.id, task.brainId, task.brainName, task.title, task.description,
+                task.modelOverride, task.scheduleType, task.intervalMs,
+                task.nextRunAt, task.lastRunAt || null, task.enabled ? 1 : 0,
+                task.createdAt, task.updatedAt
+            ];
+            this.db.run(query, params, (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+    }
+
+    public async getRecurringTasks(): Promise<RecurringTask[]> {
+        return new Promise((resolve, reject) => {
+            this.db.all('SELECT * FROM recurring_tasks ORDER BY createdAt DESC', (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows.map(this.mapRowToRecurringTask));
+            });
+        });
+    }
+
+    public async getDueRecurringTasks(now: number): Promise<RecurringTask[]> {
+        return new Promise((resolve, reject) => {
+            const query = `SELECT * FROM recurring_tasks WHERE enabled = 1 AND nextRunAt <= ?`;
+            this.db.all(query, [now], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows.map(this.mapRowToRecurringTask));
+            });
+        });
+    }
+
+    public async updateRecurringTaskNextRun(id: string, nextRunAt: number, lastRunAt: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const now = Date.now();
+            this.db.run(
+                'UPDATE recurring_tasks SET nextRunAt = ?, lastRunAt = ?, updatedAt = ? WHERE id = ?',
+                [nextRunAt, lastRunAt, now, id],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+    }
+
+    public async toggleRecurringTask(id: string, enabled: boolean): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const now = Date.now();
+            this.db.run(
+                'UPDATE recurring_tasks SET enabled = ?, updatedAt = ? WHERE id = ?',
+                [enabled ? 1 : 0, now, id],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+    }
+
+    public async deleteRecurringTask(id: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.db.run('DELETE FROM recurring_tasks WHERE id = ?', [id], (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+    }
+
     // --- Job Methods ---
 
     public async createJob(job: JobApplication): Promise<void> {
@@ -212,6 +325,24 @@ export class ExecutionGraph {
             dependencies: JSON.parse(row.dependencies || '[]'),
             retryPolicy: row.retryPolicy ? JSON.parse(row.retryPolicy) : undefined,
             brainName: row.brainName // Ensure this is mapped if added to SQL
+        };
+    }
+
+    private mapRowToRecurringTask(row: any): RecurringTask {
+        return {
+            id: row.id,
+            brainId: row.brainId,
+            brainName: row.brainName,
+            title: row.title,
+            description: row.description,
+            modelOverride: row.modelOverride,
+            scheduleType: row.scheduleType,
+            intervalMs: row.intervalMs,
+            nextRunAt: row.nextRunAt,
+            lastRunAt: row.lastRunAt || undefined,
+            enabled: !!row.enabled,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt
         };
     }
     

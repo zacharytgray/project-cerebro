@@ -20,6 +20,20 @@ interface Task {
   createdAt: number;
 }
 
+
+interface RecurringTask {
+  id: string;
+  brainId: string;
+  title: string;
+  description?: string;
+  modelOverride?: string;
+  intervalMs: number;
+  nextRunAt: number;
+  lastRunAt?: number;
+  enabled: boolean;
+}
+
+
 interface Job {
   id: string;
   company: string;
@@ -81,9 +95,10 @@ const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (checked: b
 export default function Dashboard() {
   const [brains, setBrains] = useState<BrainStatus[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
-  const [newTask, setNewTask] = useState({ brainId: 'nexus', title: '', description: '', modelOverride: 'default' });
+  const [newTask, setNewTask] = useState({ brainId: 'nexus', title: '', description: '', modelOverride: 'default', isRecurring: false, intervalMinutes: 60 });
   const [currentView, setCurrentView] = useState<'dashboard' | 'brain-detail'>('dashboard');
   const [selectedBrainId, setSelectedBrainId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -105,19 +120,22 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const [statusRes, tasksRes, jobsRes] = await Promise.all([
+      const [statusRes, tasksRes, jobsRes, recurringRes] = await Promise.all([
         fetch('/api/status'),
         fetch('/api/tasks'),
-        fetch('/api/jobs')
+        fetch('/api/jobs'),
+        fetch('/api/recurring-tasks')
       ]);
       
       const statusData = await statusRes.json();
       const tasksData = await tasksRes.json();
       const jobsData = await jobsRes.json();
+      const recurringData = await recurringRes.json();
 
       setBrains(statusData.brains || []);
       setTasks(tasksData.tasks || []);
       setJobs(jobsData.jobs || []);
+      setRecurringTasks(recurringData.recurringTasks || []);
     } catch (e) {
       console.error("Failed to fetch data", e);
     }
@@ -165,14 +183,55 @@ export default function Dashboard() {
     }
   };
 
+  const toggleRecurringTask = async (id: string, enabled: boolean) => {
+    try {
+      await fetch(`/api/recurring-tasks/${id}/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled })
+      });
+      fetchData();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const deleteRecurringTask = async (id: string) => {
+    try {
+      await fetch(`/api/recurring-tasks/${id}`, { method: 'DELETE' });
+      fetchData();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const createTask = async () => {
     if (!newTask.title) return;
     try {
-      await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newTask)
-      });
+      if (newTask.isRecurring) {
+        await fetch('/api/recurring-tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            brainId: newTask.brainId,
+            title: newTask.title,
+            description: newTask.description,
+            modelOverride: newTask.modelOverride,
+            intervalMinutes: newTask.intervalMinutes
+          })
+        });
+      } else {
+        await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            brainId: newTask.brainId,
+            title: newTask.title,
+            description: newTask.description,
+            modelOverride: newTask.modelOverride
+          })
+        });
+      }
       setIsAddTaskOpen(false);
       setNewTask({ ...newTask, title: '', description: '' });
       fetchData();
@@ -476,6 +535,43 @@ export default function Dashboard() {
           </Card>
         </section>
 
+        {/* Recurring Tasks */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2"><Calendar className="w-5 h-5" /> Recurring Tasks</h2>
+            <span className="text-xs text-muted-foreground">{recurringTasks.length} active</span>
+          </div>
+          <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto">
+            {recurringTasks.map((rt) => (
+              <Card key={rt.id} className="p-4 hover:border-blue-500/50 transition-colors">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-bold">{rt.title}</h3>
+                  <div className="flex items-center gap-2">
+                    <Toggle checked={rt.enabled} onChange={(v) => toggleRecurringTask(rt.id, v)} />
+                    <button
+                      onClick={() => deleteRecurringTask(rt.id)}
+                      className="p-1.5 hover:bg-red-900/20 hover:text-red-400 rounded transition-colors text-muted-foreground"
+                      title="Delete Recurring Task"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">{getBrainName(rt.brainId)} • Every {Math.round(rt.intervalMs / 60000)} min</p>
+                <div className="text-xs text-gray-500 flex justify-between items-center">
+                  <span>Next: {new Date(rt.nextRunAt).toLocaleString()}</span>
+                  <span>{rt.enabled ? 'Enabled' : 'Paused'}</span>
+                </div>
+              </Card>
+            ))}
+            {recurringTasks.length === 0 && (
+              <div className="text-center p-8 border border-dashed border-border rounded-lg text-muted-foreground text-sm">
+                No recurring tasks configured.
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* Active Jobs */}
         <section>
           <div className="flex items-center justify-between mb-4">
@@ -529,6 +625,25 @@ export default function Dashboard() {
               onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
             />
           </div>
+          <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border">
+            <div>
+              <div className="text-sm font-medium">Recurring Task</div>
+              <div className="text-xs text-muted-foreground">Create a scheduled task that spawns executions</div>
+            </div>
+            <Toggle checked={newTask.isRecurring} onChange={(v) => setNewTask({ ...newTask, isRecurring: v })} />
+          </div>
+          {newTask.isRecurring && (
+            <div>
+              <label className="text-xs text-muted-foreground">Interval (minutes)</label>
+              <input
+                type="number"
+                min={1}
+                className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
+                value={newTask.intervalMinutes}
+                onChange={(e) => setNewTask({ ...newTask, intervalMinutes: Number(e.target.value) })}
+              />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-muted-foreground">Brain</label>
