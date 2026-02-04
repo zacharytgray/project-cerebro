@@ -168,6 +168,15 @@ export class ExecutionGraph {
         });
     }
 
+    public async deleteTask(id: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.db.run('DELETE FROM tasks WHERE id = ?', [id], (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+    }
+
     // --- Helper Methods ---
 
     private mapRowToTask(row: any): Task {

@@ -112,6 +112,13 @@ export class ApiServer {
             return { jobs };
         });
 
+        // Delete Task
+        this.server.delete<{ Params: { id: string } }>('/api/tasks/:id', async (request, reply) => {
+            const { id } = request.params;
+            await this.runtime.graph.deleteTask(id);
+            return { success: true };
+        });
+
         // Catch-all for SPA client-side routing
         this.server.setNotFoundHandler((req, res) => {
              res.sendFile('index.html');

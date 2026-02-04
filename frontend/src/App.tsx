@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, Settings, ChevronLeft, Save } from 'lucide-react';
+import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, Settings, ChevronLeft, Save, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Types
@@ -85,7 +85,7 @@ export default function Dashboard() {
   const [newTask, setNewTask] = useState({ brainId: 'nexus', title: '', modelOverride: 'default' });
   const [currentView, setCurrentView] = useState<'dashboard' | 'brain-detail'>('dashboard');
   const [selectedBrainId, setSelectedBrainId] = useState<string | null>(null);
-  const [isBrainConfigOpen, setIsBrainConfigOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
   const models = [
     { alias: 'default', id: 'google/gemini-3-flash-preview' },
@@ -137,8 +137,6 @@ export default function Dashboard() {
   const forceRun = async (id: string) => {
     try {
       await fetch(`/api/brains/${id}/run`, { method: 'POST' });
-      // Ideally we'd show a toast or something.
-      // But refreshing data will show status: EXECUTING.
       setTimeout(fetchData, 500);
     } catch (e) {
       console.error(e);
@@ -148,6 +146,15 @@ export default function Dashboard() {
   const openBrainConfig = (brain: BrainStatus) => {
     setSelectedBrainId(brain.id);
     setCurrentView('brain-detail');
+  };
+
+  const deleteTask = async (id: string) => {
+    try {
+      await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+      fetchData();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const createTask = async () => {
@@ -177,6 +184,10 @@ export default function Dashboard() {
       default: return <Brain className="w-5 h-5" />;
     }
   };
+
+  const filteredTasks = statusFilter === 'ALL' 
+    ? tasks 
+    : tasks.filter(t => t.status === statusFilter);
 
   const activeBrain = selectedBrainId ? brains.find(b => b.id === selectedBrainId) : null;
 
@@ -219,7 +230,7 @@ export default function Dashboard() {
                   <div>
                     <label className="text-sm font-medium block mb-2 text-muted-foreground">Execution Schedule</label>
                     <input className="w-full bg-secondary/50 border border-border rounded-lg px-4 py-2.5 text-sm" placeholder="e.g. 0 7 * * * (daily 7am)" />
-                    <p className="mt-2 text-xs text-muted-foreground">Supports cron expressions or natural language like "every 30 mins"</p>
+                    <p className="mt-2 text-xs text-muted-foreground">Supports cron expressions or natural language like \"every 30 mins\"</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium block mb-2 text-muted-foreground">Heartbeat Affinity</label>
@@ -367,9 +378,24 @@ export default function Dashboard() {
         {/* Task Graph Stream */}
         <section className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2"><Terminal className="w-5 h-5" /> Execution Stream</h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2"><Terminal className="w-5 h-5" /> Execution Stream</h2>
+              <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-md">
+                {['ALL', 'READY', 'EXECUTING', 'COMPLETED', 'FAILED'].map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setStatusFilter(f)}
+                    className={`px-2 py-1 text-[10px] uppercase font-bold rounded transition-colors ${
+                      statusFilter === f ? 'bg-blue-600 text-white' : 'hover:bg-white/5 text-muted-foreground'
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground">{tasks.length} tasks recorded</span>
+              <span className="text-xs text-muted-foreground">{filteredTasks.length} tasks</span>
               <button
                 onClick={() => setIsAddTaskOpen(true)}
                 className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-md bg-blue-600/80 hover:bg-blue-600 text-white transition-colors"
@@ -387,13 +413,13 @@ export default function Dashboard() {
                   <th className="pb-3">Brain</th>
                   <th className="pb-3">Model</th>
                   <th className="pb-3">Task</th>
-                  <th className="pb-3 text-right pr-2">Age</th>
+                  <th className="pb-3 text-right pr-2">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {tasks.map((task) => (
+                {filteredTasks.map((task) => (
                   <tr key={task.id} className="group hover:bg-white/5 transition-colors">
-                    <td className="py-3 pl-2">
+                    <td className="py-3 pl-2 whitespace-nowrap">
                       <span className={`inline-block w-2 h-2 rounded-full mr-2 
                         ${task.status === 'COMPLETED' ? 'bg-green-500' : 
                           task.status === 'FAILED' ? 'bg-red-500' : 
@@ -409,13 +435,19 @@ export default function Dashboard() {
                       <Badge variant="default">{task.modelOverride || 'default'}</Badge>
                     </td>
                     <td className="py-3 font-medium text-foreground">{task.title}</td>
-                    <td className="py-3 text-right pr-2 text-muted-foreground">
-                      {Math.floor((Date.now() - task.createdAt) / 60000)}m ago
+                    <td className="py-3 text-right pr-2">
+                       <button 
+                         onClick={() => deleteTask(task.id)}
+                         className="p-1.5 hover:bg-red-900/20 hover:text-red-400 rounded transition-colors text-muted-foreground opacity-0 group-hover:opacity-100"
+                         title="Delete Task"
+                       >
+                         <Trash2 className="w-4 h-4" />
+                       </button>
                     </td>
                   </tr>
                 ))}
-                {tasks.length === 0 && (
-                   <tr><td colSpan={4} className="py-8 text-center text-muted-foreground">No tasks in graph history.</td></tr>
+                {filteredTasks.length === 0 && (
+                   <tr><td colSpan={5} className="py-8 text-center text-muted-foreground">No tasks matching filter.</td></tr>
                 )}
               </tbody>
             </table>
@@ -506,34 +538,6 @@ export default function Dashboard() {
             <button onClick={createTask} className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white">Create</button>
           </div>
         </div>
-      </Modal>
-
-      {/* Brain Config Modal */}
-      <Modal isOpen={isBrainConfigOpen} onClose={() => setIsBrainConfigOpen(false)} title={activeBrain ? `${activeBrain.name} Settings` : 'Brain Settings'}>
-        {activeBrain && (
-          <div className="flex flex-col gap-4 text-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Automation</div>
-                <div className="text-xs text-muted-foreground">Toggle auto-execution and schedules</div>
-              </div>
-              <Toggle checked={activeBrain.autoMode} onChange={(v) => toggleBrain(activeBrain.id, v)} />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Schedule (cron or human)</label>
-              <input className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm" placeholder="e.g. 0 7 * * * (daily 7am)" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Reports & Summaries</label>
-              <div className="mt-2 flex items-center gap-2">
-                <input type="checkbox" className="accent-blue-500" defaultChecked={['money','job','research'].includes(activeBrain.id)} />
-                <span>Generate markdown reports</span>
-              </div>
-              <div className="mt-2 text-xs text-muted-foreground">Short summary posted to Discord; full report stored on disk.</div>
-            </div>
-            <div className="text-xs text-muted-foreground">This is a placeholder config panel—wiring comes next.</div>
-          </div>
-        )}
       </Modal>
     </div>
   );
