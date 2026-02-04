@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, CheckSquare } from 'lucide-react';
+import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Types
@@ -7,6 +7,7 @@ interface BrainStatus {
   id: string;
   name: string;
   status: 'IDLE' | 'EXECUTING';
+  autoMode: boolean;
 }
 
 interface Task {
@@ -45,11 +46,25 @@ const Badge = ({ children, variant = 'default' }: { children: React.ReactNode; v
   );
 };
 
+const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) => (
+  <button
+    onClick={() => onChange(!checked)}
+    className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+      checked ? 'bg-blue-500' : 'bg-gray-700'
+    }`}
+  >
+    <div
+      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+        checked ? 'translate-x-5' : 'translate-x-0'
+      }`}
+    />
+  </button>
+);
+
 export default function Dashboard() {
   const [brains, setBrains] = useState<BrainStatus[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
@@ -68,8 +83,6 @@ export default function Dashboard() {
       setJobs(jobsData.jobs || []);
     } catch (e) {
       console.error("Failed to fetch data", e);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -79,8 +92,33 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const toggleBrain = async (id: string, enabled: boolean) => {
+    try {
+      await fetch(`/api/brains/${id}/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled })
+      });
+      fetchData(); // Refresh immediately
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const forceRun = async (id: string) => {
+    try {
+      await fetch(`/api/brains/${id}/run`, { method: 'POST' });
+      // Ideally we'd show a toast or something.
+      // But refreshing data will show status: EXECUTING.
+      setTimeout(fetchData, 500);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const getBrainIcon = (id: string) => {
     switch (id) {
+      case 'nexus': return <Activity className="w-5 h-5" />;
       case 'personal': return <Calendar className="w-5 h-5" />;
       case 'school': return <BookOpen className="w-5 h-5" />;
       case 'research': return <Database className="w-5 h-5" />;
@@ -127,6 +165,17 @@ export default function Dashboard() {
                       {brain.status === 'EXECUTING' ? 'Processing task...' : 'Waiting for heartbeat'}
                     </p>
                   </div>
+
+                  {/* Controls */}
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                     <Toggle checked={brain.autoMode} onChange={(v) => toggleBrain(brain.id, v)} />
+                     <span className="text-xs text-muted-foreground">Auto</span>
+                     <div className="flex-1" />
+                     <button onClick={() => forceRun(brain.id)} className="p-1 hover:bg-white/10 rounded transition-colors" title="Force Run">
+                        <Play className="w-4 h-4 text-green-400" />
+                     </button>
+                  </div>
+
                 </Card>
               </motion.div>
             ))}
