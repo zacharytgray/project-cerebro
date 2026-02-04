@@ -23,7 +23,7 @@ export class ExecutionGraph {
 
     private initSchema() {
         this.db.serialize(() => {
-            // Tasks Table
+            // Base tables (idempotent)
             this.db.run(`
                 CREATE TABLE IF NOT EXISTS tasks (
                     id TEXT PRIMARY KEY,
@@ -45,7 +45,6 @@ export class ExecutionGraph {
                 )
             `);
 
-            // Job Applications Table
             this.db.run(`
                 CREATE TABLE IF NOT EXISTS jobs (
                     id TEXT PRIMARY KEY,
@@ -58,6 +57,31 @@ export class ExecutionGraph {
                     updatedAt INTEGER
                 )
             `);
+
+            // Lightweight migrations (best-effort, safe on existing DBs)
+            const ensureColumn = (table: string, column: string, type: string) => {
+                this.db.all(`PRAGMA table_info(${table})`, (err, rows: any[]) => {
+                    if (err) {
+                        console.error(`[DB] Failed to read schema for ${table}:`, err);
+                        return;
+                    }
+                    const hasColumn = rows.some(r => r.name === column);
+                    if (!hasColumn) {
+                        this.db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`, (alterErr) => {
+                            if (alterErr) {
+                                console.error(`[DB] Failed to add column ${column} to ${table}:`, alterErr);
+                            } else {
+                                console.log(`[DB] Added column ${column} to ${table}`);
+                            }
+                        });
+                    }
+                });
+            };
+
+            // Task columns added in recent commits
+            ensureColumn('tasks', 'modelOverride', 'TEXT');
+            ensureColumn('tasks', 'brainName', 'TEXT');
+            ensureColumn('tasks', 'description', 'TEXT');
         });
     }
 
