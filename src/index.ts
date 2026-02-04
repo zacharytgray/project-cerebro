@@ -8,20 +8,24 @@ import * as path from 'path';
 
 // Load config
 const configPath = path.join(__dirname, '../config/discord_ids.json');
+const brainsPath = path.join(__dirname, '../config/brains.json');
 const discordConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+const brainsConfig = JSON.parse(fs.readFileSync(brainsPath, 'utf-8'));
 
 async function main() {
     const runtime = new CerebroRuntime();
 
     // Initialize Brains from config
-    const brains = [
-        { id: 'personal', name: 'Personal Life Brain', channelKey: 'personal_life_brain', type: 'context' },
-        { id: 'school', name: 'Schoolwork Brain', channelKey: 'schoolwork_brain', type: 'context' },
-        { id: 'research', name: 'Research Brain', channelKey: 'research_brain', type: 'context' },
-        { id: 'money', name: 'Money Making Brain', channelKey: 'money_making_brain', type: 'context' },
-        { id: 'job', name: 'Job Application Brain', channelKey: 'job_application_brain', type: 'job' },
-    ];
+    const brains = brainsConfig.brains as Array<{
+        id: string;
+        name: string;
+        channelKey: string;
+        type: 'context' | 'job';
+        description: string;
+        openClawAgentId?: string;
+    }>;
 
+    // Register Core Brains
     brains.forEach(b => {
         const channelId = discordConfig.channels[b.channelKey];
         if (channelId) {
@@ -29,8 +33,9 @@ async function main() {
             const config = {
                 id: b.id,
                 name: b.name,
-                description: 'Core brain',
-                discordChannelId: channelId
+                description: b.description,
+                discordChannelId: channelId,
+                openClawAgentId: b.openClawAgentId
             };
 
             if (b.type === 'job') {
@@ -45,13 +50,26 @@ async function main() {
         }
     });
 
+    // Register Nexus (Orchestrator)
+    const generalChannelId = discordConfig.channels[brainsConfig.nexus.channelKey];
+    if (generalChannelId) {
+        const nexusBrain = new ContextBrain({
+            id: brainsConfig.nexus.id,
+            name: brainsConfig.nexus.name,
+            description: brainsConfig.nexus.description,
+            discordChannelId: generalChannelId,
+            openClawAgentId: brainsConfig.nexus.openClawAgentId
+        }, (runtime as any).client, runtime.graph);
+        runtime.registerBrain(nexusBrain);
+    }
+
     // Register Daily Digest Brain
-    const digestChannelId = discordConfig.channels['daily_digest'];
+    const digestChannelId = discordConfig.channels[brainsConfig.digest.channelKey];
     if (digestChannelId) {
         const digestBrain = new DigestBrain({
-            id: 'digest',
-            name: 'Daily Digest Brain',
-            description: 'Aggregates reports',
+            id: brainsConfig.digest.id,
+            name: brainsConfig.digest.name,
+            description: brainsConfig.digest.description,
             discordChannelId: digestChannelId
         }, (runtime as any).client, runtime.graph, brains.map(b => b.id));
         runtime.registerBrain(digestBrain);

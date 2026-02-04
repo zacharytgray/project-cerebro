@@ -1,0 +1,57 @@
+{
+  "brains": [
+    {
+      "id": "personal",
+      "name": "Personal Life Brain",
+      "channelKey": "personal_life_brain",
+      "type": "context",
+      "description": "Personal life, routines, health, errands, relationships",
+      "openClawAgentId": "main"
+    },
+    {
+      "id": "school",
+      "name": "Schoolwork Brain",
+      "channelKey": "schoolwork_brain",
+      "type": "context",
+      "description": "Coursework, deadlines, study plans, assignments",
+      "openClawAgentId": "main"
+    },
+    {
+      "id": "research",
+      "name": "Research Brain",
+      "channelKey": "research_brain",
+      "type": "context",
+      "description": "Deep research, summaries, citations, knowledge capture",
+      "openClawAgentId": "main"
+    },
+    {
+      "id": "money",
+      "name": "Money Making Brain",
+      "channelKey": "money_making_brain",
+      "type": "context",
+      "description": "Revenue ideas, monetization experiments, business ops",
+      "openClawAgentId": "main"
+    },
+    {
+      "id": "job",
+      "name": "Job Application Brain",
+      "channelKey": "job_application_brain",
+      "type": "job",
+      "description": "Job search pipeline, applications, tracking, follow-ups",
+      "openClawAgentId": "main"
+    }
+  ],
+  "nexus": {
+    "id": "nexus",
+    "name": "Nexus (Orchestrator)",
+    "channelKey": "general",
+    "description": "Main system interface and command routing",
+    "openClawAgentId": "main"
+  },
+  "digest": {
+    "id": "digest",
+    "name": "Daily Digest Brain",
+    "channelKey": "daily_digest",
+    "description": "Aggregates reports from other brains"
+  }
+}
