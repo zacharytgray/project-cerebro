@@ -94,8 +94,53 @@ export class CerebroRuntime {
                 attempts: 0
             });
 
-            const nextRunAt = now + recurring.intervalMs;
+            const nextRunAt = this.computeNextRunAt(recurring, now);
             await this.graph.updateRecurringTaskNextRun(recurring.id, nextRunAt, now);
+        }
+    }
+
+    private computeNextRunAt(recurring: any, fromTime: number): number {
+        const cfg = recurring.scheduleConfig ? JSON.parse(recurring.scheduleConfig) : {};
+        const base = new Date(fromTime);
+
+        switch (recurring.scheduleType) {
+            case 'HOURLY': {
+                const minute = typeof cfg.minute === 'number' ? cfg.minute : 0;
+                const next = new Date(base);
+                next.setSeconds(0, 0);
+                next.setMinutes(minute);
+                if (next.getTime() <= fromTime) {
+                    next.setHours(next.getHours() + 1);
+                }
+                return next.getTime();
+            }
+            case 'DAILY': {
+                const hour = typeof cfg.hour === 'number' ? cfg.hour : 9;
+                const minute = typeof cfg.minute === 'number' ? cfg.minute : 0;
+                const next = new Date(base);
+                next.setSeconds(0, 0);
+                next.setHours(hour, minute, 0, 0);
+                if (next.getTime() <= fromTime) {
+                    next.setDate(next.getDate() + 1);
+                }
+                return next.getTime();
+            }
+            case 'WEEKLY': {
+                const day = typeof cfg.day === 'number' ? cfg.day : 1; // 0=Sun
+                const hour = typeof cfg.hour === 'number' ? cfg.hour : 9;
+                const minute = typeof cfg.minute === 'number' ? cfg.minute : 0;
+                const next = new Date(base);
+                next.setSeconds(0, 0);
+                next.setHours(hour, minute, 0, 0);
+                const delta = (day - next.getDay() + 7) % 7;
+                next.setDate(next.getDate() + (delta === 0 && next.getTime() <= fromTime ? 7 : delta));
+                return next.getTime();
+            }
+            case 'INTERVAL':
+            default: {
+                const intervalMs = recurring.intervalMs || 60 * 60 * 1000;
+                return fromTime + intervalMs;
+            }
         }
     }
 

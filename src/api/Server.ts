@@ -112,17 +112,25 @@ export class ApiServer {
         });
 
         // Recurring Tasks
-        this.server.post<{ Body: { brainId: string; title: string; description?: string; modelOverride?: string; intervalMinutes: number } }>('/api/recurring-tasks', async (request, reply) => {
-            const { brainId, title, description, modelOverride, intervalMinutes } = request.body || {} as any;
-            if (!brainId || !title || !intervalMinutes || intervalMinutes <= 0) {
+        this.server.post<{ Body: { brainId: string; title: string; description?: string; modelOverride?: string; scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY'; intervalMinutes?: number; scheduleConfig?: any } }>('/api/recurring-tasks', async (request, reply) => {
+            const { brainId, title, description, modelOverride, scheduleType, intervalMinutes, scheduleConfig } = request.body || {} as any;
+            if (!brainId || !title || !scheduleType) {
                 reply.code(400);
-                return { error: 'brainId, title, and intervalMinutes (>0) are required' };
+                return { error: 'brainId, title, and scheduleType are required' };
             }
 
             const brain = this.runtime.getBrains().find(b => b.id === brainId);
             const brainName = brain ? brain.name : brainId;
             const now = Date.now();
-            const intervalMs = Math.floor(intervalMinutes * 60 * 1000);
+
+            let intervalMs: number | undefined;
+            if (scheduleType === 'INTERVAL') {
+                if (!intervalMinutes || intervalMinutes <= 0) {
+                    reply.code(400);
+                    return { error: 'intervalMinutes (>0) required for INTERVAL schedule' };
+                }
+                intervalMs = Math.floor(intervalMinutes * 60 * 1000);
+            }
 
             await this.runtime.graph.createRecurringTask({
                 id: now.toString(),
@@ -131,9 +139,10 @@ export class ApiServer {
                 title,
                 description,
                 modelOverride,
-                scheduleType: 'INTERVAL',
+                scheduleType,
                 intervalMs,
-                nextRunAt: now + intervalMs,
+                scheduleConfig: scheduleConfig ? JSON.stringify(scheduleConfig) : undefined,
+                nextRunAt: now,
                 lastRunAt: undefined,
                 enabled: true,
                 createdAt: now,

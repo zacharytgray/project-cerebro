@@ -27,7 +27,9 @@ interface RecurringTask {
   title: string;
   description?: string;
   modelOverride?: string;
-  intervalMs: number;
+  scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
+  intervalMs?: number;
+  scheduleConfig?: string;
   nextRunAt: number;
   lastRunAt?: number;
   enabled: boolean;
@@ -98,7 +100,7 @@ export default function Dashboard() {
   const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
-  const [newTask, setNewTask] = useState({ brainId: 'nexus', title: '', description: '', modelOverride: 'default', isRecurring: false, intervalMinutes: 60 });
+  const [newTask, setNewTask] = useState({ brainId: 'nexus', title: '', description: '', modelOverride: 'default', isRecurring: false, scheduleType: 'DAILY', intervalMinutes: 60, dailyTime: '09:00', weeklyDay: '1' });
   const [currentView, setCurrentView] = useState<'dashboard' | 'brain-detail'>('dashboard');
   const [selectedBrainId, setSelectedBrainId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -209,6 +211,17 @@ export default function Dashboard() {
     if (!newTask.title) return;
     try {
       if (newTask.isRecurring) {
+        let scheduleConfig: any = {};
+        if (newTask.scheduleType === 'HOURLY') {
+          scheduleConfig = { minute: Number(newTask.dailyTime.split(':')[1] || 0) };
+        } else if (newTask.scheduleType === 'DAILY') {
+          const [h, m] = newTask.dailyTime.split(':');
+          scheduleConfig = { hour: Number(h), minute: Number(m || 0) };
+        } else if (newTask.scheduleType === 'WEEKLY') {
+          const [h, m] = newTask.dailyTime.split(':');
+          scheduleConfig = { day: Number(newTask.weeklyDay), hour: Number(h), minute: Number(m || 0) };
+        }
+
         await fetch('/api/recurring-tasks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -217,7 +230,9 @@ export default function Dashboard() {
             title: newTask.title,
             description: newTask.description,
             modelOverride: newTask.modelOverride,
-            intervalMinutes: newTask.intervalMinutes
+            scheduleType: newTask.scheduleType,
+            intervalMinutes: newTask.intervalMinutes,
+            scheduleConfig
           })
         });
       } else {
@@ -557,7 +572,7 @@ export default function Dashboard() {
                     </button>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mb-2">{getBrainName(rt.brainId)} • Every {Math.round(rt.intervalMs / 60000)} min</p>
+                <p className="text-xs text-muted-foreground mb-2">{getBrainName(rt.brainId)} • {rt.scheduleType === 'INTERVAL' ? `Every ${Math.round((rt.intervalMs || 0) / 60000)} min` : rt.scheduleType}</p>
                 <div className="text-xs text-gray-500 flex justify-between items-center">
                   <span>Next: {new Date(rt.nextRunAt).toLocaleString()}</span>
                   <span>{rt.enabled ? 'Enabled' : 'Paused'}</span>
@@ -633,15 +648,90 @@ export default function Dashboard() {
             <Toggle checked={newTask.isRecurring} onChange={(v) => setNewTask({ ...newTask, isRecurring: v })} />
           </div>
           {newTask.isRecurring && (
-            <div>
-              <label className="text-xs text-muted-foreground">Interval (minutes)</label>
-              <input
-                type="number"
-                min={1}
-                className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
-                value={newTask.intervalMinutes}
-                onChange={(e) => setNewTask({ ...newTask, intervalMinutes: Number(e.target.value) })}
-              />
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Schedule Type</label>
+                <select
+                  className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
+                  value={newTask.scheduleType}
+                  onChange={(e) => setNewTask({ ...newTask, scheduleType: e.target.value })}
+                >
+                  <option value="HOURLY">Hourly</option>
+                  <option value="DAILY">Daily</option>
+                  <option value="WEEKLY">Weekly</option>
+                  <option value="INTERVAL">Interval</option>
+                </select>
+              </div>
+
+              {newTask.scheduleType === 'INTERVAL' && (
+                <div>
+                  <label className="text-xs text-muted-foreground">Interval (minutes)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
+                    value={newTask.intervalMinutes}
+                    onChange={(e) => setNewTask({ ...newTask, intervalMinutes: Number(e.target.value) })}
+                  />
+                </div>
+              )}
+
+              {newTask.scheduleType === 'HOURLY' && (
+                <div>
+                  <label className="text-xs text-muted-foreground">Minute of Hour</label>
+                  <select
+                    className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
+                    value={newTask.dailyTime}
+                    onChange={(e) => setNewTask({ ...newTask, dailyTime: e.target.value })}
+                  >
+                    {['00','15','30','45'].map(m => (
+                      <option key={m} value={`00:${m}`}>:{m}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {newTask.scheduleType === 'DAILY' && (
+                <div>
+                  <label className="text-xs text-muted-foreground">Time of Day</label>
+                  <input
+                    type="time"
+                    className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
+                    value={newTask.dailyTime}
+                    onChange={(e) => setNewTask({ ...newTask, dailyTime: e.target.value })}
+                  />
+                </div>
+              )}
+
+              {newTask.scheduleType === 'WEEKLY' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Day</label>
+                    <select
+                      className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
+                      value={newTask.weeklyDay}
+                      onChange={(e) => setNewTask({ ...newTask, weeklyDay: e.target.value })}
+                    >
+                      <option value="0">Sunday</option>
+                      <option value="1">Monday</option>
+                      <option value="2">Tuesday</option>
+                      <option value="3">Wednesday</option>
+                      <option value="4">Thursday</option>
+                      <option value="5">Friday</option>
+                      <option value="6">Saturday</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Time</label>
+                    <input
+                      type="time"
+                      className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
+                      value={newTask.dailyTime}
+                      onChange={(e) => setNewTask({ ...newTask, dailyTime: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <div className="grid grid-cols-2 gap-4">

@@ -13,6 +13,8 @@ export interface JobApplication {
     updatedAt: number;
 }
 
+export type RecurringScheduleType = 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
+
 export interface RecurringTask {
     id: string;
     brainId: string;
@@ -20,8 +22,9 @@ export interface RecurringTask {
     title: string;
     description?: string;
     modelOverride?: string;
-    scheduleType: 'INTERVAL';
-    intervalMs: number;
+    scheduleType: RecurringScheduleType;
+    intervalMs?: number;
+    scheduleConfig?: string; // JSON string
     nextRunAt: number;
     lastRunAt?: number;
     enabled: boolean;
@@ -84,7 +87,8 @@ export class ExecutionGraph {
                     description TEXT,
                     modelOverride TEXT,
                     scheduleType TEXT NOT NULL,
-                    intervalMs INTEGER NOT NULL,
+                    intervalMs INTEGER,
+                    scheduleConfig TEXT,
                     nextRunAt INTEGER NOT NULL,
                     lastRunAt INTEGER,
                     enabled INTEGER DEFAULT 1,
@@ -118,6 +122,10 @@ export class ExecutionGraph {
             ensureColumn('tasks', 'modelOverride', 'TEXT');
             ensureColumn('tasks', 'brainName', 'TEXT');
             ensureColumn('tasks', 'description', 'TEXT');
+
+            // Recurring task columns (backwards compatible)
+            ensureColumn('recurring_tasks', 'intervalMs', 'INTEGER');
+            ensureColumn('recurring_tasks', 'scheduleConfig', 'TEXT');
         });
     }
 
@@ -198,12 +206,12 @@ export class ExecutionGraph {
     public async createRecurringTask(task: RecurringTask): Promise<void> {
         return new Promise((resolve, reject) => {
             const query = `
-                INSERT INTO recurring_tasks (id, brainId, brainName, title, description, modelOverride, scheduleType, intervalMs, nextRunAt, lastRunAt, enabled, createdAt, updatedAt)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO recurring_tasks (id, brainId, brainName, title, description, modelOverride, scheduleType, intervalMs, scheduleConfig, nextRunAt, lastRunAt, enabled, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
             const params = [
                 task.id, task.brainId, task.brainName, task.title, task.description,
-                task.modelOverride, task.scheduleType, task.intervalMs,
+                task.modelOverride, task.scheduleType, task.intervalMs || null, task.scheduleConfig || null,
                 task.nextRunAt, task.lastRunAt || null, task.enabled ? 1 : 0,
                 task.createdAt, task.updatedAt
             ];
@@ -337,7 +345,8 @@ export class ExecutionGraph {
             description: row.description,
             modelOverride: row.modelOverride,
             scheduleType: row.scheduleType,
-            intervalMs: row.intervalMs,
+            intervalMs: row.intervalMs || undefined,
+            scheduleConfig: row.scheduleConfig || undefined,
             nextRunAt: row.nextRunAt,
             lastRunAt: row.lastRunAt || undefined,
             enabled: !!row.enabled,
