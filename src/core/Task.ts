@@ -27,6 +27,7 @@ export interface Task {
     status: TaskStatus;
     title: string;
     payload: any; // Flexible payload for different task types
+    modelOverride?: string; // Model alias or ID
     
     // Dependencies & Scheduling
     dependencies: TaskDependency[];

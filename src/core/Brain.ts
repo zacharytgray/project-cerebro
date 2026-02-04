@@ -94,6 +94,7 @@ export abstract class Brain {
                     args: {
                         task: `You are the ${this.name}. \n\nContext: ${this.description}. \n\nYour task is: ${task.title}. \n\nIMPORTANT: When finished, you MUST use the 'message' tool to send your final response/confirmation to Discord channel ID: ${this.discordChannelId}`,
                         agentId: this.openClawAgentId || 'main',
+                        model: task.modelOverride || undefined,
                         label: `Cerebro: ${this.name}`,
                         thinking: 'low'
                     }

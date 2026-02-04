@@ -31,6 +31,7 @@ export class ExecutionGraph {
                     status TEXT NOT NULL,
                     title TEXT NOT NULL,
                     payload TEXT,
+                    modelOverride TEXT,
                     dependencies TEXT,
                     executeAt INTEGER,
                     createdAt INTEGER,
@@ -62,12 +63,12 @@ export class ExecutionGraph {
     public async createTask(task: Task): Promise<void> {
         return new Promise((resolve, reject) => {
             const query = `
-                INSERT INTO tasks (id, brainId, status, title, payload, dependencies, executeAt, createdAt, updatedAt, attempts, retryPolicy)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO tasks (id, brainId, status, title, payload, modelOverride, dependencies, executeAt, createdAt, updatedAt, attempts, retryPolicy)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
             const params = [
                 task.id, task.brainId, task.status, task.title,
-                JSON.stringify(task.payload), JSON.stringify(task.dependencies),
+                JSON.stringify(task.payload), task.modelOverride, JSON.stringify(task.dependencies),
                 task.executeAt, task.createdAt, task.updatedAt,
                 task.attempts, JSON.stringify(task.retryPolicy)
             ];

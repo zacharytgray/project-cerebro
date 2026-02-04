@@ -74,8 +74,8 @@ export class ApiServer {
         });
 
         // Tasks
-        this.server.post<{ Body: { brainId: string; title: string; executeAt?: number } }>('/api/tasks', async (request, reply) => {
-            const { brainId, title, executeAt } = request.body || {} as any;
+        this.server.post<{ Body: { brainId: string; title: string; executeAt?: number; modelOverride?: string } }>('/api/tasks', async (request, reply) => {
+            const { brainId, title, executeAt, modelOverride } = request.body || {} as any;
             if (!brainId || !title) {
                 reply.code(400);
                 return { error: 'brainId and title are required' };
@@ -90,6 +90,7 @@ export class ApiServer {
                 status,
                 title,
                 payload: {},
+                modelOverride,
                 dependencies: [],
                 executeAt,
                 createdAt: now,
