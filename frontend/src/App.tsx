@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, Settings } from 'lucide-react';
+import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, Settings, ChevronLeft, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Types
@@ -15,6 +15,7 @@ interface Task {
   brainId: string;
   title: string;
   status: string;
+  modelOverride?: string;
   createdAt: number;
 }
 
@@ -82,6 +83,8 @@ export default function Dashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [newTask, setNewTask] = useState({ brainId: 'nexus', title: '', modelOverride: 'default' });
+  const [currentView, setCurrentView] = useState<'dashboard' | 'brain-detail'>('dashboard');
+  const [selectedBrainId, setSelectedBrainId] = useState<string | null>(null);
   const [isBrainConfigOpen, setIsBrainConfigOpen] = useState(false);
   const [activeBrain, setActiveBrain] = useState<BrainStatus | null>(null);
 
@@ -144,8 +147,8 @@ export default function Dashboard() {
   };
 
   const openBrainConfig = (brain: BrainStatus) => {
-    setActiveBrain(brain);
-    setIsBrainConfigOpen(true);
+    setSelectedBrainId(brain.id);
+    setCurrentView('brain-detail');
   };
 
   const createTask = async () => {
@@ -175,6 +178,135 @@ export default function Dashboard() {
       default: return <Brain className="w-5 h-5" />;
     }
   };
+
+  const activeBrain = selectedBrainId ? brains.find(b => b.id === selectedBrainId) : null;
+
+  if (currentView === 'brain-detail' && activeBrain) {
+    return (
+      <div className="min-h-screen bg-background text-foreground p-8 font-sans">
+        <header className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setCurrentView('dashboard')} className="p-2 hover:bg-white/10 rounded-lg transition-colors mr-2">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <div className="p-2 bg-secondary rounded-lg text-blue-400">
+              {getBrainIcon(activeBrain.id)}
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">{activeBrain.name} <span className="text-muted-foreground font-normal text-lg ml-2">Configuration</span></h1>
+          </div>
+          <div className="flex items-center gap-3">
+             <button onClick={() => setCurrentView('dashboard')} className="px-4 py-2 text-sm rounded border border-border hover:bg-white/5 transition-colors">Cancel</button>
+             <button className="flex items-center gap-2 px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors">
+                <Save className="w-4 h-4" />
+                Save Changes
+             </button>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 flex flex-col gap-6">
+            <Card>
+              <h2 className="text-lg font-semibold mb-6 flex items-center gap-2"><Activity className="w-5 h-5 text-blue-400" /> Core Automation</h2>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg border border-border">
+                  <div>
+                    <div className="font-medium">Autonomous Execution</div>
+                    <div className="text-sm text-muted-foreground">Allow this brain to pull and execute tasks without manual triggers</div>
+                  </div>
+                  <Toggle checked={activeBrain.autoMode} onChange={(v) => toggleBrain(activeBrain.id, v)} />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium block mb-2 text-muted-foreground">Execution Schedule</label>
+                    <input className="w-full bg-secondary/50 border border-border rounded-lg px-4 py-2.5 text-sm" placeholder="e.g. 0 7 * * * (daily 7am)" />
+                    <p className="mt-2 text-xs text-muted-foreground">Supports cron expressions or natural language like "every 30 mins"</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium block mb-2 text-muted-foreground">Heartbeat Affinity</label>
+                    <select className="w-full bg-secondary/50 border border-border rounded-lg px-4 py-2.5 text-sm">
+                      <option>High Priority (Every 30s)</option>
+                      <option>Balanced (Every 5m)</option>
+                      <option>Lazy (Hourly)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <h2 className="text-lg font-semibold mb-6 flex items-center gap-2"><Database className="w-5 h-5 text-purple-400" /> Brain Context & Memory</h2>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">Configuration specific to the <strong>{activeBrain.id}</strong> domain.</p>
+                
+                {activeBrain.id === 'job' && (
+                  <div className="grid grid-cols-1 gap-4">
+                     <div className="p-4 bg-blue-900/10 border border-blue-900/30 rounded-lg">
+                        <h3 className="text-sm font-bold text-blue-300 mb-2">Job Application Profile</h3>
+                        <div className="space-y-3">
+                           <div>
+                              <label className="text-xs text-muted-foreground block mb-1 uppercase">Veteran Status</label>
+                              <select className="w-full bg-black/20 border border-blue-900/20 rounded px-2 py-1.5 text-sm">
+                                 <option>I am not a protected veteran</option>
+                                 <option>I am a protected veteran</option>
+                              </select>
+                           </div>
+                           <div>
+                              <label className="text-xs text-muted-foreground block mb-1 uppercase">Resume Link (PDF/Markdown)</label>
+                              <input className="w-full bg-black/20 border border-blue-900/20 rounded px-2 py-1.5 text-sm" placeholder="URL or path to latest resume..." />
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                )}
+
+                <div className="p-4 border border-dashed border-border rounded-lg text-center text-muted-foreground text-sm py-12">
+                   No additional specialization fields defined for this brain yet.
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            <Card>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-green-400">Reporting</h2>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                   <input type="checkbox" className="w-4 h-4 accent-blue-500" defaultChecked={['money','job','research'].includes(activeBrain.id)} />
+                   <span className="text-sm font-medium">Generate Markdown Reports</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                   When enabled, this brain will write a detailed execution log and summary to disk at the end of each run.
+                </p>
+                <div className="flex items-center gap-3 pt-2">
+                   <input type="checkbox" className="w-4 h-4 accent-blue-500" defaultChecked />
+                   <span className="text-sm font-medium">Post Summaries to Discord</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="bg-blue-600/5 border-blue-600/20">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-blue-400 mb-2">Internal Metadata</h2>
+              <div className="text-xs space-y-2 font-mono">
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-muted-foreground">ID:</span>
+                  <span>{activeBrain.id}</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-muted-foreground">Status:</span>
+                  <span className={activeBrain.status === 'EXECUTING' ? 'text-green-400' : ''}>{activeBrain.status}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">OpenClaw ID:</span>
+                  <span>{activeBrain.id}</span>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground p-8 font-sans">
@@ -254,6 +386,7 @@ export default function Dashboard() {
                 <tr>
                   <th className="pb-3 pl-2">Status</th>
                   <th className="pb-3">Brain</th>
+                  <th className="pb-3">Model</th>
                   <th className="pb-3">Task</th>
                   <th className="pb-3 text-right pr-2">Age</th>
                 </tr>
@@ -273,6 +406,9 @@ export default function Dashboard() {
                       }>{task.status}</span>
                     </td>
                     <td className="py-3 text-muted-foreground">{task.brainId}</td>
+                    <td className="py-3 text-muted-foreground">
+                      <Badge variant="default">{task.modelOverride || 'default'}</Badge>
+                    </td>
                     <td className="py-3 font-medium text-foreground">{task.title}</td>
                     <td className="py-3 text-right pr-2 text-muted-foreground">
                       {Math.floor((Date.now() - task.createdAt) / 60000)}m ago
