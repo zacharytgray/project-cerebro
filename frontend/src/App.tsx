@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play } from 'lucide-react';
+import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Types
@@ -46,6 +46,21 @@ const Badge = ({ children, variant = 'default' }: { children: React.ReactNode; v
   );
 };
 
+const Modal = ({ isOpen, onClose, title, children }: { isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
+        <div className="p-6 border-b border-border flex justify-between items-center">
+          <h2 className="text-xl font-bold">{title}</h2>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">✕</button>
+        </div>
+        <div className="p-6">{children}</div>
+      </motion.div>
+    </div>
+  );
+};
+
 const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) => (
   <button
     onClick={() => onChange(!checked)}
@@ -65,6 +80,18 @@ export default function Dashboard() {
   const [brains, setBrains] = useState<BrainStatus[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+  const [newTask, setNewTask] = useState({ brainId: 'nexus', title: '', modelOverride: 'default' });
+  const [isBrainConfigOpen, setIsBrainConfigOpen] = useState(false);
+  const [activeBrain, setActiveBrain] = useState<BrainStatus | null>(null);
+
+  const models = [
+    { alias: 'default', id: 'google/gemini-3-flash-preview' },
+    { alias: 'full', id: 'google/gemini-3-pro-preview' },
+    { alias: 'cheap', id: 'google/gemini-2.5-flash' },
+    { alias: 'free', id: 'google/gemini-2.5-flash-lite' },
+    { alias: 'old-default', id: 'google/gemini-2.5-pro' }
+  ];
 
   const fetchData = async () => {
     try {
@@ -111,6 +138,27 @@ export default function Dashboard() {
       // Ideally we'd show a toast or something.
       // But refreshing data will show status: EXECUTING.
       setTimeout(fetchData, 500);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const openBrainConfig = (brain: BrainStatus) => {
+    setActiveBrain(brain);
+    setIsBrainConfigOpen(true);
+  };
+
+  const createTask = async () => {
+    if (!newTask.title) return;
+    try {
+      await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTask)
+      });
+      setIsAddTaskOpen(false);
+      setNewTask({ ...newTask, title: '' });
+      fetchData();
     } catch (e) {
       console.error(e);
     }
@@ -171,6 +219,9 @@ export default function Dashboard() {
                      <Toggle checked={brain.autoMode} onChange={(v) => toggleBrain(brain.id, v)} />
                      <span className="text-xs text-muted-foreground">Auto</span>
                      <div className="flex-1" />
+                     <button onClick={() => openBrainConfig(brain)} className="p-1 hover:bg-white/10 rounded transition-colors" title="Configure Brain">
+                        <Settings className="w-4 h-4 text-blue-300" />
+                     </button>
                      <button onClick={() => forceRun(brain.id)} className="p-1 hover:bg-white/10 rounded transition-colors" title="Force Run">
                         <Play className="w-4 h-4 text-green-400" />
                      </button>
@@ -186,7 +237,16 @@ export default function Dashboard() {
         <section className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2"><Terminal className="w-5 h-5" /> Execution Stream</h2>
-            <span className="text-xs text-muted-foreground">{tasks.length} tasks recorded</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">{tasks.length} tasks recorded</span>
+              <button
+                onClick={() => setIsAddTaskOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-md bg-blue-600/80 hover:bg-blue-600 text-white transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add Task
+              </button>
+            </div>
           </div>
           <Card className="h-[500px] overflow-y-auto font-mono text-sm">
             <table className="w-full text-left border-collapse">
@@ -258,6 +318,88 @@ export default function Dashboard() {
         </section>
 
       </main>
+
+      {/* Add Task Modal */}
+      <Modal isOpen={isAddTaskOpen} onClose={() => setIsAddTaskOpen(false)} title="Create Task">
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="text-xs text-muted-foreground">Task Title</label>
+            <input
+              className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
+              placeholder="Describe the task..."
+              value={newTask.title}
+              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-muted-foreground">Brain</label>
+              <select
+                className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
+                value={newTask.brainId}
+                onChange={(e) => setNewTask({ ...newTask, brainId: e.target.value })}
+              >
+                {brains.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Model</label>
+              <select
+                className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
+                value={newTask.modelOverride}
+                onChange={(e) => setNewTask({ ...newTask, modelOverride: e.target.value })}
+              >
+                {models.map((m) => (
+                  <option key={m.alias} value={m.alias}>{m.alias}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p className="font-medium text-foreground">Model Aliases</p>
+            {models.map((m) => (
+              <div key={m.alias} className="flex justify-between">
+                <span>{m.alias}</span>
+                <span className="text-muted-foreground">{m.id}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button onClick={() => setIsAddTaskOpen(false)} className="px-3 py-2 text-sm rounded border border-border hover:bg-white/5">Cancel</button>
+            <button onClick={createTask} className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white">Create</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Brain Config Modal */}
+      <Modal isOpen={isBrainConfigOpen} onClose={() => setIsBrainConfigOpen(false)} title={activeBrain ? `${activeBrain.name} Settings` : 'Brain Settings'}>
+        {activeBrain && (
+          <div className="flex flex-col gap-4 text-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Automation</div>
+                <div className="text-xs text-muted-foreground">Toggle auto-execution and schedules</div>
+              </div>
+              <Toggle checked={activeBrain.autoMode} onChange={(v) => toggleBrain(activeBrain.id, v)} />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Schedule (cron or human)</label>
+              <input className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm" placeholder="e.g. 0 7 * * * (daily 7am)" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Reports & Summaries</label>
+              <div className="mt-2 flex items-center gap-2">
+                <input type="checkbox" className="accent-blue-500" defaultChecked={['money','job','research'].includes(activeBrain.id)} />
+                <span>Generate markdown reports</span>
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground">Short summary posted to Discord; full report stored on disk.</div>
+            </div>
+            <div className="text-xs text-muted-foreground">This is a placeholder config panel—wiring comes next.</div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
