@@ -92,7 +92,7 @@ export abstract class Brain {
                 body: JSON.stringify({
                     tool: 'sessions_spawn',
                     args: {
-                        task: `You are the ${this.name}. \n\nContext: ${this.description}. \n\nPlease perform this task and reply in this channel: ${task.title}`,
+                        task: `You are the ${this.name}. \n\nContext: ${this.description}. \n\nYour task is: ${task.title}. \n\nIMPORTANT: When finished, you MUST use the 'message' tool to send your final response/confirmation to Discord channel ID: ${this.discordChannelId}`,
                         agentId: this.openClawAgentId || 'main',
                         label: `Cerebro: ${this.name}`,
                         thinking: 'low'
@@ -103,9 +103,14 @@ export abstract class Brain {
             if (!response.ok) {
                 throw new Error(`Gateway returned ${response.status}: ${await response.text()}`);
             }
+
+            const result = await response.json();
+            const details = result?.result?.details || result?.details;
+            if (!result?.ok || details?.status !== 'accepted') {
+                throw new Error(`Gateway spawn failed: ${JSON.stringify(details || result)}`);
+            }
             
-            // Mark as COMPLETED
-            // Note: The sub-agent will deliver the actual content to Discord independently
+            // Mark as COMPLETED (spawn accepted; sub-agent will deliver content to Discord)
             await this.graph.updateTaskStatus(task.id, 'COMPLETED' as any);
 
         } catch (error) {

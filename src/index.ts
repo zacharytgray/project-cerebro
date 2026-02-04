@@ -70,7 +70,8 @@ async function main() {
             id: brainsConfig.digest.id,
             name: brainsConfig.digest.name,
             description: brainsConfig.digest.description,
-            discordChannelId: digestChannelId
+            discordChannelId: digestChannelId,
+            openClawAgentId: brainsConfig.digest.openClawAgentId
         }, (runtime as any).client, runtime.graph, brains.map(b => b.id));
         runtime.registerBrain(digestBrain);
     }
