@@ -449,7 +449,14 @@ export default function Dashboard() {
                     <td className="py-3 text-muted-foreground">
                       <Badge variant="default">{task.modelOverride || 'default'}</Badge>
                     </td>
-                    <td className="py-3 font-medium text-foreground">{task.title}</td>
+                    <td className="py-3 font-medium text-foreground">
+                      <div>{task.title}</div>
+                      {task.description && (
+                        <div className="text-xs text-muted-foreground font-normal mt-1 line-clamp-1 max-w-md">
+                          {task.description}
+                        </div>
+                      )}
+                    </td>
                     <td className="py-3 text-right pr-2">
                        <button 
                          onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
