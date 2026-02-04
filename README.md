@@ -3,15 +3,22 @@
 ## Goal
 Project Cerebro aims to re-envision the "CEO Dashboard" as a comprehensive **agent runtime and execution control surface**. Instead of a static task board, Cerebro provides a dynamic interface for managing autonomous "Brains" (specialized agents) that operate on a formal, stateful execution graph driven by heartbeats. The primary goal is to shift from manual task management to overseeing an autonomous system that executes, recovers, and reports on its own work.
 
-## Current Features (Phase 3 Implemented)
+## Current Features (Phase 4 Implemented)
 
 ### 🧠 Specialized Brains
-The system currently runs 5 specialized Brains, each with persistent storage and context memory.
+The system currently runs 5 specialized Brains + 1 Aggregator, each with persistent storage and context memory.
 - **Personal Life Brain**
 - **Schoolwork Brain**
 - **Research Brain**
 - **Money Making Brain**
 - **Job Application Brain**
+- **Daily Digest Brain**
+
+### 🔌 API Backend (Port 3000)
+The runtime exposes a REST API for the dashboard:
+- `GET /api/status`: Real-time status of all Brains (`IDLE`, `EXECUTING`).
+- `GET /api/tasks`: Full list of tasks in the Execution Graph.
+- `GET /api/jobs`: All tracked job applications.
 
 ### 💬 Discord Commands
 Interact with Brains directly in their specific channels.
@@ -23,10 +30,13 @@ Interact with Brains directly in their specific channels.
 - **`!context set <text>`**: Overwrite the long-term context.
 - **`!task <title>`**: Create a new task in the Execution Graph (sets status to `READY` for immediate execution).
 
-#### Job Brain Commands (`#job-application-brain` only)
+#### Job Brain Commands (`#job-application-brain`)
 - **`!job add <Company> <Position> [URL]`**: Track a new job application.
 - **`!job list`**: List the 10 most recent applications with their Status and ID.
 - **`!job remove <ID>`**: Remove a job application from the database.
+
+#### Digest Brain Commands (`#daily-digest`)
+- **`!digest`**: Aggregates today's logs from all other brains into a single report.
 
 ## Architecture
 
@@ -44,4 +54,6 @@ A central runtime loop (30s heartbeat) checks the Graph for `READY` tasks and di
 ## Setup & Run
 1. **Install Dependencies**: `npm install`
 2. **Configure**: Add `DISCORD_TOKEN` to `.env`.
-3. **Run**: `npm run start` (or `npx tsc && node dist/index.js`)
+3. **Run Backend**: `npm run start` (or `npx tsc && node dist/index.js`)
+   - Starts Discord Bot
+   - Starts API Server on `http://localhost:3000`
