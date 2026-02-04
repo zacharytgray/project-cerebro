@@ -3,62 +3,45 @@
 ## Goal
 Project Cerebro aims to re-envision the "CEO Dashboard" as a comprehensive **agent runtime and execution control surface**. Instead of a static task board, Cerebro provides a dynamic interface for managing autonomous "Brains" (specialized agents) that operate on a formal, stateful execution graph driven by heartbeats. The primary goal is to shift from manual task management to overseeing an autonomous system that executes, recovers, and reports on its own work.
 
-## Core Concepts
+## Current Features (Phase 3 Implemented)
 
-### 1. The "Brain" Architecture
-The system is composed of five primary **Brains**, each with a dedicated purpose and communication channel. A "Brain" is an autonomous agent (potentially managing sub-agents) that operates within a specific domain.
+### 🧠 Specialized Brains
+The system currently runs 5 specialized Brains, each with persistent storage and context memory.
 - **Personal Life Brain**
 - **Schoolwork Brain**
 - **Research Brain**
 - **Money Making Brain**
-- **Job Application Brain** (includes job app database management)
+- **Job Application Brain**
 
-Each Brain communicates strictly via its assigned Discord channel or through a global **Daily Digest** aggregation layer.
+### 💬 Discord Commands
+Interact with Brains directly in their specific channels.
 
-### 2. Execution Graph vs. Task Lists
-Tasks are not static text entries but **stateful execution objects**. They are managed via an **Execution Graph** that tracks lifecycle states:
-- **Pending**: Created but not started.
-- **Waiting**: Blocked on time, dependencies, or external events.
-- **Ready**: Eligible for execution.
-- **Executing**: Currently running.
-- **Paused**: Temporarily halted.
-- **Blocked**: Stopped due to error or missing resource.
-- **Needs Review**: Requires human intervention.
-- **Completed**: Successfully finished.
-- **Failed**: Terminated with errors.
+#### Global Commands (All Brains)
+- **`!log <text>`**: Append an entry to the brain's daily markdown log (`data/{brain}/{date}.md`).
+- **`!read`**: Read back today's log entries.
+- **`!context`**: View the long-term context/memory for the brain.
+- **`!context set <text>`**: Overwrite the long-term context.
+- **`!task <title>`**: Create a new task in the Execution Graph (sets status to `READY` for immediate execution).
 
-The UI will expose *why* a task is in a given state (e.g., "Waiting for 9:00 AM" or "Blocked on file upload").
+#### Job Brain Commands (`#job-application-brain` only)
+- **`!job add <Company> <Position> [URL]`**: Track a new job application.
+- **`!job list`**: List the 10 most recent applications with their Status and ID.
+- **`!job remove <ID>`**: Remove a job application from the database.
+
+## Architecture
+
+### 1. The "Brain" Architecture
+Each Brain is an autonomous agent operating within a specific domain. They communicate via Discord and persist state to disk (`data/` directory) and a SQLite database (`cerebro.db`).
+
+### 2. Execution Graph
+Tasks are managed via a SQLite-backed **Execution Graph**.
+- **Stateful**: Tasks move from `PENDING` → `READY` → `EXECUTING` → `COMPLETED`.
+- **Persistent**: All state survives restarts.
 
 ### 3. Heartbeat-Driven Autonomy
-The system relies on a first-class **heartbeat mechanism**:
-- Idle Brains check the Execution Graph on every heartbeat.
-- Eligible ("Ready") tasks are automatically resumed or started.
-- Long-running tasks execute incrementally across heartbeats.
-- System is designed for crash recoverability.
+A central runtime loop (30s heartbeat) checks the Graph for `READY` tasks and dispatches them to the appropriate Brain for execution.
 
-## Planned Functionality
-
-### Dashboard UI (Agent Runtime Surface)
-The frontend will serve as a control plane, displaying:
-- **Status**: Running/Idle state for each Brain.
-- **Telemetry**: Current model, config, last run time, duration, and token usage.
-- **Activity**: Active task phase, live logs, and generated artifacts.
-- **Views**: Agent-centric (workload/history) and Timeline-based views.
-
-### Control Systems
-- **Autonomous Execution Mode**: A global or per-Brain toggle.
-    - *Enabled*: Brains pull and execute tasks automatically.
-    - *Disabled*: Tasks accumulate and wait for manual approval.
-- **Scheduling & Cron**: Interface to define wake intervals, retry policies, and execution windows.
-
-### Reporting & Artifacts
-- **Markdown Reports**: Generated per run/execution, saved to disk.
-- **History**: Persistent log of past reports accessible via UI.
-- **Discord Summaries**: Brief notifications sent to Discord linking to full reports.
-
-### Inputs & Ingestion
-- **File Upload Interface**: "First-class" input method.
-- **Context Updates**: Uploads can trigger new tasks, unblock waiting tasks, or update a Brain's memory/context.
-
-## Architectural Philosophy
-This project represents a shift toward **autonomy, recoverability, and long-running execution**. The dashboard is for *observing* and *tuning* the machine, not just operating it manually.
+## Setup & Run
+1. **Install Dependencies**: `npm install`
+2. **Configure**: Add `DISCORD_TOKEN` to `.env`.
+3. **Run**: `npm run start` (or `npx tsc && node dist/index.js`)

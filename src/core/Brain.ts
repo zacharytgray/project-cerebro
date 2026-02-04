@@ -17,6 +17,7 @@ export abstract class Brain {
     protected description: string;
     protected client: Client;
     protected graph: ExecutionGraph;
+    public status: 'IDLE' | 'EXECUTING' = 'IDLE';
 
     constructor(config: BrainConfig, client: Client, graph: ExecutionGraph) {
         this.id = config.id;
@@ -52,6 +53,7 @@ export abstract class Brain {
         console.log(`[${this.name}] Executing task: ${task.title} (${task.id})`);
         
         // Mark as EXECUTING
+        this.status = 'EXECUTING';
         await this.graph.updateTaskStatus(task.id, 'EXECUTING' as any);
 
         try {
@@ -62,6 +64,8 @@ export abstract class Brain {
         } catch (error) {
             console.error(`[${this.name}] Task failed:`, error);
             await this.graph.updateTaskStatus(task.id, 'FAILED' as any, String(error));
+        } finally {
+            this.status = 'IDLE';
         }
     }
 

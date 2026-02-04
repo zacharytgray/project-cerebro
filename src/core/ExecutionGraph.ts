@@ -120,6 +120,16 @@ export class ExecutionGraph {
         });
     }
 
+    public async getAllTasks(): Promise<Task[]> {
+        return new Promise((resolve, reject) => {
+           const query = `SELECT * FROM tasks ORDER BY createdAt DESC LIMIT 100`;
+           this.db.all(query, [], (err, rows) => {
+               if (err) reject(err);
+               else resolve(rows.map(this.mapRowToTask));
+           });
+       });
+   }
+
     // --- Job Methods ---
 
     public async createJob(job: JobApplication): Promise<void> {

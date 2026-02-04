@@ -13,6 +13,10 @@ export class CerebroRuntime {
     private channelMap: Map<string, string> = new Map(); // ChannelID -> BrainID
     public graph: ExecutionGraph;
 
+    public getBrains(): Brain[] {
+        return Array.from(this.brains.values());
+    }
+
     constructor() {
         this.client = new Client({
             intents: [

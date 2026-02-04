@@ -1,6 +1,8 @@
 import { CerebroRuntime } from './core/Runtime';
 import { JobBrain } from './brains/JobBrain';
 import { ContextBrain } from './brains/ContextBrain';
+import { DigestBrain } from './brains/DigestBrain';
+import { ApiServer } from './api/Server';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -43,11 +45,27 @@ async function main() {
         }
     });
 
+    // Register Daily Digest Brain
+    const digestChannelId = discordConfig.channels['daily_digest'];
+    if (digestChannelId) {
+        const digestBrain = new DigestBrain({
+            id: 'digest',
+            name: 'Daily Digest Brain',
+            description: 'Aggregates reports',
+            discordChannelId: digestChannelId
+        }, (runtime as any).client, runtime.graph, brains.map(b => b.id));
+        runtime.registerBrain(digestBrain);
+    }
+
     const token = process.env.DISCORD_TOKEN;
     if (!token) {
         console.error("DISCORD_TOKEN not found in environment");
         process.exit(1);
     }
+
+    // Start API
+    const api = new ApiServer(runtime, 3000);
+    await api.start();
 
     await runtime.start(token);
 }
