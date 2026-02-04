@@ -55,7 +55,7 @@ async function main() {
     if (generalChannelId) {
         const nexusBrain = new ContextBrain({
             id: brainsConfig.nexus.id,
-            name: brainsConfig.nexus.name,
+            name: 'Nexus',
             description: brainsConfig.nexus.description,
             discordChannelId: generalChannelId,
             openClawAgentId: brainsConfig.nexus.openClawAgentId
