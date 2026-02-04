@@ -31,7 +31,7 @@ async function main() {
                 name: b.name,
                 description: 'Core brain',
                 discordChannelId: channelId
-            }, (runtime as any).client);
+            }, (runtime as any).client, runtime.graph); // Pass graph instance
             
             runtime.registerBrain(brain);
         }
