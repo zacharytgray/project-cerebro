@@ -86,7 +86,6 @@ export default function Dashboard() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'brain-detail'>('dashboard');
   const [selectedBrainId, setSelectedBrainId] = useState<string | null>(null);
   const [isBrainConfigOpen, setIsBrainConfigOpen] = useState(false);
-  const [activeBrain, setActiveBrain] = useState<BrainStatus | null>(null);
 
   const models = [
     { alias: 'default', id: 'google/gemini-3-flash-preview' },
