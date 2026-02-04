@@ -74,12 +74,15 @@ export class ApiServer {
         });
 
         // Tasks
-        this.server.post<{ Body: { brainId: string; title: string; executeAt?: number; modelOverride?: string } }>('/api/tasks', async (request, reply) => {
-            const { brainId, title, executeAt, modelOverride } = request.body || {} as any;
+        this.server.post<{ Body: { brainId: string; title: string; description?: string; executeAt?: number; modelOverride?: string } }>('/api/tasks', async (request, reply) => {
+            const { brainId, title, description, executeAt, modelOverride } = request.body || {} as any;
             if (!brainId || !title) {
                 reply.code(400);
                 return { error: 'brainId and title are required' };
             }
+
+            const brain = this.runtime.getBrains().find(b => b.id === brainId);
+            const brainName = brain ? brain.name : brainId;
 
             const now = Date.now();
             const status = executeAt && executeAt > now ? TaskStatus.WAITING : TaskStatus.READY;
@@ -87,8 +90,10 @@ export class ApiServer {
             await this.runtime.graph.createTask({
                 id: now.toString(),
                 brainId,
+                brainName,
                 status,
                 title,
+                description,
                 payload: {},
                 modelOverride,
                 dependencies: [],

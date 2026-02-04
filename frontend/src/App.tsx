@@ -14,6 +14,7 @@ interface Task {
   id: string;
   brainId: string;
   title: string;
+  description?: string;
   status: string;
   modelOverride?: string;
   createdAt: number;
@@ -82,10 +83,17 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
-  const [newTask, setNewTask] = useState({ brainId: 'nexus', title: '', modelOverride: 'default' });
+  const [newTask, setNewTask] = useState({ brainId: 'nexus', title: '', description: '', modelOverride: 'default' });
   const [currentView, setCurrentView] = useState<'dashboard' | 'brain-detail'>('dashboard');
   const [selectedBrainId, setSelectedBrainId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+
+  const getBrainName = (brainId: string) => {
+    const brain = brains.find(b => b.id === brainId);
+    return brain ? brain.name : brainId;
+  };
 
   const models = [
     { alias: 'default', id: 'google/gemini-3-flash-preview' },
@@ -166,7 +174,7 @@ export default function Dashboard() {
         body: JSON.stringify(newTask)
       });
       setIsAddTaskOpen(false);
-      setNewTask({ ...newTask, title: '' });
+      setNewTask({ ...newTask, title: '', description: '' });
       fetchData();
     } catch (e) {
       console.error(e);
@@ -418,7 +426,14 @@ export default function Dashboard() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredTasks.map((task) => (
-                  <tr key={task.id} className="group hover:bg-white/5 transition-colors">
+                  <tr 
+                    key={task.id} 
+                    className="group hover:bg-white/5 transition-colors cursor-pointer"
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setIsTaskDetailOpen(true);
+                    }}
+                  >
                     <td className="py-3 pl-2 whitespace-nowrap">
                       <span className={`inline-block w-2 h-2 rounded-full mr-2 
                         ${task.status === 'COMPLETED' ? 'bg-green-500' : 
@@ -437,7 +452,7 @@ export default function Dashboard() {
                     <td className="py-3 font-medium text-foreground">{task.title}</td>
                     <td className="py-3 text-right pr-2">
                        <button 
-                         onClick={() => deleteTask(task.id)}
+                         onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
                          className="p-1.5 hover:bg-red-900/20 hover:text-red-400 rounded transition-colors text-muted-foreground opacity-0 group-hover:opacity-100"
                          title="Delete Task"
                        >
@@ -498,6 +513,15 @@ export default function Dashboard() {
               onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
             />
           </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Description</label>
+            <textarea
+              className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm min-h-[80px]"
+              placeholder="Add details, context, or instructions..."
+              value={newTask.description}
+              onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-muted-foreground">Brain</label>
@@ -538,6 +562,84 @@ export default function Dashboard() {
             <button onClick={createTask} className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white">Create</button>
           </div>
         </div>
+      </Modal>
+
+      {/* Task Detail Modal */}
+      <Modal 
+        isOpen={isTaskDetailOpen} 
+        onClose={() => setIsTaskDetailOpen(false)} 
+        title="Task Inspector"
+      >
+        {selectedTask && (
+          <div className="flex flex-col gap-5">
+            <div>
+              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Title</div>
+              <div className="text-lg font-bold text-blue-400">{selectedTask.title}</div>
+            </div>
+
+            {selectedTask.description && (
+              <div>
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Description</div>
+                <div className="text-sm bg-secondary/30 p-3 rounded-lg border border-border leading-relaxed">
+                  {selectedTask.description}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Brain</div>
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <div className="p-1 bg-secondary rounded text-blue-400">
+                    {getBrainIcon(selectedTask.brainId)}
+                  </div>
+                  {getBrainName(selectedTask.brainId)}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Model</div>
+                <Badge variant="default">{selectedTask.modelOverride || 'default'}</Badge>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+               <div>
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Status</div>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${
+                    selectedTask.status === 'COMPLETED' ? 'bg-green-500' : 
+                    selectedTask.status === 'FAILED' ? 'bg-red-500' : 
+                    selectedTask.status === 'EXECUTING' ? 'bg-blue-400 animate-pulse' : 'bg-gray-500'
+                  }`} />
+                  <span className="text-sm font-bold uppercase">{selectedTask.status}</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Created</div>
+                <div className="text-sm text-muted-foreground">{new Date(selectedTask.createdAt).toLocaleString()}</div>
+              </div>
+            </div>
+
+            <div className="pt-4 flex justify-between gap-3 border-t border-border">
+              <button 
+                onClick={() => {
+                  deleteTask(selectedTask.id);
+                  setIsTaskDetailOpen(false);
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded bg-red-900/20 hover:bg-red-900/40 text-red-400 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Task
+              </button>
+              <button 
+                onClick={() => setIsTaskDetailOpen(false)} 
+                className="px-6 py-2 text-sm rounded bg-secondary hover:bg-secondary/80 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

@@ -28,8 +28,10 @@ export class ExecutionGraph {
                 CREATE TABLE IF NOT EXISTS tasks (
                     id TEXT PRIMARY KEY,
                     brainId TEXT NOT NULL,
+                    brainName TEXT,
                     status TEXT NOT NULL,
                     title TEXT NOT NULL,
+                    description TEXT,
                     payload TEXT,
                     modelOverride TEXT,
                     dependencies TEXT,
@@ -63,11 +65,11 @@ export class ExecutionGraph {
     public async createTask(task: Task): Promise<void> {
         return new Promise((resolve, reject) => {
             const query = `
-                INSERT INTO tasks (id, brainId, status, title, payload, modelOverride, dependencies, executeAt, createdAt, updatedAt, attempts, retryPolicy)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO tasks (id, brainId, brainName, status, title, description, payload, modelOverride, dependencies, executeAt, createdAt, updatedAt, attempts, retryPolicy)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
             const params = [
-                task.id, task.brainId, task.status, task.title,
+                task.id, task.brainId, task.brainName, task.status, task.title, task.description,
                 JSON.stringify(task.payload), task.modelOverride, JSON.stringify(task.dependencies),
                 task.executeAt, task.createdAt, task.updatedAt,
                 task.attempts, JSON.stringify(task.retryPolicy)
@@ -184,7 +186,8 @@ export class ExecutionGraph {
             ...row,
             payload: JSON.parse(row.payload || '{}'),
             dependencies: JSON.parse(row.dependencies || '[]'),
-            retryPolicy: row.retryPolicy ? JSON.parse(row.retryPolicy) : undefined
+            retryPolicy: row.retryPolicy ? JSON.parse(row.retryPolicy) : undefined,
+            brainName: row.brainName // Ensure this is mapped if added to SQL
         };
     }
     

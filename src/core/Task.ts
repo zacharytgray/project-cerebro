@@ -26,8 +26,10 @@ export interface Task {
     brainId: string;
     status: TaskStatus;
     title: string;
+    description?: string;
     payload: any; // Flexible payload for different task types
     modelOverride?: string; // Model alias or ID
+    brainName?: string; // Cache for UI
     
     // Dependencies & Scheduling
     dependencies: TaskDependency[];
