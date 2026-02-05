@@ -1158,7 +1158,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-4">
               <h2 className="text-lg font-semibold flex items-center gap-2 text-white"><Terminal className="w-5 h-5 text-blue-300" /> Execution Stream</h2>
               <span className="text-[10px] uppercase tracking-widest text-blue-200/70">Live</span>
-              <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-md">
+              <div className="flex items-center gap-1 bg-secondary/30 p-1 rounded-full border border-white/10">
                 {['ALL', 'READY', 'EXECUTING', 'COMPLETED', 'FAILED'].map(f => (
                   <button
                     key={f}
