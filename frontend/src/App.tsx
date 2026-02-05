@@ -1020,12 +1020,27 @@ export default function Dashboard() {
         </aside>
 
         <div className="flex-1 p-6">
-      <header className="mb-8 flex items-center justify-between">
+      <header className="mb-6 flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl px-6 py-4">
         <div className="flex items-center gap-3">
-          <Activity className="w-8 h-8 text-blue-400" />
-          <h1 className="text-2xl font-bold tracking-tight">Project Cerebro <span className="text-muted-foreground font-normal text-lg ml-2">Control Surface</span></h1>
+          <div className="p-2 rounded-xl bg-blue-600/20 text-blue-300"><Activity className="w-6 h-6" /></div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-white">Project Cerebro</h1>
+            <p className="text-xs text-muted-foreground">Polished control surface</p>
+          </div>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsAddTaskOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 text-xs rounded-md bg-blue-600/80 hover:bg-blue-600 text-white transition-colors"
+          >
+            <Plus className="w-4 h-4" /> New Task
+          </button>
+          <button
+            onClick={fetchData}
+            className="px-3 py-2 text-xs rounded-md border border-white/10 hover:bg-white/5"
+          >
+            Refresh
+          </button>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">{theme === 'dark' ? 'Dark' : 'Light'}</span>
             <Toggle checked={theme === 'dark'} onChange={(v) => {
@@ -1037,7 +1052,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="text-sm text-muted-foreground">System Online</span>
+            <span className="text-xs text-muted-foreground">System Online</span>
           </div>
         </div>
       </header>
@@ -1047,7 +1062,7 @@ export default function Dashboard() {
         {/* File Ingestion */}
         <section className="lg:col-span-3">
           <Card>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Database className="w-5 h-5" /> File Ingestion</h2>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white"><Database className="w-5 h-5 text-blue-300" /> File Ingestion</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div>
                 <label className="text-xs text-muted-foreground">Target Brain</label>
@@ -1095,7 +1110,7 @@ export default function Dashboard() {
 
         {/* Brain Status Grid */}
         <section className="lg:col-span-3">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Server className="w-5 h-5" /> Active Brains</h2>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white"><Server className="w-5 h-5 text-blue-300" /> Active Brains</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             {brains.map((brain) => (
               <motion.div key={brain.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -1139,7 +1154,7 @@ export default function Dashboard() {
         <section className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2"><Terminal className="w-5 h-5" /> Execution Stream</h2>
+              <h2 className="text-lg font-semibold flex items-center gap-2 text-white"><Terminal className="w-5 h-5 text-blue-300" /> Execution Stream</h2>
               <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-md">
                 {['ALL', 'READY', 'EXECUTING', 'COMPLETED', 'FAILED'].map(f => (
                   <button
@@ -1313,7 +1328,7 @@ export default function Dashboard() {
         {/* Reports */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2"><FileText className="w-5 h-5" /> Reports</h2>
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-white"><FileText className="w-5 h-5 text-blue-300" /> Reports</h2>
             <div className="flex items-center gap-2">
               <select
                 className="bg-secondary/50 border border-border rounded px-3 py-1.5 text-xs"
