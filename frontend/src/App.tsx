@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, Settings, ChevronLeft, Save, Trash2, Menu } from 'lucide-react';
+import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, ChevronLeft, Save, Trash2, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -79,7 +79,7 @@ const Modal = ({ isOpen, onClose, title, children }: { isOpen: boolean; onClose:
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card/95 border border-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
         <div className="p-6 border-b border-border flex justify-between items-center">
           <h2 className="text-xl font-bold">{title}</h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">✕</button>
@@ -316,10 +316,6 @@ export default function Dashboard() {
     }
   };
 
-  const openBrainConfig = (brain: BrainStatus) => {
-    setSelectedBrainId(brain.id);
-    setCurrentView('brain-detail');
-  };
 
   const getCfg = (path: string, fallback: any = '') => {
     const parts = path.split('.');
@@ -1209,9 +1205,7 @@ export default function Dashboard() {
                      <Toggle checked={brain.autoMode} onChange={(v) => toggleBrain(brain.id, v)} />
                      <span className="text-xs text-muted-foreground">Auto</span>
                      <div className="flex-1" />
-                     <button onClick={() => openBrainConfig(brain)} className="p-1 hover:bg-white/10 rounded transition-colors" title="Configure Brain">
-                        <Settings className="w-4 h-4 text-blue-300" />
-                     </button>
+                     {/* settings button removed (card click navigates) */}
                      <button onClick={() => forceRun(brain.id)} className="p-1 hover:bg-white/10 rounded transition-colors" title="Force Run">
                         <Play className="w-4 h-4 text-emerald-300" />
                      </button>
@@ -1243,9 +1237,7 @@ export default function Dashboard() {
                      <Toggle checked={brain.autoMode} onChange={(v) => toggleBrain(brain.id, v)} />
                      <span className="text-xs text-muted-foreground">Auto</span>
                      <div className="flex-1" />
-                     <button onClick={() => openBrainConfig(brain)} className="p-1 hover:bg-white/10 rounded transition-colors" title="Configure Brain">
-                        <Settings className="w-4 h-4 text-blue-300" />
-                     </button>
+                     {/* settings button removed (card click navigates) */}
                      <button onClick={() => forceRun(brain.id)} className="p-1 hover:bg-white/10 rounded transition-colors" title="Force Run">
                         <Play className="w-4 h-4 text-emerald-300" />
                      </button>
@@ -1709,7 +1701,7 @@ export default function Dashboard() {
             {selectedTask.description && (
               <div>
                 <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Description</div>
-                <div className="text-sm bg-secondary/30 p-3 rounded-lg border border-border leading-relaxed">
+                <div className="text-sm bg-secondary/80 p-3 rounded-lg border border-border leading-relaxed">
                   {selectedTask.description}
                 </div>
               </div>
