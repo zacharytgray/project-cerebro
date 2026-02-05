@@ -55,7 +55,14 @@ export class BrainStorage {
     public async writeReport(kind: 'morning' | 'night', content: string, date?: string): Promise<void> {
         const reportDate = date || new Date().toISOString().split('T')[0];
         const reportFile = path.join(this.reportsPath, `${reportDate}-${kind}.md`);
-        await fs.promises.writeFile(reportFile, content);
+        const timestamp = new Date().toLocaleTimeString();
+        const entry = `\n\n---\n[${timestamp}] ${kind.toUpperCase()} RUN\n\n${content}\n`;
+        try {
+            await fs.promises.access(reportFile, fs.constants.F_OK);
+            await fs.promises.appendFile(reportFile, entry);
+        } catch (e) {
+            await fs.promises.writeFile(reportFile, `# ${reportDate} ${kind.toUpperCase()} REPORTS\n${entry.trimStart()}`);
+        }
     }
 
     public async readReport(kind: 'morning' | 'night', date?: string): Promise<string> {
