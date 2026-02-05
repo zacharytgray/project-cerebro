@@ -173,6 +173,50 @@ export class ApiServer {
             return { success: true, brainId: safeBrain, path: outPath };
         });
 
+        // Reports (markdown)
+        this.server.get('/api/reports', async (request, reply) => {
+            const q: any = request.query || {};
+            const brainId = String(q.brainId || '').trim();
+            if (!brainId) {
+                reply.code(400);
+                return { error: 'brainId is required' };
+            }
+            const safeBrain = brainId.replace(/[^a-zA-Z0-9_-]/g, '');
+            const reportsDir = path.join(process.cwd(), 'data', safeBrain, 'reports');
+            const limit = Math.max(1, Math.min(50, Number(q.limit || 10)));
+            let files: string[] = [];
+            try {
+                files = await fs.promises.readdir(reportsDir);
+            } catch (e) {
+                return { reports: [] };
+            }
+            const items = await Promise.all(files
+                .filter(f => f.endsWith('.md'))
+                .map(async (f) => {
+                    const full = path.join(reportsDir, f);
+                    const stat = await fs.promises.stat(full);
+                    const match = f.match(/(\d{4}-\d{2}-\d{2})-(morning|night)\.md/);
+                    return {
+                        file: f,
+                        full,
+                        date: match?.[1] || null,
+                        kind: (match?.[2] as any) || null,
+                        mtime: stat.mtimeMs || 0
+                    };
+                }));
+            items.sort((a, b) => b.mtime - a.mtime);
+            const sliced = items.slice(0, limit);
+            const reports = await Promise.all(sliced.map(async (it) => ({
+                id: it.file,
+                brainId: safeBrain,
+                date: it.date,
+                kind: it.kind,
+                updatedAt: it.mtime,
+                markdown: await fs.promises.readFile(it.full, 'utf-8')
+            })));
+            return { reports };
+        });
+
         // Recurring Tasks
         this.server.post<{ Body: { brainId: string; title: string; description?: string; modelOverride?: string; scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY'; intervalMinutes?: number; scheduleConfig?: any } }>('/api/recurring-tasks', async (request, reply) => {
             const { brainId, title, description, modelOverride, scheduleType, intervalMinutes, scheduleConfig } = request.body || {} as any;

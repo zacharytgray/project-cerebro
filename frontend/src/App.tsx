@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, Settings, ChevronLeft, Save, Trash2 } from 'lucide-react';
+import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, Settings, ChevronLeft, Save, Trash2, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // Types
 interface BrainStatus {
@@ -42,6 +44,15 @@ interface Job {
   position: string;
   status: string;
   updatedAt: number;
+}
+
+interface Report {
+  id: string;
+  brainId: string;
+  date: string | null;
+  kind: 'morning' | 'night' | null;
+  updatedAt: number;
+  markdown: string;
 }
 
 // Components
@@ -101,7 +112,7 @@ export default function Dashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [newTask, setNewTask] = useState({ brainId: 'nexus', title: '', description: '', modelOverride: 'default', isRecurring: false, scheduleType: 'DAILY', intervalMinutes: 60, dailyTime: '09:00', weeklyDay: '1' });
-  const [currentView, setCurrentView] = useState<'dashboard' | 'brain-detail'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'brain-detail' | 'reports'>('dashboard');
   const [selectedBrainId, setSelectedBrainId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
@@ -125,6 +136,9 @@ export default function Dashboard() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [themeSource, setThemeSource] = useState<'system' | 'manual'>('system');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [reportBrainId, setReportBrainId] = useState<string>('personal');
+  const [reports, setReports] = useState<Report[]>([]);
+  const [reportLoading, setReportLoading] = useState<boolean>(false);
 
   const getBrainName = (brainId: string) => {
     const brain = brains.find(b => b.id === brainId);
@@ -159,6 +173,20 @@ export default function Dashboard() {
       setRecurringTasks(recurringData.recurringTasks || []);
     } catch (e) {
       console.error("Failed to fetch data", e);
+    }
+  };
+
+  const fetchReports = async (brainId: string, limit = 10) => {
+    try {
+      setReportLoading(true);
+      const res = await fetch(`/api/reports?brainId=${encodeURIComponent(brainId)}&limit=${limit}`);
+      const data = await res.json();
+      setReports(data.reports || []);
+    } catch (e) {
+      console.error(e);
+      setReports([]);
+    } finally {
+      setReportLoading(false);
     }
   };
 
@@ -218,6 +246,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
+    fetchReports(reportBrainId, 10);
     const interval = setInterval(fetchData, 3000); // Poll every 3s
     return () => clearInterval(interval);
   }, []);
@@ -264,6 +293,12 @@ export default function Dashboard() {
       loadBrainConfig(selectedBrainId);
     }
   }, [currentView, selectedBrainId]);
+
+  useEffect(() => {
+    if (currentView === 'reports' || currentView === 'dashboard') {
+      fetchReports(reportBrainId, 10);
+    }
+  }, [currentView, reportBrainId]);
 
   const toggleBrain = async (id: string, enabled: boolean) => {
     try {
@@ -1238,6 +1273,43 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+        </section>
+
+
+
+        {/* Reports */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2"><FileText className="w-5 h-5" /> Reports</h2>
+            <div className="flex items-center gap-2">
+              <select
+                className="bg-secondary/50 border border-border rounded px-3 py-1.5 text-xs"
+                value={reportBrainId}
+                onChange={(e) => setReportBrainId(e.target.value)}
+              >
+                {brains.map(b => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+              <button onClick={() => fetchReports(reportBrainId, 10)} className="text-xs text-blue-300 hover:underline">Refresh</button>
+            </div>
+          </div>
+          <Card>
+            {reportLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
+            {!reportLoading && reports.length === 0 && (
+              <p className="text-xs text-muted-foreground">No reports found.</p>
+            )}
+            <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2">
+              {reports.map(r => (
+                <div key={r.id} className="border border-border rounded-lg p-4 bg-secondary/20">
+                  <div className="text-xs text-muted-foreground mb-2">{r.date || 'Unknown date'} • {r.kind || 'report'} • {new Date(r.updatedAt).toLocaleString()}</div>
+                  <div className="prose prose-invert prose-sm max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{r.markdown}</ReactMarkdown>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </section>
 
       </main>
