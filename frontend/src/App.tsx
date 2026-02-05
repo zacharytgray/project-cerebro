@@ -57,7 +57,7 @@ interface Report {
 
 // Components
 const Card = ({ children, className = '', onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) => (
-  <div className={`bg-card border border-border rounded-lg p-6 ${className}`} onClick={onClick}>
+  <div className={`bg-white/5 border border-white/10 rounded-xl p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] backdrop-blur ${className}`} onClick={onClick}>
     {children}
   </div>
 );
