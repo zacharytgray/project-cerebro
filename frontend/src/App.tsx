@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, Settings, ChevronLeft, Save, Trash2, FileText } from 'lucide-react';
+import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, Settings, ChevronLeft, Save, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -112,7 +112,7 @@ export default function Dashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [newTask, setNewTask] = useState({ brainId: 'nexus', title: '', description: '', modelOverride: 'default', isRecurring: false, scheduleType: 'DAILY', intervalMinutes: 60, dailyTime: '09:00', weeklyDay: '1' });
-  const [currentView, setCurrentView] = useState<'dashboard' | 'brain-detail' | 'reports'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'brain-detail'>('dashboard');
   const [selectedBrainId, setSelectedBrainId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
@@ -136,9 +136,9 @@ export default function Dashboard() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [themeSource, setThemeSource] = useState<'system' | 'manual'>('system');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
-  const [reportBrainId, setReportBrainId] = useState<string>('personal');
   const [reports, setReports] = useState<Report[]>([]);
   const [reportLoading, setReportLoading] = useState<boolean>(false);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
 
   const getBrainName = (brainId: string) => {
     const brain = brains.find(b => b.id === brainId);
@@ -246,7 +246,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-    fetchReports(reportBrainId, 10);
     const interval = setInterval(fetchData, 3000); // Poll every 3s
     return () => clearInterval(interval);
   }, []);
@@ -291,14 +290,9 @@ export default function Dashboard() {
   useEffect(() => {
     if (currentView === 'brain-detail' && selectedBrainId) {
       loadBrainConfig(selectedBrainId);
+      fetchReports(selectedBrainId, 10);
     }
   }, [currentView, selectedBrainId]);
-
-  useEffect(() => {
-    if (currentView === 'reports' || currentView === 'dashboard') {
-      fetchReports(reportBrainId, 10);
-    }
-  }, [currentView, reportBrainId]);
 
   const toggleBrain = async (id: string, enabled: boolean) => {
     try {
@@ -962,6 +956,51 @@ export default function Dashboard() {
               </div>
             </Card>
 
+            <Card>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold">Reports</h2>
+                <button onClick={() => fetchReports(activeBrain.id, 10)} className="text-xs text-blue-300 hover:underline">Refresh</button>
+              </div>
+              {reportLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
+              {!reportLoading && reports.length === 0 && (
+                <p className="text-xs text-muted-foreground">No reports found.</p>
+              )}
+              <div className="space-y-4 max-h-[420px] overflow-y-auto pr-2">
+                {reports.map(r => (
+                  <div key={r.id} className="border border-border rounded-lg p-3 bg-secondary/20">
+                    <div className="text-xs text-muted-foreground mb-2">{r.date || 'Unknown date'} • {r.kind || 'report'} • {new Date(r.updatedAt).toLocaleString()}</div>
+                    <div className="prose prose-invert prose-sm max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{r.markdown}</ReactMarkdown>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {activeBrain.id === 'job' && (
+              <Card>
+                <h2 className="text-lg font-semibold mb-3">Job Pipeline</h2>
+                <div className="flex flex-col gap-3">
+                  {jobs.map((job) => (
+                    <div key={job.id} className="p-3 rounded-lg border border-border bg-secondary/30">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-semibold">{job.company}</div>
+                          <div className="text-xs text-muted-foreground">{job.position}</div>
+                        </div>
+                        <span className="text-xs px-2 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-800">
+                          {job.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {jobs.length === 0 && (
+                    <div className="text-xs text-muted-foreground">No active job applications tracked.</div>
+                  )}
+                </div>
+              </Card>
+            )}
+
             <Card className="bg-blue-600/5 border-blue-600/20">
               <h2 className="text-sm font-bold uppercase tracking-wider text-blue-400 mb-2">Internal Metadata</h2>
               <div className="text-xs space-y-2 font-mono">
@@ -990,6 +1029,7 @@ export default function Dashboard() {
   return (
     <div className={`min-h-screen ${isDark ? 'bg-gradient-to-br from-[#0b0e14] via-[#0d111c] to-[#0a0f1a]' : 'bg-slate-50'} text-foreground`}>
       <div className="flex min-h-screen">
+        {sidebarOpen && (
         <aside className={`hidden lg:flex w-64 flex-col gap-6 border-r ${isDark ? 'border-white/10 bg-white/5' : 'border-black/10 bg-white/80'} backdrop-blur-xl p-6 shadow-[inset_0_0_40px_rgba(59,130,246,0.05)]`}>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-blue-600/20 text-blue-300"><Activity className="w-5 h-5" /></div>
@@ -999,17 +1039,21 @@ export default function Dashboard() {
             </div>
           </div>
           <nav className="flex flex-col gap-1 text-sm">
-            {[
-              { key: 'dashboard', label: 'Dashboard', icon: <Activity className="w-4 h-4" /> },
-              { key: 'reports', label: 'Reports', icon: <FileText className="w-4 h-4" /> }
-            ].map(item => (
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${currentView === 'dashboard' ? 'bg-blue-600/20 text-blue-200 border border-blue-500/30' : 'text-muted-foreground hover:bg-white/5'}`}
+            >
+              <Activity className="w-4 h-4" /> Dashboard
+            </button>
+            <div className="mt-4 text-[11px] uppercase tracking-widest text-muted-foreground">Brains</div>
+            {brains.map((b) => (
               <button
-                key={item.key}
-                onClick={() => setCurrentView(item.key as any)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${currentView === item.key ? 'bg-blue-600/20 text-blue-200 border border-blue-500/30' : 'text-muted-foreground hover:bg-white/5'}`}
+                key={b.id}
+                onClick={() => { setSelectedBrainId(b.id); setCurrentView('brain-detail'); }}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${selectedBrainId === b.id && currentView === 'brain-detail' ? 'bg-blue-600/20 text-blue-200 border border-blue-500/30' : 'text-muted-foreground hover:bg-white/5'}`}
               >
-                {item.icon}
-                {item.label}
+                {getBrainIcon(b.id)}
+                {b.name}
               </button>
             ))}
           </nav>
@@ -1020,6 +1064,7 @@ export default function Dashboard() {
             </div>
           </div>
         </aside>
+        )}
 
         <div className="flex-1 p-6">
       <header className={`mb-6 flex items-center justify-between rounded-2xl border ${isDark ? 'border-white/10 bg-white/5' : 'border-black/10 bg-white/80'} backdrop-blur-xl px-6 py-4`}>
@@ -1031,6 +1076,12 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="px-3 py-2 text-xs rounded-md border border-white/10 hover:bg-white/5"
+          >
+            {sidebarOpen ? 'Hide' : 'Show'} Menu
+          </button>
           <button
             onClick={() => setIsAddTaskOpen(true)}
             className="flex items-center gap-2 px-3 py-2 text-xs rounded-md bg-blue-600/80 hover:bg-blue-600 text-white transition-colors"
@@ -1060,8 +1111,6 @@ export default function Dashboard() {
       </header>
 
       <main className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {currentView !== 'reports' && (
-        <>
                 <section className="lg:col-span-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="bg-gradient-to-br from-blue-600/15 via-white/5 to-transparent">
@@ -1132,12 +1181,12 @@ export default function Dashboard() {
         </section>
 
         {/* Brain Status Grid */}
-        <section className="lg:col-span-3 xl:col-span-2 xl:order-1">
+        <section className="lg:col-span-2 h-full">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground"><Server className="w-5 h-5 text-blue-300" /> Active Brains</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-[480px]">
             {brains.filter(b => b.id === 'nexus').map((brain) => (
               <motion.div key={brain.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-3">
-                <Card className="flex flex-col gap-4 relative overflow-hidden group bg-gradient-to-br from-blue-600/20 via-white/5 to-purple-600/10">
+                <Card className="flex flex-col gap-4 relative overflow-hidden group bg-gradient-to-br from-blue-600/20 via-white/5 to-purple-600/10 hover:shadow-lg hover:-translate-y-0.5 transition cursor-pointer" onClick={() => { setSelectedBrainId(brain.id); setCurrentView('brain-detail'); }}>
                   <div className="absolute top-0 left-0 w-full h-1 bg-blue-500/60"></div>
                   <div className="flex justify-between items-start">
                     <div className="p-2 bg-secondary/40 rounded-lg text-blue-300">
@@ -1167,7 +1216,7 @@ export default function Dashboard() {
             ))}
             {brains.filter(b => b.id !== 'nexus').map((brain) => (
               <motion.div key={brain.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <Card className="flex flex-col gap-4 relative overflow-hidden group bg-gradient-to-br from-white/5 via-white/5 to-blue-500/5">
+                <Card className="flex flex-col gap-4 relative overflow-hidden group bg-gradient-to-br from-white/5 via-white/5 to-blue-500/5 hover:shadow-lg hover:-translate-y-0.5 transition cursor-pointer" onClick={() => { setSelectedBrainId(brain.id); setCurrentView('brain-detail'); }}>
                   <div className={`absolute top-0 left-0 w-1 h-full ${brain.status === 'EXECUTING' ? 'bg-emerald-400' : 'bg-white/20'}`}></div>
                   <div className="flex justify-between items-start">
                     <div className="p-2 bg-secondary/40 rounded-lg text-blue-300">
@@ -1204,7 +1253,7 @@ export default function Dashboard() {
         </section>
 
         {/* Task Graph Stream */}
-        <section className="lg:col-span-2 xl:col-span-2 xl:order-3 h-full">
+        <section className="lg:col-span-3 h-full">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Terminal className="w-5 h-5 text-blue-300" /> Execution Stream</h2>
@@ -1298,7 +1347,7 @@ export default function Dashboard() {
         </section>
 
         {/* Recurring Tasks */}
-        <section className="xl:col-span-1 xl:order-4 h-full">
+        <section className="lg:col-span-1 h-full">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Calendar className="w-5 h-5 text-blue-300" /> Recurring Tasks</h2>
             <span className="text-xs text-muted-foreground">{recurringTasks.length} active</span>
@@ -1346,93 +1395,6 @@ export default function Dashboard() {
             )}
           </div>
         </section>
-
-        {/* Active Jobs */}
-        <section className="xl:col-span-1 xl:order-5 h-full">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Briefcase className="w-5 h-5 text-blue-300" /> Tracked Jobs</h2>
-            <span className="text-xs text-muted-foreground">{jobs.length} active</span>
-          </div>
-          <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto">
-            {jobs.map((job) => (
-              <Card key={job.id} className="p-4 hover:border-blue-500/50 transition-colors cursor-default">
-                <div className="flex justify-between items-start mb-1">
-                  <h3 className="font-bold">{job.company}</h3>
-                  <span className="text-xs px-2 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-800">
-                    {job.status}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">{job.position}</p>
-                <div className="text-xs text-gray-500 flex justify-between items-center">
-                  <span>ID: {job.id.slice(-6)}</span>
-                  <span>{new Date(job.updatedAt).toLocaleDateString()}</span>
-                </div>
-              </Card>
-            ))}
-            {jobs.length === 0 && (
-              <div className="text-center p-8 border border-dashed border-border rounded-lg text-muted-foreground text-sm">
-                No active job applications tracked.
-              </div>
-            )}
-          </div>
-        </section>
-
-
-
-        <section className="xl:col-span-1 xl:order-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><FileText className="w-5 h-5 text-blue-300" /> Latest Report</h2>
-            <button onClick={() => { setCurrentView('reports'); }} className="text-xs text-blue-300 hover:underline">Open Reports</button>
-          </div>
-          <Card className="bg-gradient-to-br from-slate-500/10 via-white/5 to-blue-500/10">
-            {reports.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No reports yet.</p>
-            ) : (
-              <div className="text-xs text-muted-foreground max-h-48 overflow-y-auto">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{reports[0]?.markdown || ''}</ReactMarkdown>
-              </div>
-            )}
-          </Card>
-        </section>
-
-        </>
-        )}
-
-        {currentView === 'reports' && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><FileText className="w-5 h-5 text-blue-300" /> Reports</h2>
-            <div className="flex items-center gap-2">
-              <select
-                className="bg-secondary/50 border border-border rounded px-3 py-1.5 text-xs"
-                value={reportBrainId}
-                onChange={(e) => setReportBrainId(e.target.value)}
-              >
-                {brains.map(b => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
-              <button onClick={() => fetchReports(reportBrainId, 10)} className="text-xs text-blue-300 hover:underline">Refresh</button>
-            </div>
-          </div>
-          <Card>
-            {reportLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
-            {!reportLoading && reports.length === 0 && (
-              <p className="text-xs text-muted-foreground">No reports found.</p>
-            )}
-            <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2">
-              {reports.map(r => (
-                <div key={r.id} className="border border-border rounded-lg p-4 bg-secondary/20">
-                  <div className="text-xs text-muted-foreground mb-2">{r.date || 'Unknown date'} • {r.kind || 'report'} • {new Date(r.updatedAt).toLocaleString()}</div>
-                  <div className="prose prose-invert prose-sm max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{r.markdown}</ReactMarkdown>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </section>
-        )}
 
       </main>
 

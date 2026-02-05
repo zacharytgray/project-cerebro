@@ -70,4 +70,10 @@
   body {
     @apply bg-background text-foreground;
   }
+  input, textarea, select {
+    @apply text-foreground;
+  }
+  input::placeholder, textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
 }
