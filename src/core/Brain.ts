@@ -2,6 +2,8 @@
 import { Client, TextChannel } from 'discord.js';
 import { ExecutionGraph } from './ExecutionGraph';
 import { Task } from './Task';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
 export interface BrainConfig {
     id: string;
@@ -81,6 +83,20 @@ export abstract class Brain {
         try {
             await this.sendMessage(`🤖 **${this.name}** is processing task: "${task.title}"...`);
 
+            const execAsync = promisify(exec);
+            let scheduleContext = '';
+            const needsSchedule = this.id === 'personal' || this.id === 'school' || this.id === 'digest';
+            if (needsSchedule && task.description && (task.description.includes('PERSONAL_PLANNING_KIND') || task.description.includes('SCHOOL_PLANNING_KIND') || task.description.includes('REPORT_KIND'))) {
+                try {
+                    const { stdout } = await execAsync('node dist/scripts/get-schedule.js', { cwd: process.cwd() });
+                    scheduleContext = `\n\nMerged Schedule (America/Chicago) — deterministic output from get-schedule.js:\n\n${stdout}`;
+                } catch (e) {
+                    scheduleContext = `\n\nWARNING: Failed to run get-schedule.js: ${String(e)}`;
+                }
+            }
+
+            const prompt = `You are the ${this.name}. \n\nContext: ${this.description}. \n\nYour task is: ${task.title}. ${task.description ? `\n\nTask Details: ${task.description}` : ''}${scheduleContext} \n\nIMPORTANT: When finished, send a Discord message to channel ID ${this.discordChannelId} with a short summary using the message tool.`;
+
             // Handoff to OpenClaw Sub-Agent via tool invocation
             const response = await fetch('http://localhost:18789/tools/invoke', {
                 method: 'POST',
@@ -91,7 +107,7 @@ export abstract class Brain {
                 body: JSON.stringify({
                     tool: 'sessions_spawn',
                     args: {
-                        task: `You are the ${this.name}. \n\nContext: ${this.description}. \n\nYour task is: ${task.title}. ${task.description ? `\n\nTask Details: ${task.description}` : ''} \n\nIMPORTANT: When finished, send a Discord message to channel ID ${this.discordChannelId} with a short summary using the message tool.`,
+                        task: prompt,
                         agentId: this.openClawAgentId || 'main',
                         model: task.modelOverride || undefined,
                         label: `Cerebro: ${this.name}`,

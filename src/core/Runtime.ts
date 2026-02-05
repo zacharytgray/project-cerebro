@@ -217,8 +217,10 @@ Rules:
 - Only schedule between 09:00–23:00.
 - Prefer lunch around 13:00 but choose best mid-to-late-day slot dynamically.
 - Avoid scheduling over lunch.
-- Prefer 90–120 min study sessions if adding study time.
+- DO NOT schedule study sessions or school-related tasks (school brain handles study blocks).
+- Use Personal Brain config: prioritize items in \`proactiveActivities\` (hobbies, fun, energizing). If empty, suggest gym, walks, recovery, creative time.
 - Respect higher-priority school blocks (from script output).
+- Use 12-hour AM/PM time format in any summaries or logs.
 - After adding events, send a Discord message confirming what was added.
 - Log all added events in data/personal/reports/YYYY-MM-DD-${kind}.md and update memory/personal-life.md.
 `;
@@ -287,10 +289,11 @@ Rules:
 1) Scan Todoist Inbox for labels @exam, @quiz, @homework, @research, @personal.
 2) **GET CALENDAR**: Run \`node dist/scripts/get-schedule.js\` to see free slots. Do not query gog manually.
 3) Build a next-7-days timeline (today + 7d) grouped by date and label.
-4) Auto-schedule study blocks for upcoming tasks using free slots (09:00–23:00), respecting preferred session length.
-   - Exams: start scheduling 7 days before due.
-   - Quizzes: 5 days before due.
-   - Homework: 3 days before due.
+4) Auto-schedule study blocks using free slots (09:00–23:00):
+   - Default: **1 study block per task** (homework/quiz/other).
+   - Exams: **3 study blocks total**, spread across days before the due date.
+   - Do not stack multiple blocks for non-exams.
+   - NEVER schedule over any existing event from the schedule output.
 5) If any task due < 48h is not scheduled, FORCE schedule and notify Discord.
 6) Write report to data/school/reports/YYYY-MM-DD-${kind}.md with: timeline, blocks scheduled, escalations.
 7) Use gog calendar (personal account) to add events; never delete events.
