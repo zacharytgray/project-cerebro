@@ -202,6 +202,17 @@ export default function Dashboard() {
     }
   };
 
+  const [saveTimer, setSaveTimer] = useState<any>(null);
+  useEffect(() => {
+    if (!selectedBrainId) return;
+    if (saveTimer) clearTimeout(saveTimer);
+    const t = setTimeout(() => {
+      saveBrainConfig();
+    }, 700);
+    setSaveTimer(t);
+    return () => clearTimeout(t);
+  }, [brainConfigObj, reportMorning, reportNight]);
+
 
   useEffect(() => {
     fetchData();
