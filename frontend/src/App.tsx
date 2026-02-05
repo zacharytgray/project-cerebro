@@ -986,7 +986,40 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-8 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-[#0b0e14] via-[#0d111c] to-[#0a0f1a] text-foreground">
+      <div className="flex min-h-screen">
+        <aside className="hidden lg:flex w-64 flex-col gap-6 border-r border-white/10 bg-white/5 backdrop-blur-xl p-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-blue-600/20 text-blue-300"><Activity className="w-5 h-5" /></div>
+            <div>
+              <div className="text-sm font-semibold">Project Cerebro</div>
+              <div className="text-[11px] text-muted-foreground">Control Surface</div>
+            </div>
+          </div>
+          <nav className="flex flex-col gap-1 text-sm">
+            {[
+              { key: 'dashboard', label: 'Dashboard', icon: <Activity className="w-4 h-4" /> },
+              { key: 'reports', label: 'Reports', icon: <FileText className="w-4 h-4" /> }
+            ].map(item => (
+              <button
+                key={item.key}
+                onClick={() => setCurrentView(item.key as any)}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${currentView === item.key ? 'bg-blue-600/20 text-blue-200 border border-blue-500/30' : 'text-muted-foreground hover:bg-white/5'}`}
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            ))}
+          </nav>
+          <div className="mt-auto space-y-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              System Online
+            </div>
+          </div>
+        </aside>
+
+        <div className="flex-1 p-6">
       <header className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Activity className="w-8 h-8 text-blue-400" />
@@ -1314,7 +1347,10 @@ export default function Dashboard() {
 
       </main>
 
-      {/* Add Task Modal */}
+        </div>
+      </div>
+
+            {/* Add Task Modal */}
       <Modal isOpen={isAddTaskOpen} onClose={() => setIsAddTaskOpen(false)} title="Create Task">
         <div className="flex flex-col gap-4">
           <div>
