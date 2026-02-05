@@ -57,3 +57,16 @@ A central runtime loop (30s heartbeat) checks the Graph for `READY` tasks and di
 3. **Run Backend**: `npm run start` (or `npx tsc && node dist/index.js`)
    - Starts Discord Bot
    - Starts API Server on `http://localhost:3000`
+
+## Recurring Tasks
+Recurring tasks live in their own section and **spawn normal execution tasks** on schedule.
+
+Supported schedule types:
+- **Hourly** (select minute of the hour)
+- **Daily** (select time of day)
+- **Weekly** (select day + time)
+- **Interval** (minutes)
+
+## Brain Configs (Per‑Brain)
+Each Brain has a persisted config JSON stored in SQLite. Edit configs in the Brain detail view (JSON textarea) and click **Save Changes**.
+These configs are intended for Brain‑specific settings and context.

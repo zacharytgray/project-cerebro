@@ -106,6 +106,7 @@ export default function Dashboard() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [brainConfigText, setBrainConfigText] = useState<string>('{}');
 
   const getBrainName = (brainId: string) => {
     const brain = brains.find(b => b.id === brainId);
@@ -143,11 +144,41 @@ export default function Dashboard() {
     }
   };
 
+  const loadBrainConfig = async (brainId: string) => {
+    try {
+      const res = await fetch(`/api/brains/${brainId}/config`);
+      const data = await res.json();
+      setBrainConfigText(data.config || '{}');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const saveBrainConfig = async () => {
+    if (!selectedBrainId) return;
+    try {
+      await fetch(`/api/brains/${selectedBrainId}/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: brainConfigText })
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 3000); // Poll every 3s
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (currentView === 'brain-detail' && selectedBrainId) {
+      loadBrainConfig(selectedBrainId);
+    }
+  }, [currentView, selectedBrainId]);
 
   const toggleBrain = async (id: string, enabled: boolean) => {
     try {
@@ -288,7 +319,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
              <button onClick={() => setCurrentView('dashboard')} className="px-4 py-2 text-sm rounded border border-border hover:bg-white/5 transition-colors">Cancel</button>
-             <button className="flex items-center gap-2 px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors">
+             <button onClick={saveBrainConfig} className="flex items-center gap-2 px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors">
                 <Save className="w-4 h-4" />
                 Save Changes
              </button>
@@ -330,6 +361,15 @@ export default function Dashboard() {
               <h2 className="text-lg font-semibold mb-6 flex items-center gap-2"><Database className="w-5 h-5 text-purple-400" /> Brain Context & Memory</h2>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">Configuration specific to the <strong>{activeBrain.id}</strong> domain.</p>
+
+                <div>
+                  <label className="text-xs text-muted-foreground">Brain Config (JSON)</label>
+                  <textarea
+                    className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-xs font-mono min-h-[140px]"
+                    value={brainConfigText}
+                    onChange={(e) => setBrainConfigText(e.target.value)}
+                  />
+                </div>
                 
                 {activeBrain.id === 'job' && (
                   <div className="grid grid-cols-1 gap-4">

@@ -32,6 +32,12 @@ export interface RecurringTask {
     updatedAt: number;
 }
 
+export interface BrainConfigRecord {
+    brainId: string;
+    config: string;
+    updatedAt: number;
+}
+
 export class ExecutionGraph {
     private db: Database;
 
@@ -96,6 +102,16 @@ export class ExecutionGraph {
                     updatedAt INTEGER
                 )
             `);
+
+            // Brain Configs Table
+            this.db.run(`
+                CREATE TABLE IF NOT EXISTS brain_configs (
+                    brainId TEXT PRIMARY KEY,
+                    config TEXT,
+                    updatedAt INTEGER
+                )
+            `);
+
 
 
             // Lightweight migrations (best-effort, safe on existing DBs)
@@ -272,6 +288,32 @@ export class ExecutionGraph {
     public async deleteRecurringTask(id: string): Promise<void> {
         return new Promise((resolve, reject) => {
             this.db.run('DELETE FROM recurring_tasks WHERE id = ?', [id], (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+    }
+
+    // --- Brain Configs ---
+
+    public async getBrainConfig(brainId: string): Promise<BrainConfigRecord | null> {
+        return new Promise((resolve, reject) => {
+            this.db.get('SELECT * FROM brain_configs WHERE brainId = ?', [brainId], (err, row: any) => {
+                if (err) reject(err);
+                else resolve(row ? { brainId: row.brainId, config: row.config || '{}', updatedAt: row.updatedAt } : null);
+            });
+        });
+    }
+
+    public async setBrainConfig(brainId: string, config: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const now = Date.now();
+            const query = `
+                INSERT INTO brain_configs (brainId, config, updatedAt)
+                VALUES (?, ?, ?)
+                ON CONFLICT(brainId) DO UPDATE SET config = excluded.config, updatedAt = excluded.updatedAt
+            `;
+            this.db.run(query, [brainId, config, now], (err) => {
                 if (err) reject(err);
                 else resolve();
             });

@@ -73,6 +73,21 @@ export class ApiServer {
             return { success: true };
         });
 
+        // Brain Config
+        this.server.get<{ Params: { id: string } }>('/api/brains/:id/config', async (request, reply) => {
+            const { id } = request.params;
+            const record = await this.runtime.graph.getBrainConfig(id);
+            return { config: record?.config || '{}' };
+        });
+
+        this.server.post<{ Params: { id: string }, Body: { config: any } }>('/api/brains/:id/config', async (request, reply) => {
+            const { id } = request.params;
+            const { config } = request.body || {} as any;
+            const json = typeof config === 'string' ? config : JSON.stringify(config || {});
+            await this.runtime.graph.setBrainConfig(id, json);
+            return { success: true };
+        });
+
         // Tasks
         this.server.post<{ Body: { brainId: string; title: string; description?: string; executeAt?: number; modelOverride?: string } }>('/api/tasks', async (request, reply) => {
             const { brainId, title, description, executeAt, modelOverride } = request.body || {} as any;
