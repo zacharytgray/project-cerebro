@@ -1059,7 +1059,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <main className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {currentView !== 'reports' && (
         <>
                 <section className="lg:col-span-3">
@@ -1083,7 +1083,7 @@ export default function Dashboard() {
         </section>
 
         {/* File Ingestion */}
-        <section className="lg:col-span-3">
+        <section className="lg:col-span-3 xl:col-span-1 xl:order-2">
           <Card className="bg-gradient-to-br from-blue-600/10 via-white/5 to-purple-600/10">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground"><Database className="w-5 h-5 text-blue-300" /> File Ingestion</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
@@ -1132,7 +1132,7 @@ export default function Dashboard() {
         </section>
 
         {/* Brain Status Grid */}
-        <section className="lg:col-span-3">
+        <section className="lg:col-span-3 xl:col-span-2 xl:order-1">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground"><Server className="w-5 h-5 text-blue-300" /> Active Brains</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             {brains.map((brain) => (
@@ -1174,7 +1174,7 @@ export default function Dashboard() {
         </section>
 
         {/* Task Graph Stream */}
-        <section className="lg:col-span-2">
+        <section className="lg:col-span-2 xl:col-span-2 xl:order-3">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Terminal className="w-5 h-5 text-blue-300" /> Execution Stream</h2>
@@ -1268,7 +1268,7 @@ export default function Dashboard() {
         </section>
 
         {/* Recurring Tasks */}
-        <section>
+        <section className="xl:col-span-1 xl:order-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Calendar className="w-5 h-5 text-blue-300" /> Recurring Tasks</h2>
             <span className="text-xs text-muted-foreground">{recurringTasks.length} active</span>
@@ -1318,7 +1318,7 @@ export default function Dashboard() {
         </section>
 
         {/* Active Jobs */}
-        <section>
+        <section className="xl:col-span-1 xl:order-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Briefcase className="w-5 h-5 text-blue-300" /> Tracked Jobs</h2>
             <span className="text-xs text-muted-foreground">{jobs.length} active</span>
@@ -1348,6 +1348,22 @@ export default function Dashboard() {
         </section>
 
 
+
+        <section className="xl:col-span-1 xl:order-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><FileText className="w-5 h-5 text-blue-300" /> Latest Report</h2>
+            <button onClick={() => { setCurrentView('reports'); }} className="text-xs text-blue-300 hover:underline">Open Reports</button>
+          </div>
+          <Card className="bg-gradient-to-br from-slate-500/10 via-white/5 to-blue-500/10">
+            {reports.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No reports yet.</p>
+            ) : (
+              <div className="text-xs text-muted-foreground max-h-48 overflow-y-auto">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{reports[0]?.markdown || ''}</ReactMarkdown>
+              </div>
+            )}
+          </Card>
+        </section>
 
         </>
         )}
