@@ -1158,8 +1158,10 @@ export default function Dashboard() {
             <span className="text-xs text-muted-foreground">{recurringTasks.length} active</span>
           </div>
           <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto">
-            {recurringTasks.map((rt) => (
-              <Card key={rt.id} className="p-4 hover:border-blue-500/50 transition-colors cursor-pointer" onClick={() => openRecurringEditor(rt)}>
+            {recurringTasks.map((rt) => {
+              const isBrainTask = (rt.description || '').includes('REPORT_KIND:') || (rt.description || '').includes('PLANNING_KIND:') || (rt.description || '').includes('MONEY_SEARCH');
+              return (
+              <Card key={rt.id} className={`p-4 hover:border-blue-500/50 transition-colors ${isBrainTask ? '' : 'cursor-pointer'}`} onClick={() => { if (!isBrainTask) openRecurringEditor(rt); }}>
                 <div className="flex justify-between items-start mb-1">
                   <h3 className="font-bold">{rt.title}</h3>
                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>

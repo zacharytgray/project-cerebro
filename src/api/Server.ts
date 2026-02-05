@@ -1,7 +1,9 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
+import multipart from '@fastify/multipart';
 import path from 'path';
+import fs from 'fs';
 import { CerebroRuntime } from '../core/Runtime';
 import { TaskStatus } from '../core/Task';
 
@@ -17,6 +19,10 @@ export class ApiServer {
         
         this.server.register(cors, { 
             origin: true // Allow all origins for dev
+        });
+
+        this.server.register(multipart, {
+            limits: { fileSize: 50 * 1024 * 1024 } // 50MB
         });
 
         // Serve Static Frontend
@@ -126,6 +132,28 @@ export class ApiServer {
             return { tasks };
         });
 
+        // File Uploads
+        this.server.post('/api/upload', async (request, reply) => {
+            const data = await request.file();
+            if (!data) {
+                reply.code(400);
+                return { error: 'No file uploaded' };
+            }
+
+            const brainId = (data.fields?.brainId as any)?.value || 'default';
+            const safeBrain = brainId.replace(/[^a-zA-Z0-9_-]/g, '') || 'default';
+            const intakeDir = path.join(process.cwd(), 'data', safeBrain, 'intake');
+            if (!fs.existsSync(intakeDir)) {
+                fs.mkdirSync(intakeDir, { recursive: true });
+            }
+
+            const filename = data.filename || `upload-${Date.now()}`;
+            const outPath = path.join(intakeDir, filename);
+            await fs.promises.writeFile(outPath, await data.toBuffer());
+
+            return { success: true, brainId: safeBrain, path: outPath };
+        });
+
         // Recurring Tasks
         this.server.post<{ Body: { brainId: string; title: string; description?: string; modelOverride?: string; scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY'; intervalMinutes?: number; scheduleConfig?: any } }>('/api/recurring-tasks', async (request, reply) => {
             const { brainId, title, description, modelOverride, scheduleType, intervalMinutes, scheduleConfig } = request.body || {} as any;
@@ -176,6 +204,51 @@ export class ApiServer {
             const { id } = request.params;
             const { enabled } = request.body || {} as any;
             await this.runtime.graph.toggleRecurringTask(id, !!enabled);
+            return { success: true };
+        });
+
+        this.server.post<{ Params: { id: string }, Body: { title?: string; description?: string; modelOverride?: string; scheduleType?: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY'; intervalMinutes?: number; scheduleConfig?: any } }>('/api/recurring-tasks/:id', async (request, reply) => {
+            const { id } = request.params;
+            const { title, description, modelOverride, scheduleType, intervalMinutes, scheduleConfig } = request.body || {} as any;
+
+            const recurring = (await this.runtime.graph.getRecurringTasks()).find(r => r.id === id);
+            if (!recurring) {
+                reply.code(404);
+                return { error: 'Recurring task not found' };
+            }
+
+            const desc = recurring.description || '';
+            const isBrainTask = desc.includes('REPORT_KIND:') || desc.includes('PLANNING_KIND:') || desc.includes('MONEY_SEARCH');
+            if (isBrainTask) {
+                reply.code(403);
+                return { error: 'Brain-managed recurring tasks are read-only. Edit in Brain Config.' };
+            }
+
+            let intervalMs: number | undefined = recurring.intervalMs;
+            let scheduleTypeFinal = recurring.scheduleType;
+            let scheduleConfigFinal = recurring.scheduleConfig;
+            if (scheduleType) {
+                scheduleTypeFinal = scheduleType;
+                if (scheduleType === 'INTERVAL') {
+                    if (!intervalMinutes || intervalMinutes <= 0) {
+                        reply.code(400);
+                        return { error: 'intervalMinutes (>0) required for INTERVAL schedule' };
+                    }
+                    intervalMs = Math.floor(intervalMinutes * 60 * 1000);
+                }
+                scheduleConfigFinal = scheduleConfig ? JSON.stringify(scheduleConfig) : undefined;
+            }
+
+            const now = Date.now();
+            const nextRunAt = this.runtime.computeNextRunAt({
+                scheduleType: scheduleTypeFinal,
+                scheduleConfig: scheduleConfigFinal,
+                intervalMs
+            } as any, now);
+
+            await this.runtime.graph.updateRecurringTaskFields(id, { title, description, modelOverride });
+            await this.runtime.graph.updateRecurringTaskSchedule(id, scheduleTypeFinal, scheduleConfigFinal, intervalMs, nextRunAt);
+
             return { success: true };
         });
 
