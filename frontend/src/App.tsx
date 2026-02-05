@@ -1063,7 +1063,7 @@ export default function Dashboard() {
         
         {/* File Ingestion */}
         <section className="lg:col-span-3">
-          <Card>
+          <Card className="bg-gradient-to-br from-blue-600/10 via-white/5 to-purple-600/10">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white"><Database className="w-5 h-5 text-blue-300" /> File Ingestion</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div>
@@ -1157,6 +1157,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <h2 className="text-lg font-semibold flex items-center gap-2 text-white"><Terminal className="w-5 h-5 text-blue-300" /> Execution Stream</h2>
+              <span className="text-[10px] uppercase tracking-widest text-blue-200/70">Live</span>
               <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-md">
                 {['ALL', 'READY', 'EXECUTING', 'COMPLETED', 'FAILED'].map(f => (
                   <button
