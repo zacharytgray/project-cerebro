@@ -1135,10 +1135,10 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             {brains.map((brain) => (
               <motion.div key={brain.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <Card className="flex flex-col gap-3 relative overflow-hidden group">
-                  <div className={`absolute top-0 left-0 w-1 h-full ${brain.status === 'EXECUTING' ? 'bg-green-500' : 'bg-gray-700'}`}></div>
+                <Card className="flex flex-col gap-4 relative overflow-hidden group bg-gradient-to-br from-white/5 via-white/5 to-blue-500/5">
+                  <div className={`absolute top-0 left-0 w-1 h-full ${brain.status === 'EXECUTING' ? 'bg-emerald-400' : 'bg-white/20'}`}></div>
                   <div className="flex justify-between items-start">
-                    <div className="p-2 bg-secondary rounded-lg text-blue-400">
+                    <div className="p-2 bg-secondary/40 rounded-lg text-blue-300">
                       {getBrainIcon(brain.id)}
                     </div>
                     <Badge variant={brain.status === 'EXECUTING' ? 'success' : 'default'}>
@@ -1146,14 +1146,14 @@ export default function Dashboard() {
                     </Badge>
                   </div>
                   <div>
-                    <h3 className="font-medium truncate">{brain.name}</h3>
+                    <h3 className="font-semibold truncate text-white">{brain.name}</h3>
                     <p className="text-xs text-muted-foreground mt-1">
                       {brain.status === 'EXECUTING' ? 'Processing task...' : 'Waiting for heartbeat'}
                     </p>
                   </div>
 
                   {/* Controls */}
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                  <div className="flex items-center gap-2 mt-2 pt-3 border-t border-white/10">
                      <Toggle checked={brain.autoMode} onChange={(v) => toggleBrain(brain.id, v)} />
                      <span className="text-xs text-muted-foreground">Auto</span>
                      <div className="flex-1" />
@@ -1161,7 +1161,7 @@ export default function Dashboard() {
                         <Settings className="w-4 h-4 text-blue-300" />
                      </button>
                      <button onClick={() => forceRun(brain.id)} className="p-1 hover:bg-white/10 rounded transition-colors" title="Force Run">
-                        <Play className="w-4 h-4 text-green-400" />
+                        <Play className="w-4 h-4 text-emerald-300" />
                      </button>
                   </div>
 
@@ -1275,9 +1275,9 @@ export default function Dashboard() {
             {recurringTasks.map((rt) => {
               const isBrainTask = (rt.description || '').includes('REPORT_KIND:') || (rt.description || '').includes('PLANNING_KIND:') || (rt.description || '').includes('MONEY_SEARCH');
               return (
-              <Card key={rt.id} className={`p-4 hover:border-blue-500/50 transition-colors ${isBrainTask ? '' : 'cursor-pointer'}`} onClick={() => { if (!isBrainTask) openRecurringEditor(rt); }}>
+              <Card key={rt.id} className={`p-4 bg-gradient-to-br from-white/5 via-white/5 to-blue-500/5 ${isBrainTask ? '' : 'cursor-pointer'}`} onClick={() => { if (!isBrainTask) openRecurringEditor(rt); }}>
                 <div className="flex justify-between items-start mb-1">
-                  <h3 className="font-bold">{rt.title}</h3>
+                  <h3 className="font-bold text-white">{rt.title}</h3>
                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <Toggle checked={rt.enabled} onChange={(v) => toggleRecurringTask(rt.id, v)} />
                     <button
