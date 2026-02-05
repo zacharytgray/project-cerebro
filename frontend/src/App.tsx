@@ -1058,6 +1058,8 @@ export default function Dashboard() {
       </header>
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {currentView !== 'reports' && (
+        <>
         
         {/* File Ingestion */}
         <section className="lg:col-span-3">
@@ -1325,7 +1327,10 @@ export default function Dashboard() {
 
 
 
-        {/* Reports */}
+        </>
+        )}
+
+        {currentView === 'reports' && (
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2 text-white"><FileText className="w-5 h-5 text-blue-300" /> Reports</h2>
@@ -1359,6 +1364,7 @@ export default function Dashboard() {
             </div>
           </Card>
         </section>
+        )}
 
       </main>
 
