@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, Settings, ChevronLeft, Save, Trash2 } from 'lucide-react';
+import { Activity, Brain, Server, Terminal, Briefcase, Calendar, BookOpen, DollarSign, Database, Play, Plus, Settings, ChevronLeft, Save, Trash2, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -520,8 +520,7 @@ export default function Dashboard() {
 
   const activeBrain = selectedBrainId ? brains.find(b => b.id === selectedBrainId) : null;
 
-  if (currentView === 'brain-detail' && activeBrain) {
-    return (
+  const brainDetailView = currentView === 'brain-detail' && activeBrain ? (
       <div className="min-h-screen bg-background text-foreground p-8 font-sans">
         <header className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -534,7 +533,7 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold tracking-tight">{activeBrain.name} <span className="text-muted-foreground font-normal text-lg ml-2">Configuration</span></h1>
           </div>
           <div className="flex items-center gap-3">
-             <button onClick={() => setCurrentView('dashboard')} className="px-4 py-2 text-sm rounded border border-border hover:bg-white/5 transition-colors">Cancel</button>
+             <button onClick={() => setCurrentView('dashboard')} className="px-4 py-2 text-sm rounded border border-border hover:bg-white/5 hover:shadow-md hover:-translate-y-0.5 transition transition-colors">Cancel</button>
              <div className="flex items-center gap-3">
                <span className="text-xs text-muted-foreground">
                  {lastSavedAt ? `Saved ${lastSavedAt.toLocaleTimeString()}` : 'Not saved yet'}
@@ -1021,8 +1020,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    );
-  }
+  ) : null;
 
   const isDark = theme === 'dark';
 
@@ -1041,7 +1039,7 @@ export default function Dashboard() {
           <nav className="flex flex-col gap-1 text-sm">
             <button
               onClick={() => setCurrentView('dashboard')}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${currentView === 'dashboard' ? 'bg-blue-600/20 text-blue-200 border border-blue-500/30' : 'text-muted-foreground hover:bg-white/5'}`}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${currentView === 'dashboard' ? 'bg-blue-600/20 text-blue-200 border border-blue-500/30' : 'text-muted-foreground hover:bg-white/5 hover:shadow-md hover:-translate-y-0.5 transition'}`}
             >
               <Activity className="w-4 h-4" /> Dashboard
             </button>
@@ -1069,6 +1067,13 @@ export default function Dashboard() {
         <div className="flex-1 p-6">
       <header className={`mb-6 flex items-center justify-between rounded-2xl border ${isDark ? 'border-white/10 bg-white/5' : 'border-black/10 bg-white/80'} backdrop-blur-xl px-6 py-4`}>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-lg border border-white/10 hover:bg-white/5 hover:shadow-md transition"
+            title="Toggle menu"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
           <div className="p-2 rounded-xl bg-blue-600/20 text-blue-300"><Activity className="w-6 h-6" /></div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-foreground">Project Cerebro</h1>
@@ -1076,12 +1081,6 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="px-3 py-2 text-xs rounded-md border border-white/10 hover:bg-white/5"
-          >
-            {sidebarOpen ? 'Hide' : 'Show'} Menu
-          </button>
           <button
             onClick={() => setIsAddTaskOpen(true)}
             className="flex items-center gap-2 px-3 py-2 text-xs rounded-md bg-blue-600/80 hover:bg-blue-600 text-white transition-colors"
@@ -1110,6 +1109,9 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {currentView === 'brain-detail' && brainDetailView}
+
+      {currentView !== 'brain-detail' && (
       <main className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 <section className="lg:col-span-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1181,7 +1183,10 @@ export default function Dashboard() {
         </section>
 
         {/* Brain Status Grid */}
-        <section className="lg:col-span-2 h-full">
+        <section className="lg:col-span-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+            <div className="lg:col-span-2 h-full">
+
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground"><Server className="w-5 h-5 text-blue-300" /> Active Brains</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-[480px]">
             {brains.filter(b => b.id === 'nexus').map((brain) => (
@@ -1250,6 +1255,57 @@ export default function Dashboard() {
               </motion.div>
             ))}
           </div>
+            </div>
+            <div className="lg:col-span-1 h-full">
+
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Calendar className="w-5 h-5 text-blue-300" /> Recurring Tasks</h2>
+            <span className="text-xs text-muted-foreground">{recurringTasks.length} active</span>
+          </div>
+          <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto">
+            {recurringTasks.map((rt) => {
+              const isBrainTask = (rt.description || '').includes('REPORT_KIND:') || (rt.description || '').includes('PLANNING_KIND:') || (rt.description || '').includes('MONEY_SEARCH');
+              return (
+              <Card key={rt.id} className={`p-4 bg-gradient-to-br from-white/5 via-white/5 to-blue-500/5 ${isBrainTask ? '' : 'cursor-pointer'}`} onClick={() => { if (!isBrainTask) openRecurringEditor(rt); }}>
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-bold text-foreground">{rt.title}</h3>
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Toggle checked={rt.enabled} onChange={(v) => toggleRecurringTask(rt.id, v)} />
+                    <button
+                      onClick={() => runRecurringTask(rt.id)}
+                      className="p-1.5 hover:bg-blue-900/20 hover:text-blue-300 rounded transition-colors text-muted-foreground"
+                      title="Run Now"
+                    >
+                      <Play className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteRecurringTask(rt.id)}
+                      className="p-1.5 hover:bg-red-900/20 hover:text-red-400 rounded transition-colors text-muted-foreground"
+                      title="Delete Recurring Task"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">{getBrainName(rt.brainId)} • {rt.scheduleType === 'INTERVAL' ? `Every ${Math.round((rt.intervalMs || 0) / 60000)} min` : rt.scheduleType}{(rt.description || '').includes('REPORT_KIND:') || (rt.description || '').includes('PLANNING_KIND:') || (rt.description || '').includes('MONEY_SEARCH') ? ' • Brain Task' : ''}</p>
+                {((rt.description || '').includes('REPORT_KIND:') || (rt.description || '').includes('PLANNING_KIND:') || (rt.description || '').includes('MONEY_SEARCH')) && (
+                  <p className="text-[11px] text-muted-foreground">Managed in Brain Config → Schedules</p>
+                )}
+                <div className="text-xs text-gray-500 flex justify-between items-center">
+                  <span>Next: {new Date(rt.nextRunAt).toLocaleString()}</span>
+                  <span>{rt.enabled ? 'Enabled' : 'Paused'}</span>
+                </div>
+              </Card>
+              );
+            })}
+            {recurringTasks.length === 0 && (
+              <div className="text-center p-8 border border-dashed border-border rounded-lg text-muted-foreground text-sm">
+                No recurring tasks configured.
+              </div>
+            )}
+          </div>
+            </div>
+          </div>
         </section>
 
         {/* Task Graph Stream */}
@@ -1315,11 +1371,11 @@ export default function Dashboard() {
                         task.status === 'FAILED' ? 'text-red-400' : 'text-muted-foreground'
                       }>{task.status}</span>
                     </td>
-                    <td className="py-3 text-muted-foreground">{task.brainId}</td>
-                    <td className="py-3 text-muted-foreground">
+                    <td className="py-3 px-2 text-muted-foreground">{task.brainId}</td>
+                    <td className="py-3 px-2 text-muted-foreground">
                       <Badge variant="default">{task.modelOverride || 'default'}</Badge>
                     </td>
-                    <td className="py-3 font-medium text-foreground">
+                    <td className="py-3 px-2 font-medium text-foreground">
                       <div>{task.title}</div>
                       {task.description && (
                         <div className="text-xs text-muted-foreground font-normal mt-1 line-clamp-1 max-w-md">
@@ -1346,57 +1402,10 @@ export default function Dashboard() {
           </Card>
         </section>
 
-        {/* Recurring Tasks */}
-        <section className="lg:col-span-1 h-full">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Calendar className="w-5 h-5 text-blue-300" /> Recurring Tasks</h2>
-            <span className="text-xs text-muted-foreground">{recurringTasks.length} active</span>
-          </div>
-          <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto">
-            {recurringTasks.map((rt) => {
-              const isBrainTask = (rt.description || '').includes('REPORT_KIND:') || (rt.description || '').includes('PLANNING_KIND:') || (rt.description || '').includes('MONEY_SEARCH');
-              return (
-              <Card key={rt.id} className={`p-4 bg-gradient-to-br from-white/5 via-white/5 to-blue-500/5 ${isBrainTask ? '' : 'cursor-pointer'}`} onClick={() => { if (!isBrainTask) openRecurringEditor(rt); }}>
-                <div className="flex justify-between items-start mb-1">
-                  <h3 className="font-bold text-foreground">{rt.title}</h3>
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Toggle checked={rt.enabled} onChange={(v) => toggleRecurringTask(rt.id, v)} />
-                    <button
-                      onClick={() => runRecurringTask(rt.id)}
-                      className="p-1.5 hover:bg-blue-900/20 hover:text-blue-300 rounded transition-colors text-muted-foreground"
-                      title="Run Now"
-                    >
-                      <Play className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => deleteRecurringTask(rt.id)}
-                      className="p-1.5 hover:bg-red-900/20 hover:text-red-400 rounded transition-colors text-muted-foreground"
-                      title="Delete Recurring Task"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mb-2">{getBrainName(rt.brainId)} • {rt.scheduleType === 'INTERVAL' ? `Every ${Math.round((rt.intervalMs || 0) / 60000)} min` : rt.scheduleType}{(rt.description || '').includes('REPORT_KIND:') || (rt.description || '').includes('PLANNING_KIND:') || (rt.description || '').includes('MONEY_SEARCH') ? ' • Brain Task' : ''}</p>
-                {((rt.description || '').includes('REPORT_KIND:') || (rt.description || '').includes('PLANNING_KIND:') || (rt.description || '').includes('MONEY_SEARCH')) && (
-                  <p className="text-[11px] text-muted-foreground">Managed in Brain Config → Schedules</p>
-                )}
-                <div className="text-xs text-gray-500 flex justify-between items-center">
-                  <span>Next: {new Date(rt.nextRunAt).toLocaleString()}</span>
-                  <span>{rt.enabled ? 'Enabled' : 'Paused'}</span>
-                </div>
-              </Card>
-              );
-            })}
-            {recurringTasks.length === 0 && (
-              <div className="text-center p-8 border border-dashed border-border rounded-lg text-muted-foreground text-sm">
-                No recurring tasks configured.
-              </div>
-            )}
-          </div>
-        </section>
+
 
       </main>
+      )}
 
         </div>
       </div>
