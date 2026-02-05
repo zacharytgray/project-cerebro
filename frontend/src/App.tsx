@@ -1184,7 +1184,8 @@ export default function Dashboard() {
                   <span>{rt.enabled ? 'Enabled' : 'Paused'}</span>
                 </div>
               </Card>
-            ))}
+              );
+            })}
             {recurringTasks.length === 0 && (
               <div className="text-center p-8 border border-dashed border-border rounded-lg text-muted-foreground text-sm">
                 No recurring tasks configured.
