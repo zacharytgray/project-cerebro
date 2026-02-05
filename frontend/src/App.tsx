@@ -57,7 +57,7 @@ interface Report {
 
 // Components
 const Card = ({ children, className = '', onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) => (
-  <div className={`bg-white/5 border border-white/10 rounded-xl p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] backdrop-blur ${className}`} onClick={onClick}>
+  <div className={`bg-white/90 dark:bg-white/5 border border-black/10 dark:border-white/10 text-foreground rounded-xl p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] backdrop-blur ${className}`} onClick={onClick}>
     {children}
   </div>
 );
@@ -985,10 +985,12 @@ export default function Dashboard() {
     );
   }
 
+  const isDark = theme === 'dark';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0b0e14] via-[#0d111c] to-[#0a0f1a] text-foreground">
+    <div className={`min-h-screen ${isDark ? 'bg-gradient-to-br from-[#0b0e14] via-[#0d111c] to-[#0a0f1a]' : 'bg-slate-50'} text-foreground`}>
       <div className="flex min-h-screen">
-        <aside className="hidden lg:flex w-64 flex-col gap-6 border-r border-white/10 bg-white/5 backdrop-blur-xl p-6 shadow-[inset_0_0_40px_rgba(59,130,246,0.05)]">
+        <aside className={`hidden lg:flex w-64 flex-col gap-6 border-r ${isDark ? 'border-white/10 bg-white/5' : 'border-black/10 bg-white/80'} backdrop-blur-xl p-6 shadow-[inset_0_0_40px_rgba(59,130,246,0.05)]`}>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-blue-600/20 text-blue-300"><Activity className="w-5 h-5" /></div>
             <div>
@@ -1020,11 +1022,11 @@ export default function Dashboard() {
         </aside>
 
         <div className="flex-1 p-6">
-      <header className="mb-6 flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl px-6 py-4">
+      <header className={`mb-6 flex items-center justify-between rounded-2xl border ${isDark ? 'border-white/10 bg-white/5' : 'border-black/10 bg-white/80'} backdrop-blur-xl px-6 py-4`}>
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-blue-600/20 text-blue-300"><Activity className="w-6 h-6" /></div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">Project Cerebro</h1>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Project Cerebro</h1>
             <p className="text-xs text-muted-foreground">Polished control surface</p>
           </div>
         </div>
@@ -1064,17 +1066,17 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="bg-gradient-to-br from-blue-600/15 via-white/5 to-transparent">
               <div className="text-xs text-muted-foreground">Tasks</div>
-              <div className="text-2xl font-bold mt-1 text-white">{tasks.length}</div>
+              <div className="text-2xl font-bold mt-1 text-foreground">{tasks.length}</div>
               <div className="text-[11px] text-muted-foreground mt-2">All task entries</div>
             </Card>
             <Card className="bg-gradient-to-br from-emerald-500/15 via-white/5 to-transparent">
               <div className="text-xs text-muted-foreground">Executing</div>
-              <div className="text-2xl font-bold mt-1 text-white">{tasks.filter(t => t.status === 'EXECUTING').length}</div>
+              <div className="text-2xl font-bold mt-1 text-foreground">{tasks.filter(t => t.status === 'EXECUTING').length}</div>
               <div className="text-[11px] text-muted-foreground mt-2">Currently running</div>
             </Card>
             <Card className="bg-gradient-to-br from-purple-500/15 via-white/5 to-transparent">
               <div className="text-xs text-muted-foreground">Recurring</div>
-              <div className="text-2xl font-bold mt-1 text-white">{recurringTasks.length}</div>
+              <div className="text-2xl font-bold mt-1 text-foreground">{recurringTasks.length}</div>
               <div className="text-[11px] text-muted-foreground mt-2">Scheduled automations</div>
             </Card>
           </div>
@@ -1083,7 +1085,7 @@ export default function Dashboard() {
         {/* File Ingestion */}
         <section className="lg:col-span-3">
           <Card className="bg-gradient-to-br from-blue-600/10 via-white/5 to-purple-600/10">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white"><Database className="w-5 h-5 text-blue-300" /> File Ingestion</h2>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground"><Database className="w-5 h-5 text-blue-300" /> File Ingestion</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div>
                 <label className="text-xs text-muted-foreground">Target Brain</label>
@@ -1131,7 +1133,7 @@ export default function Dashboard() {
 
         {/* Brain Status Grid */}
         <section className="lg:col-span-3">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white"><Server className="w-5 h-5 text-blue-300" /> Active Brains</h2>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground"><Server className="w-5 h-5 text-blue-300" /> Active Brains</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             {brains.map((brain) => (
               <motion.div key={brain.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -1146,7 +1148,7 @@ export default function Dashboard() {
                     </Badge>
                   </div>
                   <div>
-                    <h3 className="font-semibold truncate text-white">{brain.name}</h3>
+                    <h3 className="font-semibold truncate text-foreground">{brain.name}</h3>
                     <p className="text-xs text-muted-foreground mt-1">
                       {brain.status === 'EXECUTING' ? 'Processing task...' : 'Waiting for heartbeat'}
                     </p>
@@ -1175,7 +1177,7 @@ export default function Dashboard() {
         <section className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2 text-white"><Terminal className="w-5 h-5 text-blue-300" /> Execution Stream</h2>
+              <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Terminal className="w-5 h-5 text-blue-300" /> Execution Stream</h2>
               <span className="text-[10px] uppercase tracking-widest text-blue-200/70">Live</span>
               <div className="flex items-center gap-1 bg-secondary/30 p-1 rounded-full border border-white/10">
                 {['ALL', 'READY', 'EXECUTING', 'COMPLETED', 'FAILED'].map(f => (
@@ -1268,7 +1270,7 @@ export default function Dashboard() {
         {/* Recurring Tasks */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-white"><Calendar className="w-5 h-5 text-blue-300" /> Recurring Tasks</h2>
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Calendar className="w-5 h-5 text-blue-300" /> Recurring Tasks</h2>
             <span className="text-xs text-muted-foreground">{recurringTasks.length} active</span>
           </div>
           <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto">
@@ -1277,7 +1279,7 @@ export default function Dashboard() {
               return (
               <Card key={rt.id} className={`p-4 bg-gradient-to-br from-white/5 via-white/5 to-blue-500/5 ${isBrainTask ? '' : 'cursor-pointer'}`} onClick={() => { if (!isBrainTask) openRecurringEditor(rt); }}>
                 <div className="flex justify-between items-start mb-1">
-                  <h3 className="font-bold text-white">{rt.title}</h3>
+                  <h3 className="font-bold text-foreground">{rt.title}</h3>
                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <Toggle checked={rt.enabled} onChange={(v) => toggleRecurringTask(rt.id, v)} />
                     <button
@@ -1318,7 +1320,7 @@ export default function Dashboard() {
         {/* Active Jobs */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-white"><Briefcase className="w-5 h-5 text-blue-300" /> Tracked Jobs</h2>
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Briefcase className="w-5 h-5 text-blue-300" /> Tracked Jobs</h2>
             <span className="text-xs text-muted-foreground">{jobs.length} active</span>
           </div>
           <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto">
@@ -1353,7 +1355,7 @@ export default function Dashboard() {
         {currentView === 'reports' && (
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-white"><FileText className="w-5 h-5 text-blue-300" /> Reports</h2>
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><FileText className="w-5 h-5 text-blue-300" /> Reports</h2>
             <div className="flex items-center gap-2">
               <select
                 className="bg-secondary/50 border border-border rounded px-3 py-1.5 text-xs"
