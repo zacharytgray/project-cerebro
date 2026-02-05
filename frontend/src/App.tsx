@@ -124,6 +124,7 @@ export default function Dashboard() {
   const [proactiveInput, setProactiveInput] = useState<string>('');
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [themeSource, setThemeSource] = useState<'system' | 'manual'>('system');
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
 
   const getBrainName = (brainId: string) => {
     const brain = brains.find(b => b.id === brainId);
@@ -197,6 +198,7 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ config: updatedText })
       });
+      setLastSavedAt(new Date());
     } catch (e) {
       console.error(e);
     }
@@ -230,7 +232,9 @@ export default function Dashboard() {
       setThemeSource('system');
       setTheme(prefersDark ? 'dark' : 'light');
     }
+  }, []);
 
+  useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) => {
       if (themeSource === 'system') {
@@ -241,12 +245,18 @@ export default function Dashboard() {
     return () => {
       if (media && media.removeEventListener) media.removeEventListener('change', handler);
     };
-  }, []);
+  }, [themeSource]);
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'dark') root.classList.add('dark');
-    else root.classList.remove('dark');
+    const body = document.body;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      body.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+      body.classList.remove('dark');
+    }
   }, [theme]);
 
   useEffect(() => {
@@ -487,10 +497,15 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
              <button onClick={() => setCurrentView('dashboard')} className="px-4 py-2 text-sm rounded border border-border hover:bg-white/5 transition-colors">Cancel</button>
-             <button onClick={saveBrainConfig} className="flex items-center gap-2 px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors">
-                <Save className="w-4 h-4" />
-                Save Changes
-             </button>
+             <div className="flex items-center gap-3">
+               <span className="text-xs text-muted-foreground">
+                 {lastSavedAt ? `Saved ${lastSavedAt.toLocaleTimeString()}` : 'Not saved yet'}
+               </span>
+               <button onClick={saveBrainConfig} className="flex items-center gap-2 px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors">
+                  <Save className="w-4 h-4" />
+                  Save Changes
+               </button>
+             </div>
           </div>
         </header>
 
