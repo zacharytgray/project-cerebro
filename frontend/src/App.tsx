@@ -1134,8 +1134,38 @@ export default function Dashboard() {
         {/* Brain Status Grid */}
         <section className="lg:col-span-3 xl:col-span-2 xl:order-1">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground"><Server className="w-5 h-5 text-blue-300" /> Active Brains</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            {brains.map((brain) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {brains.filter(b => b.id === 'nexus').map((brain) => (
+              <motion.div key={brain.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-3">
+                <Card className="flex flex-col gap-4 relative overflow-hidden group bg-gradient-to-br from-blue-600/20 via-white/5 to-purple-600/10">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-blue-500/60"></div>
+                  <div className="flex justify-between items-start">
+                    <div className="p-2 bg-secondary/40 rounded-lg text-blue-300">
+                      {getBrainIcon(brain.id)}
+                    </div>
+                    <Badge variant={brain.status === 'EXECUTING' ? 'success' : 'default'}>
+                      {brain.status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">{brain.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">All-seeing orchestration layer</p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 pt-3 border-t border-white/10">
+                     <Toggle checked={brain.autoMode} onChange={(v) => toggleBrain(brain.id, v)} />
+                     <span className="text-xs text-muted-foreground">Auto</span>
+                     <div className="flex-1" />
+                     <button onClick={() => openBrainConfig(brain)} className="p-1 hover:bg-white/10 rounded transition-colors" title="Configure Brain">
+                        <Settings className="w-4 h-4 text-blue-300" />
+                     </button>
+                     <button onClick={() => forceRun(brain.id)} className="p-1 hover:bg-white/10 rounded transition-colors" title="Force Run">
+                        <Play className="w-4 h-4 text-emerald-300" />
+                     </button>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+            {brains.filter(b => b.id !== 'nexus').map((brain) => (
               <motion.div key={brain.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <Card className="flex flex-col gap-4 relative overflow-hidden group bg-gradient-to-br from-white/5 via-white/5 to-blue-500/5">
                   <div className={`absolute top-0 left-0 w-1 h-full ${brain.status === 'EXECUTING' ? 'bg-emerald-400' : 'bg-white/20'}`}></div>
