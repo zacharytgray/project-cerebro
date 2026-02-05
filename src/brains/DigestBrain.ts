@@ -19,25 +19,74 @@ export class DigestBrain extends Brain {
     public async handleUserMessage(message: string): Promise<void> {
         const text = message.trim().toLowerCase();
         if (text === '!digest') {
-            await this.generateDigest('morning');
+            await this.runDigestTask({ id: Date.now().toString(), description: 'REPORT_KIND:morning' } as any, 'morning');
         }
         if (text === '!digest-night') {
-            await this.generateDigest('night');
+            await this.runDigestTask({ id: Date.now().toString(), description: 'REPORT_KIND:night' } as any, 'night');
         }
     }
 
     protected async executeTask(task: Task): Promise<void> {
         if (task.description?.includes('REPORT_KIND:morning')) {
-            await this.generateDigest('morning');
-            await this.graph.updateTaskStatus(task.id, 'COMPLETED' as any);
+            await this.runDigestTask(task, 'morning');
             return;
         }
         if (task.description?.includes('REPORT_KIND:night')) {
-            await this.generateDigest('night');
-            await this.graph.updateTaskStatus(task.id, 'COMPLETED' as any);
+            await this.runDigestTask(task, 'night');
             return;
         }
         await super['executeTask'](task as any);
+    }
+
+    private async runDigestTask(task: Task, kind: 'morning' | 'night'): Promise<void> {
+        this.status = 'EXECUTING';
+        await this.graph.updateTaskStatus(task.id, 'EXECUTING' as any);
+        try {
+            await this.sendMessage("🔍 **Compiling Daily Digest...**");
+            const { prompt, reportBundle, state } = await this.buildDigestPrompt(kind);
+
+            const response = await fetch('http://localhost:18789/tools/invoke', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.GATEWAY_TOKEN}`
+                },
+                body: JSON.stringify({
+                    tool: 'sessions_spawn',
+                    args: {
+                        task: prompt,
+                        agentId: this.openClawAgentId || 'digest',
+                        model: task.modelOverride || undefined,
+                        label: `Cerebro: ${this.name}`,
+                        thinking: 'low'
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Gateway returned ${response.status}: ${await response.text()}`);
+            }
+
+            const result = await response.json();
+            const details = result?.result?.details || result?.details;
+            if (!result?.ok || details?.status !== 'accepted') {
+                throw new Error(`Gateway spawn failed: ${JSON.stringify(details || result)}`);
+            }
+
+            // Save deterministic bundle for traceability
+            const digestStorage = new BrainStorage('digest');
+            const today = this.getDateString(new Date());
+            await digestStorage.writeReport(kind, reportBundle, today);
+
+            await this.writeState(state);
+            await this.graph.updateTaskStatus(task.id, 'COMPLETED' as any);
+        } catch (error) {
+            console.error(`[${this.name}] Digest task failed:`, error);
+            await this.sendMessage(`❌ **Digest Failed:** ${String(error)}`);
+            await this.graph.updateTaskStatus(task.id, 'FAILED' as any, String(error));
+        } finally {
+            this.status = 'IDLE';
+        }
     }
 
     private async readState(): Promise<any> {
@@ -75,9 +124,7 @@ export class DigestBrain extends Brain {
         }
     }
 
-    private async generateDigest(kind: 'morning' | 'night'): Promise<void> {
-        await this.sendMessage("🔍 **Compiling Daily Digest...**");
-
+    private async buildDigestPrompt(kind: 'morning' | 'night'): Promise<{ prompt: string; reportBundle: string; state: any }> {
         const now = new Date();
         const today = this.getDateString(now);
         const tomorrow = this.getDateString(new Date(now.getTime() + 24 * 60 * 60 * 1000));
@@ -87,15 +134,14 @@ export class DigestBrain extends Brain {
         const lastRunAt = state.lastRun?.[kind] || 0;
         const lastReportedByBrain = state.lastReportedByBrain || {};
 
-        let report = `📅 **Daily Digest (${kind}) — ${today}**\n\n`;
-        report += kind === 'morning'
-            ? `**Day ahead:** ${today}\n\n`
-            : `**Looking ahead:** ${tomorrow}\n\n`;
+        let bundle = `DIGEST_KIND: ${kind}\nRUN_DATE: ${today}\nTARGET_DATE: ${targetDate}\n\n`;
+        bundle += kind === 'morning'
+            ? `Focus: day ahead (${today}).\n\n`
+            : `Focus: following day (${tomorrow}).\n\n`;
 
         let hasContent = false;
 
         for (const brainId of this.monitoredBrains) {
-            const storage = new BrainStorage(brainId);
             const files = await this.listReportFiles(brainId);
 
             const relevantFiles: string[] = [];
@@ -117,13 +163,11 @@ export class DigestBrain extends Brain {
             if (relevantFiles.length === 0) continue;
 
             hasContent = true;
-            report += `**${brainId.toUpperCase()} BRAIN**\n`;
+            bundle += `=== ${brainId.toUpperCase()} BRAIN ===\n`;
 
             for (const filePath of relevantFiles) {
                 const content = await fs.promises.readFile(filePath, 'utf-8');
-                const lines = content.split('\n').filter(l => l.trim().length > 0);
-                const summary = lines.slice(0, 25).join('\n');
-                report += `${summary}\n\n`;
+                bundle += `--- ${path.basename(filePath)} ---\n${content}\n\n`;
             }
 
             if (brainId !== 'personal' && brainId !== 'school') {
@@ -132,26 +176,29 @@ export class DigestBrain extends Brain {
         }
 
         if (!hasContent) {
-            report += "*No new reports since the last digest run.*";
+            bundle += "NO_NEW_REPORTS\n";
         }
 
-        // Split message if too long for Discord (2000 chars)
-        if (report.length > 2000) {
-            const chunks = report.match(/[\s\S]{1,1900}/g) || [];
-            for (const chunk of chunks) {
-                await this.sendMessage(chunk);
-            }
-        } else {
-            await this.sendMessage(report);
-        }
+        const prompt = `You are the Daily Digest Brain. Summarize the bundled reports below into ONE cohesive message for Discord.
 
-        // Save digest report
-        const digestStorage = new BrainStorage('digest');
-        await digestStorage.writeReport(kind, report, today);
+Constraints:
+- Output ONE message only.
+- Use 12-hour AM/PM time.
+- If kind=morning, outline the day ahead (today). If kind=night, outline the following day (tomorrow).
+- Explicitly call out calendar additions from Personal and Schoolwork brains.
+- Do NOT repeat items from money/job/research that were already reported previously (the bundle already filters these).
+- Keep it concise but complete.
+- End with a short "Actionable Highlights" bullet list.
+
+Report Bundle:
+${bundle}
+
+IMPORTANT: When finished, send a Discord message to channel ID ${this.discordChannelId} using the message tool.`;
 
         state.lastRun = state.lastRun || {};
         state.lastRun[kind] = Date.now();
         state.lastReportedByBrain = lastReportedByBrain;
-        await this.writeState(state);
+
+        return { prompt, reportBundle: bundle, state };
     }
 }
