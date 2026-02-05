@@ -1204,7 +1204,7 @@ export default function Dashboard() {
         </section>
 
         {/* Task Graph Stream */}
-        <section className="lg:col-span-2 xl:col-span-2 xl:order-3">
+        <section className="lg:col-span-2 xl:col-span-2 xl:order-3 h-full">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Terminal className="w-5 h-5 text-blue-300" /> Execution Stream</h2>
@@ -1298,7 +1298,7 @@ export default function Dashboard() {
         </section>
 
         {/* Recurring Tasks */}
-        <section className="xl:col-span-1 xl:order-4">
+        <section className="xl:col-span-1 xl:order-4 h-full">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Calendar className="w-5 h-5 text-blue-300" /> Recurring Tasks</h2>
             <span className="text-xs text-muted-foreground">{recurringTasks.length} active</span>
@@ -1348,7 +1348,7 @@ export default function Dashboard() {
         </section>
 
         {/* Active Jobs */}
-        <section className="xl:col-span-1 xl:order-5">
+        <section className="xl:col-span-1 xl:order-5 h-full">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Briefcase className="w-5 h-5 text-blue-300" /> Tracked Jobs</h2>
             <span className="text-xs text-muted-foreground">{jobs.length} active</span>
