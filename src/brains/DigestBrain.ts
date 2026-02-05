@@ -28,16 +28,22 @@ export class DigestBrain extends Brain {
 
         for (const brainId of this.monitoredBrains) {
             const storage = new BrainStorage(brainId);
+            const reports = await storage.readReportsForDate(date);
             const log = await storage.readTodayLog();
-            
-            if (log && log.trim().length > 0) {
+
+            if (reports.length > 0) {
                 hasContent = true;
                 report += `**${brainId.toUpperCase()} BRAIN**\n`;
-                // Simple summary: take last 3 lines or just link it? 
-                // For now, let's just show the log content (truncated if too long)
+                for (const rep of reports) {
+                    const lines = rep.content.split('\n').filter(l => l.trim().length > 0);
+                    const summary = lines.slice(0, 20).join('\n');
+                    report += `*${rep.kind.toUpperCase()} REPORT*\n${summary}\n\n`;
+                }
+            } else if (log && log.trim().length > 0) {
+                hasContent = true;
+                report += `**${brainId.toUpperCase()} BRAIN**\n`;
                 const lines = log.split('\n').filter(l => l.trim().length > 0);
-                const summary = lines.slice(-5).join('\n'); // Last 5 entries
-                
+                const summary = lines.slice(-5).join('\n');
                 report += summary + '\n\n';
             }
         }

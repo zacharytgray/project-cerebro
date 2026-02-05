@@ -56,18 +56,17 @@ export abstract class Brain {
     }
 
     protected async processTasks(force: boolean): Promise<void> {
-        // Only execute if AutoMode is ON or Forced
-        if (!this.autoMode && !force) {
-            return;
-        }
-
         // 1. Get READY tasks for this brain
         const tasks = await this.graph.getReadyTasks(this.id);
         
         if (tasks.length > 0) {
-            console.log(`[${this.name}] Found ${tasks.length} ready tasks (Auto: ${this.autoMode}, Force: ${force}).`);
+            console.log(`[${this.name}] Found ${tasks.length} ready tasks.`);
             for (const task of tasks) {
-                await this.executeTask(task);
+                // Execute if AutoMode is ON, Forced, or if it's a recurring task instance
+                const isRecurring = !!task.payload?.recurringTaskId;
+                if (this.autoMode || force || isRecurring) {
+                    await this.executeTask(task);
+                }
             }
         }
     }
@@ -92,7 +91,7 @@ export abstract class Brain {
                 body: JSON.stringify({
                     tool: 'sessions_spawn',
                     args: {
-                        task: `You are the ${this.name}. \n\nContext: ${this.description}. \n\nYour task is: ${task.title}. ${task.description ? `\n\nTask Details: ${task.description}` : ''} \n\nIMPORTANT: When finished, you MUST use the 'message' tool to send your final response/confirmation to Discord channel ID: ${this.discordChannelId}`,
+                        task: `You are the ${this.name}. \n\nContext: ${this.description}. \n\nYour task is: ${task.title}. ${task.description ? `\n\nTask Details: ${task.description}` : ''} \n\nIMPORTANT: When finished, send a Discord message to channel ID ${this.discordChannelId} with a short summary using the message tool.`,
                         agentId: this.openClawAgentId || 'main',
                         model: task.modelOverride || undefined,
                         label: `Cerebro: ${this.name}`,

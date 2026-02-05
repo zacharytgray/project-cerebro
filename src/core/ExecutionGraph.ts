@@ -247,6 +247,15 @@ export class ExecutionGraph {
         });
     }
 
+    public async getRecurringTasksByBrain(brainId: string): Promise<RecurringTask[]> {
+        return new Promise((resolve, reject) => {
+            this.db.all('SELECT * FROM recurring_tasks WHERE brainId = ? ORDER BY createdAt DESC', [brainId], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows.map(this.mapRowToRecurringTask));
+            });
+        });
+    }
+
     public async getDueRecurringTasks(now: number): Promise<RecurringTask[]> {
         return new Promise((resolve, reject) => {
             const query = `SELECT * FROM recurring_tasks WHERE enabled = 1 AND nextRunAt <= ?`;
@@ -277,6 +286,34 @@ export class ExecutionGraph {
             this.db.run(
                 'UPDATE recurring_tasks SET enabled = ?, updatedAt = ? WHERE id = ?',
                 [enabled ? 1 : 0, now, id],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+    }
+
+    public async updateRecurringTaskSchedule(id: string, scheduleType: RecurringScheduleType, scheduleConfig: string | undefined, intervalMs: number | undefined, nextRunAt: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const now = Date.now();
+            this.db.run(
+                'UPDATE recurring_tasks SET scheduleType = ?, scheduleConfig = ?, intervalMs = ?, nextRunAt = ?, updatedAt = ? WHERE id = ?',
+                [scheduleType, scheduleConfig || null, intervalMs || null, nextRunAt, now, id],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+    }
+
+    public async updateRecurringTaskFields(id: string, fields: { title?: string; description?: string; modelOverride?: string }): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const now = Date.now();
+            this.db.run(
+                'UPDATE recurring_tasks SET title = ?, description = ?, modelOverride = ?, updatedAt = ? WHERE id = ?',
+                [fields.title || null, fields.description || null, fields.modelOverride || null, now, id],
                 (err) => {
                     if (err) reject(err);
                     else resolve();

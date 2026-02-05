@@ -3,13 +3,18 @@ import * as path from 'path';
 
 export class BrainStorage {
     private basePath: string;
+    private reportsPath: string;
     private brainId: string;
 
     constructor(brainId: string) {
         this.brainId = brainId;
         this.basePath = path.join(process.cwd(), 'data', brainId);
+        this.reportsPath = path.join(this.basePath, 'reports');
         if (!fs.existsSync(this.basePath)) {
             fs.mkdirSync(this.basePath, { recursive: true });
+        }
+        if (!fs.existsSync(this.reportsPath)) {
+            fs.mkdirSync(this.reportsPath, { recursive: true });
         }
     }
 
@@ -45,5 +50,33 @@ export class BrainStorage {
          } catch (e) {
              return 'No context defined.';
          }
+    }
+
+    public async writeReport(kind: 'morning' | 'night', content: string, date?: string): Promise<void> {
+        const reportDate = date || new Date().toISOString().split('T')[0];
+        const reportFile = path.join(this.reportsPath, `${reportDate}-${kind}.md`);
+        await fs.promises.writeFile(reportFile, content);
+    }
+
+    public async readReport(kind: 'morning' | 'night', date?: string): Promise<string> {
+        const reportDate = date || new Date().toISOString().split('T')[0];
+        const reportFile = path.join(this.reportsPath, `${reportDate}-${kind}.md`);
+        try {
+            return await fs.promises.readFile(reportFile, 'utf-8');
+        } catch (e) {
+            return '';
+        }
+    }
+
+    public async readReportsForDate(date?: string): Promise<{ kind: 'morning' | 'night'; content: string }[]> {
+        const reportDate = date || new Date().toISOString().split('T')[0];
+        const reports: { kind: 'morning' | 'night'; content: string }[] = [];
+        for (const kind of ['morning', 'night'] as const) {
+            const content = await this.readReport(kind, reportDate);
+            if (content && content.trim().length > 0) {
+                reports.push({ kind, content });
+            }
+        }
+        return reports;
     }
 }

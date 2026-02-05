@@ -5,7 +5,7 @@
       "name": "Personal Life Brain",
       "channelKey": "personal_life_brain",
       "type": "context",
-      "description": "Personal life, routines, health, errands, relationships",
+      "description": "Personal life, routines, health, errands, relationships. Calendar access via gog CLI using account zacharytgray@gmail.com; calendars: primary + Spring 2026 Classes (ID: 11f616ac4709e82271d6902bec2d12cb2f927a7777dbad0a7e9c7ae611bf00a7@group.calendar.google.com). Always merge and list chronologically with no calendar headings.",
       "openClawAgentId": "personal"
     },
     {
