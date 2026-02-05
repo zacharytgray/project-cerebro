@@ -189,6 +189,7 @@ Constraints:
 - Do NOT repeat items from money/job/research that were already reported previously (the bundle already filters these).
 - Keep it concise but complete.
 - End with a short "Actionable Highlights" bullet list.
+- When mentioning bedtime, DO NOT estimate. Use the deterministic script: \`node dist/scripts/bedtime.js\` and report its output verbatim.
 
 Report Bundle:
 ${bundle}

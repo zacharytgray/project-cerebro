@@ -49,6 +49,8 @@ async function main() {
     const fromStr = from.toISOString();
     const toStr = to.toISOString();
 
+    // Always refresh from source on each run (deterministic pull)
+
     const allEvents: NormalizedEvent[] = [];
 
     for (const cal of CALENDARS) {
