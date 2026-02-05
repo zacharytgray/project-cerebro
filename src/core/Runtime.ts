@@ -11,6 +11,7 @@ export class CerebroRuntime {
     private brains: Map<string, Brain> = new Map();
     private heartbeatInterval: NodeJS.Timeout | null = null;
     private channelMap: Map<string, string> = new Map(); // ChannelID -> BrainID
+    private lastReportSyncAt: number = 0;
     public graph: ExecutionGraph;
 
     public getBrains(): Brain[] {
@@ -55,13 +56,16 @@ export class CerebroRuntime {
         console.log('Starting heartbeat loop (30s)...');
         this.heartbeatInterval = setInterval(async () => {
             
-            // 1. Evaluate Graph (Promote Waiting -> Ready)
+            // 1. Sync report schedules (config-driven)
+            await this.syncReportSchedules();
+
+            // 2. Evaluate Graph (Promote Waiting -> Ready)
             await this.graph.evaluateGraph();
 
-            // 2. Spawn due recurring tasks
+            // 3. Spawn due recurring tasks
             await this.evaluateRecurringTasks();
 
-            // 3. Tick Brains
+            // 4. Tick Brains
             this.brains.forEach(async (brain) => {
                 try {
                     await brain.onHeartbeat();
@@ -99,7 +103,290 @@ export class CerebroRuntime {
         }
     }
 
-    private computeNextRunAt(recurring: any, fromTime: number): number {
+    private async syncReportSchedules(): Promise<void> {
+        const now = Date.now();
+        if (now - this.lastReportSyncAt < 5 * 60 * 1000) return; // every 5 minutes
+        this.lastReportSyncAt = now;
+
+        const brains = this.getBrains();
+        for (const brain of brains) {
+            const record = await this.graph.getBrainConfig(brain.id);
+            if (!record?.config) continue;
+
+            let cfg: any = {};
+            try {
+                cfg = JSON.parse(record.config || '{}');
+            } catch (e) {
+                continue;
+            }
+
+            if (!cfg.reportTiming || !cfg.reporting?.enabled) continue;
+
+            const existing = await this.graph.getRecurringTasksByBrain(brain.id);
+            const ensureReportTask = async (kind: 'morning' | 'night') => {
+                const timing = cfg.reportTiming?.[kind];
+                if (!timing || typeof timing !== 'string' || !timing.includes(':')) return;
+                const [h, m] = timing.split(':');
+                const hour = Number(h);
+                const minute = Number(m || 0);
+                if (Number.isNaN(hour) || Number.isNaN(minute)) return;
+
+                const scheduleConfig = { hour, minute };
+                const marker = `REPORT_KIND:${kind}`;
+                const title = `${brain.name} Report (${kind})`;
+                const baseDesc = `${marker}
+Generate the ${kind} report for ${brain.name}. Write markdown to data/${brain.id}/reports/YYYY-MM-DD-${kind}.md.
+Always keep report concise, structured, and ready for Daily Digest.
+Location: Tulsa, Oklahoma (Timezone: America/Chicago).`;
+                const personalExtras = `\nPersonal Life requirements:
+- To get the schedule, RUN THIS SCRIPT: \`node dist/scripts/get-schedule.js\`. It handles merging, timezones, and sorting for you. Use its output as the single source of truth for the calendar.
+- List events chronologically with no calendar headings.
+- Log events added today.
+- Compute latest bedtime = earliest event tomorrow (from the script output) minus 10 hours.
+- Update memory file at memory/personal-life.md with current calendar model + preferences.`;
+                const description = brain.id === 'personal' ? baseDesc + personalExtras : baseDesc;
+
+                const existingTask = existing.find(t => (t.description || '').includes(marker));
+                const nextRunAt = this.computeNextRunAt({ scheduleType: 'DAILY', scheduleConfig: JSON.stringify(scheduleConfig) } as any, now);
+
+                if (!existingTask) {
+                    await this.graph.createRecurringTask({
+                        id: `${brain.id}-report-${kind}`,
+                        brainId: brain.id,
+                        brainName: brain.name,
+                        title,
+                        description,
+                        modelOverride: cfg.reporting?.modelOverride,
+                        scheduleType: 'DAILY',
+                        scheduleConfig: JSON.stringify(scheduleConfig),
+                        nextRunAt,
+                        lastRunAt: undefined,
+                        enabled: true,
+                        createdAt: now,
+                        updatedAt: now
+                    });
+                } else {
+                    await this.graph.updateRecurringTaskSchedule(existingTask.id, 'DAILY', JSON.stringify(scheduleConfig), undefined, nextRunAt);
+                    if (existingTask.title !== title || existingTask.description !== description) {
+                        await this.graph.deleteRecurringTask(existingTask.id);
+                        await this.graph.createRecurringTask({
+                            id: `${brain.id}-report-${kind}`,
+                            brainId: brain.id,
+                            brainName: brain.name,
+                            title,
+                            description,
+                            modelOverride: cfg.reporting?.modelOverride,
+                            scheduleType: 'DAILY',
+                            scheduleConfig: JSON.stringify(scheduleConfig),
+                            nextRunAt,
+                            lastRunAt: existingTask.lastRunAt,
+                            enabled: existingTask.enabled,
+                            createdAt: existingTask.createdAt,
+                            updatedAt: now
+                        });
+                    }
+                }
+            };
+
+            await ensureReportTask('morning');
+            await ensureReportTask('night');
+
+            // Personal Life proactive planning tasks
+            if (brain.id === 'personal') {
+                const planningCfg = cfg.personalPlanning || { morning: '09:30', night: '20:30' };
+                const ensurePlanningTask = async (kind: 'morning' | 'night') => {
+                    const timing = planningCfg?.[kind];
+                    if (!timing || typeof timing !== 'string' || !timing.includes(':')) return;
+                    const [h, m] = timing.split(':');
+                    const hour = Number(h);
+                    const minute = Number(m || 0);
+                    if (Number.isNaN(hour) || Number.isNaN(minute)) return;
+
+                    const scheduleConfig = { hour, minute };
+                    const marker = `PERSONAL_PLANNING_KIND:${kind}`;
+                    const title = `Personal Life Planning (${kind})`;
+                    const description = `${marker}
+Update the personal calendar model and proactively schedule energizing/healthy activities inside free slots.
+Location: Tulsa, Oklahoma (Timezone: America/Chicago).
+
+**STEP 1: GET SCHEDULE**
+Run \`node dist/scripts/get-schedule.js\`. This script merges your Primary and Spring 2026 calendars and converts everything to local time. USE THIS OUTPUT. Do not query gog calendar manually.
+
+**STEP 2: PLAN**
+Rules:
+- Only schedule between 09:00–23:00.
+- Prefer lunch around 13:00 but choose best mid-to-late-day slot dynamically.
+- Avoid scheduling over lunch.
+- Prefer 90–120 min study sessions if adding study time.
+- Respect higher-priority school blocks (from script output).
+- After adding events, send a Discord message confirming what was added.
+- Log all added events in data/personal/reports/YYYY-MM-DD-${kind}.md and update memory/personal-life.md.
+`;
+
+                    const existingPlanning = existing.find(t => (t.description || '').includes(marker));
+                    const nextRunAt = this.computeNextRunAt({ scheduleType: 'DAILY', scheduleConfig: JSON.stringify(scheduleConfig) } as any, now);
+                    if (!existingPlanning) {
+                        await this.graph.createRecurringTask({
+                            id: `personal-planning-${kind}`,
+                            brainId: brain.id,
+                            brainName: brain.name,
+                            title,
+                            description,
+                            modelOverride: cfg.reporting?.modelOverride,
+                            scheduleType: 'DAILY',
+                            scheduleConfig: JSON.stringify(scheduleConfig),
+                            nextRunAt,
+                            lastRunAt: undefined,
+                            enabled: true,
+                            createdAt: now,
+                            updatedAt: now
+                        });
+                    } else {
+                        await this.graph.updateRecurringTaskSchedule(existingPlanning.id, 'DAILY', JSON.stringify(scheduleConfig), undefined, nextRunAt);
+                        // Also ensure description updates
+                        if (existingPlanning.description !== description) {
+                             await this.graph.deleteRecurringTask(existingPlanning.id);
+                             await this.graph.createRecurringTask({
+                                id: `personal-planning-${kind}`,
+                                brainId: brain.id,
+                                brainName: brain.name,
+                                title,
+                                description,
+                                modelOverride: cfg.reporting?.modelOverride,
+                                scheduleType: 'DAILY',
+                                scheduleConfig: JSON.stringify(scheduleConfig),
+                                nextRunAt,
+                                lastRunAt: existingPlanning.lastRunAt,
+                                enabled: existingPlanning.enabled,
+                                createdAt: existingPlanning.createdAt,
+                                updatedAt: now
+                            });
+                        }
+                    }
+                };
+
+                await ensurePlanningTask('morning');
+                await ensurePlanningTask('night');
+            }
+
+            // Schoolwork planning tasks (config-driven)
+            if (brain.id === 'school') {
+                const planningCfg = cfg.schoolPlanning || { morning: '09:30', night: '20:30' };
+                const ensureSchoolPlanning = async (kind: 'morning' | 'night') => {
+                    const timing = planningCfg?.[kind];
+                    if (!timing || typeof timing !== 'string' || !timing.includes(':')) return;
+                    const [h, m] = timing.split(':');
+                    const hour = Number(h);
+                    const minute = Number(m || 0);
+                    if (Number.isNaN(hour) || Number.isNaN(minute)) return;
+
+                    const scheduleConfig = { hour, minute };
+                    const marker = `SCHOOL_PLANNING_KIND:${kind}`;
+                    const title = `Schoolwork Planning (${kind})`;
+                    const description = `${marker}
+1) Scan Todoist Inbox for labels @exam, @quiz, @homework, @research, @personal.
+2) **GET CALENDAR**: Run \`node dist/scripts/get-schedule.js\` to see free slots. Do not query gog manually.
+3) Build a next-7-days timeline (today + 7d) grouped by date and label.
+4) Auto-schedule study blocks for upcoming tasks using free slots (09:00–23:00), respecting preferred session length.
+   - Exams: start scheduling 7 days before due.
+   - Quizzes: 5 days before due.
+   - Homework: 3 days before due.
+5) If any task due < 48h is not scheduled, FORCE schedule and notify Discord.
+6) Write report to data/school/reports/YYYY-MM-DD-${kind}.md with: timeline, blocks scheduled, escalations.
+7) Use gog calendar (personal account) to add events; never delete events.
+`;
+
+                    const existingPlanning = existing.find(t => (t.description || '').includes(marker));
+                    const nextRunAt = this.computeNextRunAt({ scheduleType: 'DAILY', scheduleConfig: JSON.stringify(scheduleConfig) } as any, now);
+                    if (!existingPlanning) {
+                        await this.graph.createRecurringTask({
+                            id: `school-planning-${kind}`,
+                            brainId: brain.id,
+                            brainName: brain.name,
+                            title,
+                            description,
+                            modelOverride: cfg.reporting?.modelOverride,
+                            scheduleType: 'DAILY',
+                            scheduleConfig: JSON.stringify(scheduleConfig),
+                            nextRunAt,
+                            lastRunAt: undefined,
+                            enabled: true,
+                            createdAt: now,
+                            updatedAt: now
+                        });
+                    } else {
+                        await this.graph.updateRecurringTaskSchedule(existingPlanning.id, 'DAILY', JSON.stringify(scheduleConfig), undefined, nextRunAt);
+                        if (existingPlanning.description !== description) {
+                             await this.graph.deleteRecurringTask(existingPlanning.id);
+                             await this.graph.createRecurringTask({
+                                id: `school-planning-${kind}`,
+                                brainId: brain.id,
+                                brainName: brain.name,
+                                title,
+                                description,
+                                modelOverride: cfg.reporting?.modelOverride,
+                                scheduleType: 'DAILY',
+                                scheduleConfig: JSON.stringify(scheduleConfig),
+                                nextRunAt,
+                                lastRunAt: existingPlanning.lastRunAt,
+                                enabled: existingPlanning.enabled,
+                                createdAt: existingPlanning.createdAt,
+                                updatedAt: now
+                            });
+                        }
+                    }
+                };
+
+                await ensureSchoolPlanning('morning');
+                await ensureSchoolPlanning('night');
+            }
+
+            // Money weekly search (config-driven)
+            if (brain.id === 'money') {
+                const runDay = cfg.scheduling?.weeklyRunDay ?? 1;
+                const runTime = cfg.scheduling?.weeklyRunTime || '10:00';
+                const [h, m] = String(runTime).split(':');
+                const hour = Number(h);
+                const minute = Number(m || 0);
+                if (!Number.isNaN(hour) && !Number.isNaN(minute)) {
+                    const scheduleConfig = { day: Number(runDay), hour, minute };
+                    const title = 'Money Weekly Search';
+                    const description = `MONEY_SEARCH
+Spend ~${cfg.moneySearch?.weeklyHours || 2} hours searching the web for AI money-making opportunities and local small-business leads.
+- Focus: forums, communities, local businesses, small business sites.
+- Avoid: military/government, large corporations.
+- Extract contact info (emails) from business sites when possible.
+- Draft outreach emails and append to data/money/outreach-queue.json (do NOT send yet).
+- Produce a markdown report in data/money/reports/YYYY-MM-DD-search.md with leads, sources, and draft snippets.
+- Use office email only; do NOT use personal email.
+`;
+                    const existingWeekly = existing.find(t => t.id === 'money-weekly-search');
+                    const nextRunAt = this.computeNextRunAt({ scheduleType: 'WEEKLY', scheduleConfig: JSON.stringify(scheduleConfig) } as any, now);
+                    if (!existingWeekly) {
+                        await this.graph.createRecurringTask({
+                            id: 'money-weekly-search',
+                            brainId: brain.id,
+                            brainName: brain.name,
+                            title,
+                            description,
+                            modelOverride: cfg.reporting?.modelOverride,
+                            scheduleType: 'WEEKLY',
+                            scheduleConfig: JSON.stringify(scheduleConfig),
+                            nextRunAt,
+                            lastRunAt: undefined,
+                            enabled: true,
+                            createdAt: now,
+                            updatedAt: now
+                        });
+                    } else {
+                        await this.graph.updateRecurringTaskSchedule(existingWeekly.id, 'WEEKLY', JSON.stringify(scheduleConfig), undefined, nextRunAt);
+                    }
+                }
+            }
+        }
+    }
+
+    public computeNextRunAt(recurring: any, fromTime: number): number {
         const cfg = recurring.scheduleConfig ? JSON.parse(recurring.scheduleConfig) : {};
         const base = new Date(fromTime);
 
@@ -145,7 +432,22 @@ export class CerebroRuntime {
     }
 
     private async handleMessage(message: Message) {
-        if (message.author.bot) return;
+        // Allow bot messages only for task completion signals
+        if (message.author.bot) {
+            const match = message.content.match(/\u2063\u2063TASK_DONE:(.+?)\u2063/);
+            if (match) {
+                const taskId = match[1];
+                try {
+                    await this.graph.updateTaskStatus(taskId, 'COMPLETED' as any);
+                    const brainId = this.channelMap.get(message.channelId);
+                    const brain = brainId ? this.brains.get(brainId) : null;
+                    if (brain) brain.status = 'IDLE';
+                } catch (e) {
+                    console.error('Failed to mark task complete:', e);
+                }
+            }
+            return;
+        }
 
         const brainId = this.channelMap.get(message.channelId);
         if (brainId) {

@@ -3,6 +3,12 @@ node_modules/
 dist/
 .env
 
+# App data
+cerebro.db
+data/
+memory/
+frontend/dist/
+
 # Logs
 logs
 *.log

@@ -68,13 +68,32 @@ export class ApiServer {
         });
 
         // Control: Force Run
-        this.server.post<{ Params: { id: string } }>('/api/brains/:id/run', async (request, reply) => {
+        this.server.post<{ Params: { id: string }, Body: { title?: string; description?: string; modelOverride?: string } }>('/api/brains/:id/run', async (request, reply) => {
             const { id } = request.params;
+            const { title, description, modelOverride } = request.body || {} as any;
             const brain = this.runtime.getBrains().find(b => b.id === id);
             if (!brain) {
                 reply.code(404);
                 return { error: "Brain not found" };
             }
+
+            const now = Date.now();
+            await this.runtime.graph.createTask({
+                id: now.toString(),
+                brainId: brain.id,
+                brainName: brain.name,
+                status: TaskStatus.READY,
+                title: title || `${brain.name} Manual Run`,
+                description: description || 'Manual run requested.',
+                payload: { manualRun: true },
+                modelOverride,
+                dependencies: [],
+                executeAt: now,
+                createdAt: now,
+                updatedAt: now,
+                attempts: 0
+            });
+
             await brain.forceRun();
             return { success: true };
         });
@@ -204,6 +223,41 @@ export class ApiServer {
             const { id } = request.params;
             const { enabled } = request.body || {} as any;
             await this.runtime.graph.toggleRecurringTask(id, !!enabled);
+            return { success: true };
+        });
+
+        // Manual Run: create task from recurring definition + run immediately
+        this.server.post<{ Params: { id: string } }>('/api/recurring-tasks/:id/run', async (request, reply) => {
+            const { id } = request.params;
+            const recurring = (await this.runtime.graph.getRecurringTasks()).find(r => r.id === id);
+            if (!recurring) {
+                reply.code(404);
+                return { error: 'Recurring task not found' };
+            }
+
+            const brain = this.runtime.getBrains().find(b => b.id === recurring.brainId);
+            const now = Date.now();
+
+            await this.runtime.graph.createTask({
+                id: now.toString(),
+                brainId: recurring.brainId,
+                brainName: recurring.brainName,
+                status: TaskStatus.READY,
+                title: recurring.title,
+                description: recurring.description,
+                payload: { recurringTaskId: recurring.id, manualRun: true },
+                modelOverride: recurring.modelOverride,
+                dependencies: [],
+                executeAt: now,
+                createdAt: now,
+                updatedAt: now,
+                attempts: 0
+            });
+
+            if (brain) {
+                await brain.forceRun();
+            }
+
             return { success: true };
         });
 

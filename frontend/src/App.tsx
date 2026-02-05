@@ -339,6 +339,15 @@ export default function Dashboard() {
     }
   };
 
+  const runRecurringTask = async (id: string) => {
+    try {
+      await fetch(`/api/recurring-tasks/${id}/run`, { method: 'POST' });
+      fetchData();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const deleteRecurringTask = async (id: string) => {
     try {
       await fetch(`/api/recurring-tasks/${id}`, { method: 'DELETE' });
@@ -1166,6 +1175,13 @@ export default function Dashboard() {
                   <h3 className="font-bold">{rt.title}</h3>
                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <Toggle checked={rt.enabled} onChange={(v) => toggleRecurringTask(rt.id, v)} />
+                    <button
+                      onClick={() => runRecurringTask(rt.id)}
+                      className="p-1.5 hover:bg-blue-900/20 hover:text-blue-300 rounded transition-colors text-muted-foreground"
+                      title="Run Now"
+                    >
+                      <Play className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => deleteRecurringTask(rt.id)}
                       className="p-1.5 hover:bg-red-900/20 hover:text-red-400 rounded transition-colors text-muted-foreground"

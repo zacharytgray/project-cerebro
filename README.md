@@ -61,6 +61,11 @@ A central runtime loop (30s heartbeat) checks the Graph for `READY` tasks and di
 ## Recurring Tasks
 Recurring tasks live in their own section and **spawn normal execution tasks** on schedule.
 
+## File Ingestion
+The dashboard includes a file upload block that writes files to intake folders:
+- Default: `data/default/intake/`
+- Per-brain: `data/<brainId>/intake/`
+
 Supported schedule types:
 - **Hourly** (select minute of the hour)
 - **Daily** (select time of day)
@@ -70,3 +75,5 @@ Supported schedule types:
 ## Brain Configs (Per‑Brain)
 Each Brain has a persisted config JSON stored in SQLite. Edit configs in the Brain detail view (JSON textarea) and click **Save Changes**.
 These configs are intended for Brain‑specific settings and context.
+
+**Reporting:** Each brain can schedule two daily markdown reports (morning + night). Times are configurable in the UI and stored under `reportTiming`.
