@@ -29,7 +29,9 @@ export class ApiServer {
         const frontendPath = path.join(process.cwd(), 'frontend', 'dist');
         this.server.register(fastifyStatic, {
             root: frontendPath,
-            prefix: '/'
+            prefix: '/',
+            cacheControl: false,
+            maxAge: 0
         });
 
         this.registerRoutes();

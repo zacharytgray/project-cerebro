@@ -1060,7 +1060,26 @@ export default function Dashboard() {
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {currentView !== 'reports' && (
         <>
-        
+                <section className="lg:col-span-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-gradient-to-br from-blue-600/15 via-white/5 to-transparent">
+              <div className="text-xs text-muted-foreground">Tasks</div>
+              <div className="text-2xl font-bold mt-1 text-white">{tasks.length}</div>
+              <div className="text-[11px] text-muted-foreground mt-2">All task entries</div>
+            </Card>
+            <Card className="bg-gradient-to-br from-emerald-500/15 via-white/5 to-transparent">
+              <div className="text-xs text-muted-foreground">Executing</div>
+              <div className="text-2xl font-bold mt-1 text-white">{tasks.filter(t => t.status === 'EXECUTING').length}</div>
+              <div className="text-[11px] text-muted-foreground mt-2">Currently running</div>
+            </Card>
+            <Card className="bg-gradient-to-br from-purple-500/15 via-white/5 to-transparent">
+              <div className="text-xs text-muted-foreground">Recurring</div>
+              <div className="text-2xl font-bold mt-1 text-white">{recurringTasks.length}</div>
+              <div className="text-[11px] text-muted-foreground mt-2">Scheduled automations</div>
+            </Card>
+          </div>
+        </section>
+
         {/* File Ingestion */}
         <section className="lg:col-span-3">
           <Card className="bg-gradient-to-br from-blue-600/10 via-white/5 to-purple-600/10">
