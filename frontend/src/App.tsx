@@ -988,7 +988,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0b0e14] via-[#0d111c] to-[#0a0f1a] text-foreground">
       <div className="flex min-h-screen">
-        <aside className="hidden lg:flex w-64 flex-col gap-6 border-r border-white/10 bg-white/5 backdrop-blur-xl p-6">
+        <aside className="hidden lg:flex w-64 flex-col gap-6 border-r border-white/10 bg-white/5 backdrop-blur-xl p-6 shadow-[inset_0_0_40px_rgba(59,130,246,0.05)]">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-blue-600/20 text-blue-300"><Activity className="w-5 h-5" /></div>
             <div>
@@ -1050,9 +1050,9 @@ export default function Dashboard() {
               localStorage.setItem('cerebro-theme', next);
             }} />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 rounded-full px-3 py-1 border border-green-500/30 bg-green-500/10">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="text-xs text-muted-foreground">System Online</span>
+            <span className="text-xs text-green-300">System Online</span>
           </div>
         </div>
       </header>
@@ -1248,7 +1248,7 @@ export default function Dashboard() {
         {/* Recurring Tasks */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2"><Calendar className="w-5 h-5" /> Recurring Tasks</h2>
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-white"><Calendar className="w-5 h-5 text-blue-300" /> Recurring Tasks</h2>
             <span className="text-xs text-muted-foreground">{recurringTasks.length} active</span>
           </div>
           <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto">
@@ -1298,7 +1298,7 @@ export default function Dashboard() {
         {/* Active Jobs */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2"><Briefcase className="w-5 h-5" /> Tracked Jobs</h2>
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-white"><Briefcase className="w-5 h-5 text-blue-300" /> Tracked Jobs</h2>
             <span className="text-xs text-muted-foreground">{jobs.length} active</span>
           </div>
           <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto">
