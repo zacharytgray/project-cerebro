@@ -209,6 +209,27 @@ export function registerRecurringRoutes(
   });
 
   /**
+   * POST /api/recurring/:id/toggle
+   * Toggle recurring task enabled/disabled
+   */
+  server.post<{
+    Params: { id: string };
+    Body: { enabled: boolean };
+  }>('/api/recurring/:id/toggle', async (request, reply) => {
+    const { id } = request.params;
+    const { enabled } = request.body;
+    
+    const task = recurringRepo.getById(id);
+    if (!task) {
+      reply.code(404);
+      return { error: 'Recurring task not found' };
+    }
+
+    const updated = recurringRepo.update({ id, active: enabled });
+    return { success: true, task: updated };
+  });
+
+  /**
    * GET /api/brains/:brainId/recurring
    * Get recurring tasks for a brain
    */

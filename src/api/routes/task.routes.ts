@@ -73,6 +73,18 @@ export function registerTaskRoutes(
   });
 
   /**
+   * DELETE /api/tasks
+   * Clear all tasks
+   */
+  server.delete('/api/tasks', async (request, reply) => {
+    const tasks = taskRepo.findAll();
+    for (const task of tasks) {
+      taskRepo.delete(task.id);
+    }
+    return { success: true, deletedCount: tasks.length };
+  });
+
+  /**
    * GET /api/brains/:brainId/tasks
    * Get tasks for a brain
    */
