@@ -126,7 +126,8 @@ export function DashboardPage({
         dayOfWeek: '1',
       });
     } catch (err: any) {
-      setRecurringError(err.message || 'Failed to create recurring task');
+      const message = err instanceof Error ? err.message : String(err);
+      setRecurringError(message || 'Failed to create recurring task');
       console.error('Failed to create recurring task:', err);
     }
   };
