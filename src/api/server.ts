@@ -1,0 +1,124 @@
+/**
+ * API server - Fastify setup only
+ */
+
+import Fastify, { FastifyInstance } from 'fastify';
+import cors from '@fastify/cors';
+import fastifyStatic from '@fastify/static';
+import multipart from '@fastify/multipart';
+import * as path from 'path';
+import { logger } from '../lib/logger';
+import { errorHandler } from './middleware/error-handler';
+import { requestLogger } from './middleware/request-logger';
+import {
+  registerStatusRoutes,
+  registerBrainRoutes,
+  registerTaskRoutes,
+  registerRecurringRoutes,
+  registerReportRoutes,
+  registerUploadRoutes,
+} from './routes';
+import { BrainService, ReportService } from '../services';
+import { TaskRepository, RecurringTaskRepository } from '../data/repositories';
+
+export interface ApiServerDependencies {
+  brainService: BrainService;
+  taskRepo: TaskRepository;
+  recurringRepo: RecurringTaskRepository;
+  reportService: ReportService;
+}
+
+export class ApiServer {
+  private server: FastifyInstance;
+  private port: number;
+
+  constructor(
+    port: number,
+    private deps: ApiServerDependencies
+  ) {
+    this.port = port;
+    this.server = Fastify({
+      logger: false, // Use our custom logger
+    });
+
+    this.setupMiddleware();
+    this.registerRoutes();
+  }
+
+  /**
+   * Setup middleware
+   */
+  private setupMiddleware(): void {
+    // CORS
+    this.server.register(cors, {
+      origin: true, // Allow all origins for dev
+    });
+
+    // Multipart for file uploads
+    this.server.register(multipart, {
+      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+    });
+
+    // Static frontend files
+    const frontendPath = path.join(process.cwd(), 'frontend', 'dist');
+    this.server.register(fastifyStatic, {
+      root: frontendPath,
+      prefix: '/',
+      cacheControl: false,
+      maxAge: 0,
+    });
+
+    // Request logger
+    this.server.addHook('onRequest', requestLogger);
+
+    // Error handler
+    this.server.setErrorHandler(errorHandler);
+  }
+
+  /**
+   * Register all routes
+   */
+  private registerRoutes(): void {
+    registerStatusRoutes(this.server, this.deps.brainService);
+    registerBrainRoutes(this.server, this.deps.brainService);
+    registerTaskRoutes(this.server, this.deps.taskRepo);
+    registerRecurringRoutes(this.server, this.deps.recurringRepo);
+    registerReportRoutes(this.server, this.deps.reportService);
+    registerUploadRoutes(this.server);
+
+    logger.info('API routes registered');
+  }
+
+  /**
+   * Start the server
+   */
+  async start(): Promise<void> {
+    try {
+      await this.server.listen({ port: this.port, host: '0.0.0.0' });
+      logger.info('API server started', { port: this.port });
+    } catch (error) {
+      logger.error('Failed to start API server', error as Error);
+      throw error;
+    }
+  }
+
+  /**
+   * Stop the server
+   */
+  async stop(): Promise<void> {
+    try {
+      await this.server.close();
+      logger.info('API server stopped');
+    } catch (error) {
+      logger.error('Failed to stop API server', error as Error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get the Fastify instance
+   */
+  getInstance(): FastifyInstance {
+    return this.server;
+  }
+}
