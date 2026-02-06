@@ -33,6 +33,7 @@ export interface CreateRecurringTaskInput {
   cronExpression?: string;
   payload?: Record<string, any>;
   modelOverride?: string;
+  nextExecutionAt?: number;
 }
 
 export interface UpdateRecurringTaskInput {

@@ -135,18 +135,13 @@ export function registerRecurringRoutes(
       cronExpression,
       payload: body.intervalMinutes ? { intervalMinutes: body.intervalMinutes } : {},
       modelOverride: body.modelOverride,
+      nextExecutionAt,
     };
 
     const task = recurringRepo.create(input);
 
-    // Set nextExecutionAt after creation (repository doesn't handle this)
-    recurringRepo.update({
-      id: task.id,
-      nextExecutionAt,
-    });
-
     reply.code(201);
-    return { ...task, nextExecutionAt };
+    return task;
   });
 
   /**
