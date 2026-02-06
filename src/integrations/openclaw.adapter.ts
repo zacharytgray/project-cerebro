@@ -60,10 +60,20 @@ export class OpenClawAdapter {
         outputPreview: stdout.substring(0, 200),
       });
 
-      // If using --json, parse the response
+      // If using --json, parse the response and extract text from payloads
       try {
         const jsonResponse = JSON.parse(stdout);
-        return jsonResponse.output || jsonResponse.message || stdout;
+        // Extract text from result.payloads array (OpenClaw JSON format)
+        if (jsonResponse.result?.payloads && Array.isArray(jsonResponse.result.payloads)) {
+          const texts = jsonResponse.result.payloads
+            .map((p: any) => p.text)
+            .filter((t: string | null) => t && t.trim().length > 0);
+          if (texts.length > 0) {
+            return texts.join('\n');
+          }
+        }
+        // Fallback to other common fields
+        return jsonResponse.output || jsonResponse.message || jsonResponse.text || stdout;
       } catch {
         // Not JSON, return raw output
         return stdout;
