@@ -117,7 +117,7 @@ export class TaskExecutorService {
 
     this.taskRepo.update({
       id: task.id,
-      status: TaskStatus.PENDING,
+      status: TaskStatus.READY,
       executeAt,
     });
 

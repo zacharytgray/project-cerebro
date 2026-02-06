@@ -62,13 +62,10 @@ export class HeartbeatLoop {
     logger.debug('Heartbeat tick');
 
     try {
-      // 1. Process recurring tasks
+      // 1. Process recurring tasks (create instances for due recurring tasks)
       await this.processRecurringTasks();
 
-      // 2. Update task statuses (WAITING -> READY if executeAt has passed)
-      await this.updateTaskStatuses();
-
-      // 3. Run brain heartbeats
+      // 2. Run brain heartbeats (auto-mode brains will pick up READY tasks)
       await this.brainService.heartbeatAll();
     } catch (error) {
       logger.error('Heartbeat tick failed', error as Error);
@@ -112,32 +109,6 @@ export class HeartbeatLoop {
         logger.error('Failed to process recurring task', error as Error, {
           recurringTaskId: recurringTask.id,
         });
-      }
-    }
-  }
-
-  /**
-   * Update task statuses (PENDING/WAITING -> READY if eligible for execution)
-   */
-  private async updateTaskStatuses(): Promise<void> {
-    const now = Date.now();
-
-    // Handle WAITING tasks (scheduled for specific time)
-    const waitingTasks = this.taskRepo.findByStatus('WAITING' as any);
-    for (const task of waitingTasks) {
-      if (task.executeAt && task.executeAt <= now) {
-        this.taskRepo.updateStatus(task.id, 'READY' as any);
-        logger.debug('Task status updated to READY (was WAITING)', { taskId: task.id });
-      }
-    }
-
-    // Handle PENDING tasks (immediately executable or scheduled)
-    const pendingTasks = this.taskRepo.findByStatus('PENDING' as any);
-    for (const task of pendingTasks) {
-      // If no executeAt, or executeAt has passed, mark as READY
-      if (!task.executeAt || task.executeAt <= now) {
-        this.taskRepo.updateStatus(task.id, 'READY' as any);
-        logger.debug('Task status updated to READY (was PENDING)', { taskId: task.id });
       }
     }
   }

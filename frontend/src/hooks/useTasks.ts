@@ -53,12 +53,26 @@ export function useTasks() {
     [fetch]
   );
 
+  const executeTask = useCallback(
+    async (id: string) => {
+      try {
+        await api.executeTask(id);
+        // Wait a bit then refresh to see status change
+        setTimeout(fetch, 1000);
+      } catch (e) {
+        console.error('Failed to execute task:', e);
+      }
+    },
+    [fetch]
+  );
+
   return {
     tasks,
     loading,
     error,
     createTask,
     deleteTask,
+    executeTask,
     refetch: fetch,
   };
 }

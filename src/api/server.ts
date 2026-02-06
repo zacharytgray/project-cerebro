@@ -18,7 +18,7 @@ import {
   registerReportRoutes,
   registerUploadRoutes,
 } from './routes';
-import { BrainService, ReportService } from '../services';
+import { BrainService, ReportService, TaskExecutorService } from '../services';
 import { TaskRepository, RecurringTaskRepository } from '../data/repositories';
 
 export interface ApiServerDependencies {
@@ -26,6 +26,7 @@ export interface ApiServerDependencies {
   taskRepo: TaskRepository;
   recurringRepo: RecurringTaskRepository;
   reportService: ReportService;
+  taskExecutor: TaskExecutorService;
 }
 
 export class ApiServer {
@@ -81,7 +82,7 @@ export class ApiServer {
   private registerRoutes(): void {
     registerStatusRoutes(this.server, this.deps.brainService);
     registerBrainRoutes(this.server, this.deps.brainService);
-    registerTaskRoutes(this.server, this.deps.taskRepo);
+    registerTaskRoutes(this.server, this.deps.taskRepo, this.deps.taskExecutor);
     registerRecurringRoutes(this.server, this.deps.recurringRepo);
     registerReportRoutes(this.server, this.deps.reportService);
     registerUploadRoutes(this.server);

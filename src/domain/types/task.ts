@@ -3,13 +3,8 @@
  */
 
 export enum TaskStatus {
-  PENDING = 'PENDING',
-  WAITING = 'WAITING', // Waiting on time or dependency
   READY = 'READY', // Eligible for execution
   EXECUTING = 'EXECUTING',
-  PAUSED = 'PAUSED',
-  BLOCKED = 'BLOCKED',
-  NEEDS_REVIEW = 'NEEDS_REVIEW',
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
 }

@@ -112,6 +112,7 @@ export class CerebroRuntime {
       taskRepo: this.taskRepo,
       recurringRepo: this.recurringRepo,
       reportService: this.reportService,
+      taskExecutor: this.taskExecutorService,
     });
 
     logger.info('Cerebro runtime initialized');

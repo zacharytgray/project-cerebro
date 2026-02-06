@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Terminal } from 'lucide-react';
-import type { Task, BrainStatus } from '../../api/types';
+import type { Task, BrainStatus, TaskStatus } from '../../api/types';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { TaskRow } from './TaskRow';
@@ -11,10 +11,19 @@ interface TaskStreamProps {
   brains: BrainStatus[];
   loading: boolean;
   onTaskClick: (task: Task) => void;
+  onExecuteTask?: (taskId: string) => void;
+  onDeleteTask?: (taskId: string) => void;
 }
 
-export function TaskStream({ tasks, brains, loading, onTaskClick }: TaskStreamProps) {
-  const [filter, setFilter] = useState('ALL');
+export function TaskStream({ 
+  tasks, 
+  brains, 
+  loading, 
+  onTaskClick,
+  onExecuteTask,
+  onDeleteTask
+}: TaskStreamProps) {
+  const [filter, setFilter] = useState<TaskStatus | 'ALL'>('ALL');
 
   const getBrainName = (brainId: string) => {
     return brains.find((b) => b.id === brainId)?.name || brainId;
@@ -24,7 +33,7 @@ export function TaskStream({ tasks, brains, loading, onTaskClick }: TaskStreamPr
     ? tasks 
     : tasks.filter((t) => t.status === filter);
 
-  const filters = ['ALL', 'PENDING', 'EXECUTING', 'COMPLETED', 'FAILED'];
+  const filters: Array<TaskStatus | 'ALL'> = ['ALL', 'READY', 'EXECUTING', 'COMPLETED', 'FAILED'];
 
   return (
     <Card>
@@ -65,6 +74,8 @@ export function TaskStream({ tasks, brains, loading, onTaskClick }: TaskStreamPr
               task={task}
               brainName={getBrainName(task.brainId)}
               onClick={onTaskClick}
+              onExecute={onExecuteTask}
+              onDelete={onDeleteTask}
             />
           ))
         )}

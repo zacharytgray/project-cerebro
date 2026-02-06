@@ -5,18 +5,21 @@ export interface BrainStatus {
   autoMode: boolean;
 }
 
+export type TaskStatus = 'READY' | 'EXECUTING' | 'COMPLETED' | 'FAILED';
+
 export interface Task {
   id: string;
   brainId: string;
   title: string;
   description?: string;
-  status: string;
+  status: TaskStatus;
   modelOverride?: string;
   createdAt: number;
   updatedAt?: number;
   attempts?: number;
   error?: string;
   output?: string;
+  executeAt?: number;
 }
 
 export interface RecurringTask {

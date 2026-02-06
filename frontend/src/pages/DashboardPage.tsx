@@ -21,6 +21,7 @@ interface DashboardPageProps {
   onCreateTask: (taskData: any) => Promise<void>;
   onCreateRecurring: (taskData: any) => Promise<void>;
   onDeleteTask: (id: string) => void;
+  onExecuteTask: (id: string) => void;
 }
 
 export function DashboardPage({
@@ -34,6 +35,7 @@ export function DashboardPage({
   onCreateTask,
   onCreateRecurring,
   onDeleteTask,
+  onExecuteTask,
 }: DashboardPageProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
@@ -92,6 +94,8 @@ export function DashboardPage({
             brains={brains}
             loading={loadingTasks}
             onTaskClick={handleTaskClick}
+            onExecuteTask={onExecuteTask}
+            onDeleteTask={onDeleteTask}
           />
         </div>
 

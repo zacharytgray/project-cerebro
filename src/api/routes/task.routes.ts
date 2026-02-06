@@ -5,10 +5,12 @@
 import { FastifyInstance } from 'fastify';
 import { TaskRepository } from '../../data/repositories';
 import { TaskStatus, CreateTaskInput } from '../../domain/types';
+import { TaskExecutorService } from '../../services/task-executor.service';
 
 export function registerTaskRoutes(
   server: FastifyInstance,
-  taskRepo: TaskRepository
+  taskRepo: TaskRepository,
+  taskExecutor: TaskExecutorService
 ): void {
   /**
    * GET /api/tasks
@@ -80,5 +82,33 @@ export function registerTaskRoutes(
     const { brainId } = request.params;
     const tasks = taskRepo.findByBrainId(brainId);
     return { tasks };
+  });
+
+  /**
+   * POST /api/tasks/:id/execute
+   * Execute a task immediately
+   */
+  server.post<{
+    Params: { id: string };
+  }>('/api/tasks/:id/execute', async (request, reply) => {
+    const { id } = request.params;
+    const task = taskRepo.getById(id);
+    
+    if (!task) {
+      reply.code(404);
+      return { error: 'Task not found' };
+    }
+
+    if (task.status !== 'READY') {
+      reply.code(400);
+      return { error: `Task cannot be executed (status: ${task.status})` };
+    }
+
+    // Execute the task asynchronously
+    taskExecutor.executeTask(id).catch((error) => {
+      console.error('Task execution failed:', error);
+    });
+
+    return { success: true, message: 'Task execution started' };
   });
 }

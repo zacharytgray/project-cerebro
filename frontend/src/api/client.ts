@@ -108,4 +108,8 @@ export const api = {
     }),
   runBrain: (id: string) =>
     fetchApi<void>(`/api/brains/${id}/force-run`, { method: 'POST' }),
+
+  // Task Actions
+  executeTask: (id: string) =>
+    fetchApi<void>(`/api/tasks/${id}/execute`, { method: 'POST' }),
 };

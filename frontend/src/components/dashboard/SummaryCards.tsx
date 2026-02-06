@@ -10,7 +10,7 @@ interface SummaryCardsProps {
 export function SummaryCards({ brains, tasks }: SummaryCardsProps) {
   const activeBrains = brains.filter((b) => b.autoMode).length;
   const executingBrains = brains.filter((b) => b.status === 'EXECUTING').length;
-  const pendingTasks = tasks.filter((t) => t.status === 'PENDING').length;
+  const readyTasks = tasks.filter((t) => t.status === 'READY').length;
   const completedToday = tasks.filter((t) => {
     const today = new Date().setHours(0, 0, 0, 0);
     return t.status === 'COMPLETED' && t.createdAt >= today;
@@ -36,8 +36,8 @@ export function SummaryCards({ brains, tasks }: SummaryCardsProps) {
     },
     {
       icon: Clock,
-      label: 'Pending Tasks',
-      value: pendingTasks,
+      label: 'Ready Tasks',
+      value: readyTasks,
       total: tasks.length,
       color: 'text-yellow-400',
       glow: 'rgba(234, 179, 8, 0.3)',
