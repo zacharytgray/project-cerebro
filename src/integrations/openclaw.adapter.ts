@@ -31,55 +31,93 @@ export class OpenClawAdapter {
    * Execute a task with an OpenClaw agent
    */
   async executeTask(agentId: string, payload: OpenClawTaskPayload): Promise<string> {
+    const command = this.buildCommand(agentId, payload);
+    
     logger.info('Executing task with OpenClaw agent', {
       agentId,
       promptLength: payload.prompt.length,
       model: payload.model,
+      thinking: payload.thinking,
+      command: command.substring(0, 200) + (command.length > 200 ? '...' : ''), // Log truncated command for debugging
     });
 
     try {
-      // In the existing code, this uses the `openclaw` CLI tool
-      // For now, we'll keep the same approach
-      const command = this.buildCommand(agentId, payload);
-      const { stdout, stderr } = await execAsync(command);
-
-      if (stderr) {
-        logger.warn('OpenClaw execution warnings', { stderr });
-      }
-
-      logger.info('OpenClaw task completed', {
-        agentId,
-        outputLength: stdout.length,
+      const { stdout, stderr } = await execAsync(command, {
+        timeout: 600000, // 10 minute timeout
+        maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large responses
       });
 
-      return stdout;
-    } catch (error) {
-      logger.error('OpenClaw task execution failed', error as Error, { agentId });
-      throw new OpenClawError('OpenClaw task execution failed');
+      if (stderr) {
+        logger.warn('OpenClaw execution stderr output', { 
+          agentId,
+          stderr: stderr.substring(0, 500),
+        });
+      }
+
+      logger.info('OpenClaw task completed successfully', {
+        agentId,
+        outputLength: stdout.length,
+        outputPreview: stdout.substring(0, 200),
+      });
+
+      // If using --json, parse the response
+      try {
+        const jsonResponse = JSON.parse(stdout);
+        return jsonResponse.output || jsonResponse.message || stdout;
+      } catch {
+        // Not JSON, return raw output
+        return stdout;
+      }
+    } catch (error: any) {
+      // Capture detailed error information
+      const errorDetails = {
+        agentId,
+        promptLength: payload.prompt.length,
+        exitCode: error.code,
+        signal: error.signal,
+        killed: error.killed,
+        stdout: error.stdout?.substring(0, 1000) || '',
+        stderr: error.stderr?.substring(0, 1000) || '',
+        message: error.message,
+        command: command.substring(0, 100) + '...',
+      };
+      
+      logger.error('OpenClaw task execution failed', error as Error, errorDetails);
+      
+      // Include more context in the thrown error
+      const detailedMessage = `OpenClaw task execution failed for agent "${agentId}": ${error.message || 'Unknown error'}. ` +
+        `Exit code: ${error.code || 'N/A'}. ` +
+        `Stderr: ${error.stderr?.substring(0, 200) || 'None'}`;
+      
+      throw new OpenClawError(detailedMessage);
     }
   }
 
   /**
    * Build the openclaw CLI command
+   * 
+   * OpenClaw CLI usage:
+   *   openclaw agent --agent <id> --message <text> [--thinking <level>] [--json]
+   * 
+   * Note: --gateway and --token are not CLI flags; they're configured via
+   * ~/.openclaw/openclaw.json or environment variables.
    */
   private buildCommand(agentId: string, payload: OpenClawTaskPayload): string {
-    const parts: string[] = ['openclaw', 'agent', 'run'];
+    const parts: string[] = ['openclaw', 'agent'];
     
     parts.push('--agent', agentId);
-    parts.push('--gateway', this.gatewayUrl);
-    parts.push('--token', this.token);
-    
-    if (payload.model) {
-      parts.push('--model', payload.model);
-    }
     
     if (payload.thinking) {
       parts.push('--thinking', payload.thinking);
     }
     
-    // Escape the prompt
-    const escapedPrompt = payload.prompt.replace(/"/g, '\\"');
-    parts.push('--prompt', `"${escapedPrompt}"`);
+    // Use --json for structured output that's easier to parse
+    parts.push('--json');
+    
+    // Escape the message for shell. The message goes via --message (not --prompt).
+    // Use single quotes and escape any single quotes in the content.
+    const escapedMessage = payload.prompt.replace(/'/g, "'\\''");
+    parts.push('--message', `'${escapedMessage}'`);
 
     return parts.join(' ');
   }
