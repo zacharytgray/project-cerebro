@@ -1,79 +1,203 @@
 # Project Cerebro
 
 ## Goal
-Project Cerebro aims to re-envision the "CEO Dashboard" as a comprehensive **agent runtime and execution control surface**. Instead of a static task board, Cerebro provides a dynamic interface for managing autonomous "Brains" (specialized agents) that operate on a formal, stateful execution graph driven by heartbeats. The primary goal is to shift from manual task management to overseeing an autonomous system that executes, recovers, and reports on its own work.
+Project Cerebro is a comprehensive **agent runtime and execution control surface** for managing autonomous "Brains" (specialized AI agents). It provides a dynamic interface for overseeing an autonomous system that executes, recovers, and reports on its own work through a formal execution graph driven by heartbeats.
 
-## Current Features (Phase 4 Implemented)
+## Current Features
 
-### 🧠 Specialized Brains
-The system currently runs 5 specialized Brains + 1 Aggregator, each with persistent storage and context memory.
-- **Personal Life Brain**
-- **Schoolwork Brain**
-- **Research Brain**
-- **Money Making Brain**
-- **Job Application Brain**
-- **Daily Digest Brain**
+### 🧠 Brains
+The system runs 7 Brains, each with its own scope, tools, and Discord channel:
+
+| Brain | Channel | Description |
+|-------|---------|-------------|
+| **Nexus** | #general | Main system interface with highest scope and privileges |
+| **Personal Life** | #personal-life | Personal routines, health, errands, relationships |
+| **Schoolwork** | #schoolwork | Coursework, deadlines, study plans |
+| **Research** | #research | Deep research, summaries, citations |
+| **Money Making** | #money-making | Revenue ideas, business operations |
+| **Job Application** | #job-application | Job search pipeline and tracking |
+| **Daily Digest** | #daily-digest | Aggregates reports from all brains |
+
+### 🎛️ Dashboard (Web UI)
+The web interface provides real-time control over the system:
+
+**Layout:**
+```
+┌─────────────────────────────────────┬─────────────────────┐
+│ Nexus Brain (full width)            │ Recurring Tasks     │
+│                                     │ (scrollable list)   │
+├─────────────────────────────────────┤                     │
+│ Specialized Brains (3x2 grid)       │                     │
+│ ┌────────────┐ ┌────────────┐       │                     │
+│ │ Personal   │ │ Schoolwork │       │                     │
+│ ├────────────┼─┼────────────┤       │                     │
+│ │ Research   │ │ Money      │       │                     │
+│ ├────────────┼─┼────────────┤       │                     │
+│ │ Job        │ │ Digest     │       │                     │
+│ └────────────┘ └────────────┘       │                     │
+└─────────────────────────────────────┴─────────────────────┘
+│ Execution Stream                                          │
+│ (tasks with play/trash buttons)                           │
+└───────────────────────────────────────────────────────────┘
+```
+
+### 📋 Task System
+
+**Task Statuses:**
+- `READY` - Eligible for execution (default for new tasks)
+- `EXECUTING` - Currently running
+- `COMPLETED` - Finished successfully
+- `FAILED` - Error occurred (details visible on click)
+
+**Creating Tasks:**
+- One-time tasks: Created immediately as READY
+- Recurring tasks: Spawn READY task instances on schedule
+
+**Task Controls:**
+- ▶️ **Play button** - Execute a READY task immediately
+- 🗑️ **Trash icon** - Delete task from the stream
+- Auto Mode brains pick up READY tasks automatically
+
+### 🔄 Recurring Tasks
+
+Recurring tasks live in the side panel and spawn task instances on schedule.
+
+**Schedule Types:**
+- **Hourly** - "At :30 past each hour"
+- **Daily** - "Daily at 7:00 AM"
+- **Weekly** - "Weekly on Monday at 9:00 PM"
+- **Interval** - "Every X minutes"
+
+**Key Behavior:** Recurring task instances **always execute** regardless of the brain's Auto Mode setting.
 
 ### 🔌 API Backend (Port 3000)
-The runtime exposes a REST API for the dashboard:
-- `GET /api/status`: Real-time status of all Brains (`IDLE`, `EXECUTING`).
-- `GET /api/tasks`: Full list of tasks in the Execution Graph.
-- `GET /api/jobs`: All tracked job applications.
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/status` | Real-time brain status |
+| `GET /api/tasks` | All tasks in execution stream |
+| `POST /api/tasks` | Create new one-time task |
+| `POST /api/tasks/:id/execute` | Execute task immediately |
+| `DELETE /api/tasks/:id` | Delete task |
+| `GET /api/recurring` | All recurring tasks |
+| `POST /api/recurring` | Create recurring task |
+| `POST /api/recurring/:id/run` | Run recurring task now |
+| `DELETE /api/recurring/:id` | Delete recurring task |
+| `GET /api/config/models` | Available OpenClaw models |
 
 ### 💬 Discord Commands
-Interact with Brains directly in their specific channels.
 
-#### Global Commands (All Brains)
-- **`!log <text>`**: Append an entry to the brain's daily markdown log (`data/{brain}/{date}.md`).
-- **`!read`**: Read back today's log entries.
-- **`!context`**: View the long-term context/memory for the brain.
-- **`!context set <text>`**: Overwrite the long-term context.
-- **`!task <title>`**: Create a new task in the Execution Graph (sets status to `READY` for immediate execution).
+**Global Commands (all channels):**
+- `!task <title>` - Create a new READY task
+- `!log <text>` - Append to brain's daily log
+- `!read` - Read today's log
+- `!context` - View brain's context
+- `!context set <text>` - Update context
 
-#### Job Brain Commands (`#job-application-brain`)
-- **`!job add <Company> <Position> [URL]`**: Track a new job application.
-- **`!job list`**: List the 10 most recent applications with their Status and ID.
-- **`!job remove <ID>`**: Remove a job application from the database.
+**Job Brain Commands:**
+- `!job add <Company> <Position> [URL]` - Track application
+- `!job list` - List recent applications
+- `!job remove <ID>` - Remove application
 
-#### Digest Brain Commands (`#daily-digest`)
-- **`!digest`**: Aggregates today's logs from all other brains into a single report.
+**Digest Brain:**
+- `!digest` - Generate aggregated daily report
 
 ## Architecture
 
-### 1. The "Brain" Architecture
-Each Brain is an autonomous agent operating within a specific domain. They communicate via Discord and persist state to disk (`data/` directory) and a SQLite database (`cerebro.db`).
+### Task Lifecycle
+```
+READY → EXECUTING → COMPLETED
+                → FAILED (error stored)
+```
 
-### 2. Execution Graph
-Tasks are managed via a SQLite-backed **Execution Graph**.
-- **Stateful**: Tasks move from `PENDING` → `READY` → `EXECUTING` → `COMPLETED`.
-- **Persistent**: All state survives restarts.
+Tasks start as **READY** (no PENDING state). The heartbeat loop (60s) processes:
+1. Creates recurring task instances when due
+2. Auto-Mode brains pick up READY tasks
+3. Recurring instances execute regardless of Auto Mode
 
-### 3. Heartbeat-Driven Autonomy
-A central runtime loop (30s heartbeat) checks the Graph for `READY` tasks and dispatches them to the appropriate Brain for execution.
+### Brain Execution Flow
+1. Brain finds READY tasks for itself
+2. `TaskExecutorService` orchestrates execution
+3. `OpenClawAdapter` calls `openclaw agent` CLI
+4. Output is parsed (JSON → clean text, duplicates removed)
+5. Result sent to brain's Discord channel
 
 ## Setup & Run
-1. **Install Dependencies**: `npm install`
-2. **Configure**: Add `DISCORD_TOKEN` to `.env`.
-3. **Run Backend**: `npm run start` (or `npx tsc && node dist/index.js`)
-   - Starts Discord Bot
-   - Starts API Server on `http://localhost:3000`
 
-## Recurring Tasks
-Recurring tasks live in their own section and **spawn normal execution tasks** on schedule.
+1. **Install:** `npm install`
+2. **Configure:** Copy `.env.example` to `.env` and fill in:
+   - `DISCORD_BOT_TOKEN`
+   - `OPENCLAW_TOKEN` (from `openclaw gateway status`)
+3. **Build:** `npx tsc && cd frontend && npm run build`
+4. **Run:** `node dist/index.js`
 
-## File Ingestion
-The dashboard includes a file upload block that writes files to intake folders:
-- Default: `data/default/intake/`
-- Per-brain: `data/<brainId>/intake/`
+## Configuration
 
-Supported schedule types:
-- **Hourly** (select minute of the hour)
-- **Daily** (select time of day)
-- **Weekly** (select day + time)
-- **Interval** (minutes)
+### Brains (`config/brains.json`)
+```json
+{
+  "brains": [
+    {
+      "id": "school",
+      "name": "Schoolwork Brain",
+      "channelKey": "schoolwork_brain",
+      "type": "context",
+      "description": "...",
+      "openClawAgentId": "school"
+    }
+  ],
+  "nexus": { ... },
+  "digest": { ... }
+}
+```
 
-## Brain Configs (Per‑Brain)
-Each Brain has a persisted config JSON stored in SQLite. Edit configs in the Brain detail view (JSON textarea) and click **Save Changes**.
-These configs are intended for Brain‑specific settings and context.
+### Models
+Models are loaded dynamically from `~/.openclaw/openclaw.json`. The UI shows available models with their providers (google, anthropic, openai-codex, etc.).
 
-**Reporting:** Each brain can schedule two daily markdown reports (morning + night). Times are configurable in the UI and stored under `reportTiming`.
+## Debugging
+
+```bash
+# Check task counts by status
+sqlite3 cerebro.db "SELECT status, COUNT(*) FROM tasks GROUP BY status;"
+
+# View recent failed tasks
+sqlite3 cerebro.db "SELECT id, title, error FROM tasks WHERE status='FAILED' ORDER BY updatedAt DESC LIMIT 5;"
+
+# Check recurring task schedules
+sqlite3 cerebro.db "SELECT title, datetime(nextExecutionAt/1000, 'unixepoch', 'localtime') FROM recurring_tasks;"
+
+# Test OpenClaw agent manually
+openclaw agent --agent school --message "test" --json
+```
+
+## Common Issues
+
+**"Brain config not found"**
+- Check `config/brains.json` has matching brain ID
+- Verify brain is registered in `src/index.ts`
+
+**Tasks not executing**
+- Check task status is `READY`
+- For non-recurring: ensure brain Auto Mode is ON or use Play button
+- Check OpenClaw gateway is running: `openclaw gateway status`
+
+**Duplicate messages in Discord**
+- Fixed by deduplication logic in `OpenClawAdapter`
+- Only unique text payloads are sent
+
+**Light mode issues**
+- Background now properly switches between dark/white gradients
+- Theme preference saved to localStorage
+
+## Development
+
+```bash
+# Backend hot reload
+npm run dev
+
+# Frontend dev server
+cd frontend && npm run dev
+
+# Build for production
+npm run build
+```
