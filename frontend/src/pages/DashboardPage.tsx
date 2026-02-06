@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Plus, Repeat, Play, Trash2 } from 'lucide-react';
-import { api } from '../api/client';
-import type { BrainStatus, Task, RecurringTask } from '../api/types';
+import { useState } from 'react';
+import { Plus, Repeat, Play, Trash2, Power, PowerOff } from 'lucide-react';
+import type { BrainStatus, Task, RecurringTask, ModelAlias } from '../api/types';
 import { SummaryCards } from '../components/dashboard/SummaryCards';
 import { TaskStream } from '../components/tasks/TaskStream';
 import { TaskDetailModal } from '../components/tasks/TaskDetailModal';
@@ -28,9 +27,23 @@ interface DashboardPageProps {
   onCreateRecurring: (taskData: any) => Promise<void>;
   onDeleteRecurring: (id: string) => void;
   onRunRecurring: (id: string) => void;
+  onUpdateRecurring: (
+    id: string,
+    data: {
+      brainId?: string;
+      title?: string;
+      description?: string;
+      modelOverride?: string;
+      scheduleType?: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
+      intervalMinutes?: number;
+      enabled?: boolean;
+    }
+  ) => Promise<void>;
+  onToggleRecurring: (id: string, enabled: boolean) => Promise<void>;
   onDeleteTask: (id: string) => void;
   onExecuteTask: (id: string) => void;
   onClearAllTasks: () => void;
+  models: ModelAlias[];
 }
 
 export function DashboardPage({
@@ -46,9 +59,12 @@ export function DashboardPage({
   onCreateRecurring,
   onDeleteRecurring,
   onRunRecurring,
+  onUpdateRecurring,
+  onToggleRecurring,
   onDeleteTask,
   onExecuteTask,
   onClearAllTasks,
+  models,
 }: DashboardPageProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
@@ -67,19 +83,6 @@ export function DashboardPage({
     dayOfWeek: '1', // Monday
     modelId: '', // Full model ID (not alias)
   });
-  const [availableModels, setAvailableModels] = useState<Array<{alias: string; id: string; provider: string}>>([]);
-
-  // Fetch models when add recurring modal opens
-  useEffect(() => {
-    if (isAddRecurringOpen) {
-      api.getModels().then(data => {
-        setAvailableModels(data.models);
-        if (!newRecurring.modelId && data.models.length > 0) {
-          setNewRecurring(prev => ({ ...prev, modelId: data.models[0].id }));
-        }
-      }).catch(() => setAvailableModels([]));
-    }
-  }, [isAddRecurringOpen]);
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
@@ -273,9 +276,26 @@ export function DashboardPage({
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
+                          onToggleRecurring(task.id, !task.enabled);
+                        }}
+                        className="p-1"
+                        title={task.enabled ? 'Disable' : 'Enable'}
+                      >
+                        {task.enabled ? (
+                          <Power className="w-3 h-3 text-green-500" />
+                        ) : (
+                          <PowerOff className="w-3 h-3 text-red-500" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           onRunRecurring(task.id);
                         }}
                         className="p-1"
+                        title="Run now"
                       >
                         <Play className="w-3 h-3" />
                       </Button>
@@ -287,6 +307,7 @@ export function DashboardPage({
                           onDeleteRecurring(task.id);
                         }}
                         className="p-1"
+                        title="Delete"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -378,8 +399,8 @@ export function DashboardPage({
               className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
             >
               <option value="">Default (brain default)</option>
-              {availableModels.map((m) => (
-                <option key={m.id} value={m.id}>{m.alias} ({m.provider})</option>
+              {models.map((m) => (
+                <option key={m.id} value={m.id}>{m.alias}</option>
               ))}
             </select>
           </div>
@@ -484,6 +505,21 @@ export function DashboardPage({
         {editingRecurring && (
           <div className="space-y-4">
             <div>
+              <label className="text-sm font-medium">Brain</label>
+              <select
+                value={editingRecurring.brainId}
+                onChange={(e) => setEditingRecurring({ ...editingRecurring, brainId: e.target.value })}
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+              >
+                {brains.map((brain) => (
+                  <option key={brain.id} value={brain.id}>
+                    {brain.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
               <label className="text-sm font-medium">Title</label>
               <Input
                 value={editingRecurring.title}
@@ -500,15 +536,104 @@ export function DashboardPage({
                 className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[80px]"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Enabled</label>
-              <input
-                type="checkbox"
-                checked={editingRecurring.enabled}
-                onChange={(e) => setEditingRecurring({ ...editingRecurring, enabled: e.target.checked })}
-                className="w-4 h-4"
-              />
+
+            <div>
+              <label className="text-sm font-medium">Model (optional)</label>
+              <select
+                value={editingRecurring.modelOverride || ''}
+                onChange={(e) =>
+                  setEditingRecurring({ ...editingRecurring, modelOverride: e.target.value || undefined })
+                }
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+              >
+                <option value="">Default</option>
+                {models.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.alias} ({model.id})
+                  </option>
+                ))}
+              </select>
             </div>
+
+            <div>
+              <label className="text-sm font-medium">Schedule</label>
+              <select
+                value={editingRecurring.scheduleType}
+                onChange={(e) =>
+                  setEditingRecurring({
+                    ...editingRecurring,
+                    scheduleType: e.target.value as typeof editingRecurring.scheduleType,
+                  })
+                }
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+              >
+                <option value="HOURLY">Hourly</option>
+                <option value="DAILY">Daily</option>
+                <option value="WEEKLY">Weekly</option>
+                <option value="INTERVAL">Custom Interval</option>
+              </select>
+            </div>
+
+            {editingRecurring.scheduleType === 'INTERVAL' && (
+              <div>
+                <label className="text-sm font-medium">Interval (minutes)</label>
+                <Input
+                  type="number"
+                  value={editingRecurring.intervalMs ? Math.round(editingRecurring.intervalMs / 60000) : 60}
+                  onChange={(e) =>
+                    setEditingRecurring({
+                      ...editingRecurring,
+                      intervalMs: parseInt(e.target.value) * 60000 || 60000,
+                    })
+                  }
+                />
+              </div>
+            )}
+
+            {(editingRecurring.scheduleType === 'DAILY' || editingRecurring.scheduleType === 'WEEKLY' || editingRecurring.scheduleType === 'HOURLY') && (
+              <div>
+                <label className="text-sm font-medium">
+                  {editingRecurring.scheduleType === 'HOURLY' ? 'At minute' : 'Time'}
+                </label>
+                <input
+                  type="time"
+                  value={new Date(editingRecurring.nextRunAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })} // Needs to be dynamic based on scheduleConfig
+                  onChange={(e) => {
+                    const [hour, minute] = e.target.value.split(':').map(Number);
+                    setEditingRecurring({
+                      ...editingRecurring,
+                      scheduleConfig: { ...editingRecurring.scheduleConfig, hour, minute },
+                    });
+                  }}
+                  className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+                />
+              </div>
+            )}
+
+            {editingRecurring.scheduleType === 'WEEKLY' && (
+              <div>
+                <label className="text-sm font-medium">Day of Week</label>
+                <select
+                  value={editingRecurring.scheduleConfig?.day?.toString() || '0'}
+                  onChange={(e) =>
+                    setEditingRecurring({
+                      ...editingRecurring,
+                      scheduleConfig: { ...editingRecurring.scheduleConfig, day: parseInt(e.target.value) },
+                    })
+                  }
+                  className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+                >
+                  <option value="0">Sunday</option>
+                  <option value="1">Monday</option>
+                  <option value="2">Tuesday</option>
+                  <option value="3">Wednesday</option>
+                  <option value="4">Thursday</option>
+                  <option value="5">Friday</option>
+                  <option value="6">Saturday</option>
+                </select>
+              </div>
+            )}
+            
             <div className="flex gap-2 pt-4">
               <Button 
                 variant="secondary" 
@@ -523,9 +648,23 @@ export function DashboardPage({
               <Button 
                 variant="primary" 
                 onClick={async () => {
-                  // Update via API - for now just close
-                  setIsEditRecurringOpen(false);
-                  setEditingRecurring(null);
+                  if (editingRecurring) {
+                    const payload: any = {
+                      brainId: editingRecurring.brainId,
+                      title: editingRecurring.title,
+                      description: editingRecurring.description,
+                      modelOverride: editingRecurring.modelOverride,
+                      scheduleType: editingRecurring.scheduleType,
+                      scheduleConfig: editingRecurring.scheduleConfig,
+                    };
+
+                    if (editingRecurring.scheduleType === 'INTERVAL') {
+                      payload.intervalMinutes = editingRecurring.intervalMs ? Math.round(editingRecurring.intervalMs / 60000) : undefined;
+                    }
+                    await onUpdateRecurring(editingRecurring.id, payload);
+                    setIsEditRecurringOpen(false);
+                    setEditingRecurring(null);
+                  }
                 }} 
                 className="flex-1"
               >

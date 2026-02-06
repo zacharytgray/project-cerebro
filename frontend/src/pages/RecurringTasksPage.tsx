@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Repeat, Plus, Clock, Trash2, Play } from 'lucide-react';
-import type { BrainStatus, RecurringTask } from '../api/types';
+import { Repeat, Plus, Clock, Trash2, Play, Power, PowerOff } from 'lucide-react';
+import type { BrainStatus, RecurringTask, ModelAlias } from '../api/types';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -10,37 +10,59 @@ import { Input } from '../components/ui/Input';
 interface RecurringTasksPageProps {
   brains: BrainStatus[];
   recurringTasks: RecurringTask[];
+  models: ModelAlias[];
   loading: boolean;
   onCreateRecurring: (data: {
     brainId: string;
     title: string;
     description?: string;
+    modelOverride?: string;
     scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
     intervalMinutes?: number;
   }) => Promise<void>;
   onDeleteRecurring: (id: string) => void;
   onRunRecurring: (id: string) => void;
+  onToggleRecurring: (id: string, enabled: boolean) => Promise<void>;
+  onUpdateRecurring: (
+    id: string,
+    data: {
+      brainId?: string;
+      title?: string;
+      description?: string;
+      modelOverride?: string;
+      scheduleType?: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
+      intervalMinutes?: number;
+      enabled?: boolean;
+    }
+  ) => Promise<void>;
 }
 
 export function RecurringTasksPage({
   brains,
   recurringTasks,
+  models,
   loading,
   onCreateRecurring,
   onDeleteRecurring,
   onRunRecurring,
+  onToggleRecurring,
+  onUpdateRecurring,
 }: RecurringTasksPageProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<RecurringTask | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [newTask, setNewTask] = useState<{
     brainId: string;
     title: string;
     description: string;
+    modelOverride: string;
     scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
     intervalMinutes: number;
   }>({
     brainId: '',
     title: '',
     description: '',
+    modelOverride: '',
     scheduleType: 'DAILY',
     intervalMinutes: 60,
   });
@@ -53,6 +75,7 @@ export function RecurringTasksPage({
       brainId: '',
       title: '',
       description: '',
+      modelOverride: '',
       scheduleType: 'DAILY',
       intervalMinutes: 60,
     });
@@ -118,7 +141,11 @@ export function RecurringTasksPage({
             recurringTasks.map((task) => (
               <div
                 key={task.id}
-                className="p-4 rounded-lg border border-border bg-secondary/20 flex items-start justify-between gap-4"
+                className="p-4 rounded-lg border border-border bg-secondary/20 flex items-start justify-between gap-4 cursor-pointer"
+                onClick={() => {
+                  setEditingTask(task);
+                  setIsEditOpen(true);
+                }}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -127,6 +154,11 @@ export function RecurringTasksPage({
                       {task.enabled ? 'Enabled' : 'Disabled'}
                     </Badge>
                   </div>
+                  {task.modelOverride && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Model: {models.find((m) => m.id === task.modelOverride)?.alias || task.modelOverride}
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-1">
                     {getBrainName(task.brainId)} · {formatSchedule(task)}
                   </p>
@@ -147,7 +179,26 @@ export function RecurringTasksPage({
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => onRunRecurring(task.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleRecurring(task.id, !task.enabled);
+                    }}
+                    className="p-2"
+                    title={task.enabled ? 'Disable' : 'Enable'}
+                  >
+                    {task.enabled ? (
+                      <Power className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <PowerOff className="w-4 h-4 text-red-500" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRunRecurring(task.id);
+                    }}
                     className="p-2"
                     title="Run now"
                   >
@@ -156,7 +207,10 @@ export function RecurringTasksPage({
                   <Button
                     variant="danger"
                     size="sm"
-                    onClick={() => onDeleteRecurring(task.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteRecurring(task.id);
+                    }}
                     className="p-2"
                     title="Delete"
                   >
@@ -212,6 +266,22 @@ export function RecurringTasksPage({
           </div>
 
           <div>
+            <label className="text-sm font-medium">Model (optional)</label>
+            <select
+              value={newTask.modelOverride}
+              onChange={(e) => setNewTask({ ...newTask, modelOverride: e.target.value })}
+              className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+            >
+              <option value="">Default</option>
+              {models.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.alias} ({model.id})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className="text-sm font-medium">Schedule</label>
             <select
               value={newTask.scheduleType}
@@ -256,6 +326,140 @@ export function RecurringTasksPage({
           </div>
         </div>
       </Modal>
+
+      {/* Edit Modal */}
+      {editingTask && (
+        <Modal
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          title="Edit Recurring Task"
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Brain</label>
+              <select
+                value={editingTask.brainId}
+                onChange={(e) =>
+                  setEditingTask({ ...editingTask, brainId: e.target.value })
+                }
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+              >
+                {brains.map((brain) => (
+                  <option key={brain.id} value={brain.id}>
+                    {brain.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Title</label>
+              <Input
+                value={editingTask.title}
+                onChange={(e) =>
+                  setEditingTask({ ...editingTask, title: e.target.value })
+                }
+                placeholder="Task title"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Description (optional)</label>
+              <textarea
+                value={editingTask.description || ''}
+                onChange={(e) =>
+                  setEditingTask({ ...editingTask, description: e.target.value })
+                }
+                placeholder="Task description"
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[80px]"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Model (optional)</label>
+              <select
+                value={editingTask.modelOverride || ''}
+                onChange={(e) =>
+                  setEditingTask({ ...editingTask, modelOverride: e.target.value || undefined })
+                }
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+              >
+                <option value="">Default</option>
+                {models.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.alias} ({model.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Schedule</label>
+              <select
+                value={editingTask.scheduleType}
+                onChange={(e) =>
+                  setEditingTask({
+                    ...editingTask,
+                    scheduleType: e.target.value as typeof editingTask.scheduleType,
+                  })
+                }
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+              >
+                <option value="HOURLY">Hourly</option>
+                <option value="DAILY">Daily</option>
+                <option value="WEEKLY">Weekly</option>
+                <option value="INTERVAL">Custom Interval</option>
+              </select>
+            </div>
+
+            {editingTask.scheduleType === 'INTERVAL' && (
+              <div>
+                <label className="text-sm font-medium">Interval (minutes)</label>
+                <Input
+                  type="number"
+                  value={editingTask.intervalMs ? Math.round(editingTask.intervalMs / 60000) : 60}
+                  onChange={(e) =>
+                    setEditingTask({
+                      ...editingTask,
+                      intervalMs: parseInt(e.target.value) * 60000 || 60000,
+                    })
+                  }
+                />
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-4">
+              <Button
+                variant="secondary"
+                onClick={() => setIsEditOpen(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={async () => {
+                  if (editingTask) {
+                    await onUpdateRecurring(editingTask.id, {
+                      brainId: editingTask.brainId,
+                      title: editingTask.title,
+                      description: editingTask.description,
+                      modelOverride: editingTask.modelOverride,
+                      scheduleType: editingTask.scheduleType,
+                      intervalMinutes: editingTask.intervalMs ? Math.round(editingTask.intervalMs / 60000) : undefined,
+                    });
+                    setIsEditOpen(false);
+                    setEditingTask(null);
+                  }
+                }}
+                className="flex-1"
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

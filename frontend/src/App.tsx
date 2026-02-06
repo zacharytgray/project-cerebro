@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Shell } from './components/layout/Shell';
 import { DashboardPage } from './pages/DashboardPage';
 import { BrainDetailPage } from './pages/BrainDetailPage';
@@ -6,17 +6,35 @@ import { useBrains } from './hooks/useBrains';
 import { useTasks } from './hooks/useTasks';
 import { useRecurring } from './hooks/useRecurring';
 import { useTheme } from './hooks/useTheme';
+import { api } from './api/client';
+import type { ModelAlias } from './api/types';
 
 type View = 'dashboard' | 'brain-detail';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedBrainId, setSelectedBrainId] = useState<string | null>(null);
+  const [models, setModels] = useState<ModelAlias[]>([]);
 
   const { brains, loading: loadingBrains, toggleBrain, runBrain } = useBrains();
   const { tasks, loading: loadingTasks, createTask, deleteTask, executeTask, clearAllTasks } = useTasks();
-  const { recurringTasks, loading: loadingRecurring, createRecurringTask, deleteRecurringTask, runRecurringTask } = useRecurring();
+  const {
+    recurringTasks,
+    loading: loadingRecurring,
+    createRecurringTask,
+    updateRecurringTask,
+    toggleRecurringTask,
+    deleteRecurringTask,
+    runRecurringTask,
+  } = useRecurring();
   const { theme, mode, toggleTheme } = useTheme();
+  
+  // Fetch models on mount
+  useEffect(() => {
+    api.getModels().then(data => {
+      setModels(data.models.map(m => ({ alias: m.alias, id: m.id })));
+    }).catch(() => setModels([]));
+  }, []);
 
   const handleNavigate = (view: View | 'recurring-tasks', brainId?: string) => {
     if (view === 'recurring-tasks') {
@@ -64,9 +82,12 @@ export default function App() {
           onCreateRecurring={createRecurringTask}
           onDeleteRecurring={deleteRecurringTask}
           onRunRecurring={runRecurringTask}
+          onUpdateRecurring={updateRecurringTask} // New prop
+          onToggleRecurring={toggleRecurringTask} // New prop
           onDeleteTask={deleteTask}
           onExecuteTask={executeTask}
           onClearAllTasks={clearAllTasks}
+          models={models} // New prop
         />
       )}
 
