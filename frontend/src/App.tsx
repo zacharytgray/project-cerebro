@@ -1107,7 +1107,27 @@ export default function Dashboard() {
 
       {currentView !== 'brain-detail' && (
       <main className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <section className="lg:col-span-3">
+<section className="lg:col-span-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-gradient-to-br from-blue-600/15 via-white/5 to-transparent">
+              <div className="text-xs text-muted-foreground">Tasks</div>
+              <div className="text-2xl font-bold mt-1 text-foreground">{tasks.length}</div>
+              <div className="text-[11px] text-muted-foreground mt-2">All task entries</div>
+            </Card>
+            <Card className="bg-gradient-to-br from-emerald-500/15 via-white/5 to-transparent">
+              <div className="text-xs text-muted-foreground">Executing</div>
+              <div className="text-2xl font-bold mt-1 text-foreground">{tasks.filter(t => t.status === 'EXECUTING').length}</div>
+              <div className="text-[11px] text-muted-foreground mt-2">Currently running</div>
+            </Card>
+            <Card className="bg-gradient-to-br from-purple-500/15 via-white/5 to-transparent">
+              <div className="text-xs text-muted-foreground">Recurring</div>
+              <div className="text-2xl font-bold mt-1 text-foreground">{recurringTasks.length}</div>
+              <div className="text-[11px] text-muted-foreground mt-2">Scheduled automations</div>
+            </Card>
+          </div>
+        </section>
+
+<section className="lg:col-span-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="bg-gradient-to-br from-blue-600/15 via-white/5 to-transparent">
               <div className="text-xs text-muted-foreground">Tasks</div>
@@ -1130,7 +1150,10 @@ export default function Dashboard() {
         {/* File Ingestion */}
         <section className="lg:col-span-3">
           <Card className="bg-gradient-to-br from-blue-600/10 via-white/5 to-purple-600/10">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground"><Database className="w-5 h-5 text-blue-300" /> File Ingestion</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Database className="w-5 h-5 text-blue-300" /> File Ingestion</h2>
+              <span className="text-[11px] text-muted-foreground">Uploads go to data/&lt;brain&gt;/intake/ or data/default/intake/</span>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div>
                 <label className="text-xs text-muted-foreground">Target Brain</label>
@@ -1172,108 +1195,11 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-3">Uploads go to <code>data/&lt;brain&gt;/intake/</code> or <code>data/default/intake/</code>.</p>
+            
           </Card>
         </section>
 
-
-
-        <section className="lg:col-span-3 h-full">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Terminal className="w-5 h-5 text-blue-300" /> Execution Stream</h2>
-              <span className="text-[10px] uppercase tracking-widest text-blue-200/70">Live</span>
-              <div className="flex items-center gap-1 bg-secondary/30 p-1 rounded-full border border-white/10">
-                {['ALL', 'READY', 'EXECUTING', 'COMPLETED', 'FAILED'].map(f => (
-                  <button
-                    key={f}
-                    onClick={() => setStatusFilter(f)}
-                    className={`px-2 py-1 text-[10px] uppercase font-bold rounded transition-colors ${
-                      statusFilter === f ? 'bg-blue-600 text-white' : 'hover:bg-white/5 text-muted-foreground'
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground">{filteredTasks.length} tasks</span>
-              <button
-                onClick={() => setIsAddTaskOpen(true)}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-md bg-blue-600/80 hover:bg-blue-600 text-white transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Add Task
-              </button>
-            </div>
-          </div>
-          <Card className="h-[500px] overflow-y-auto font-mono text-sm">
-            <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur text-muted-foreground text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="pb-3 pl-2">Status</th>
-                  <th className="pb-3">Brain</th>
-                  <th className="pb-3">Model</th>
-                  <th className="pb-3">Task</th>
-                  <th className="pb-3 text-right pr-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredTasks.map((task) => (
-                  <tr 
-                    key={task.id} 
-                    className="group hover:bg-white/5 transition-colors cursor-pointer"
-                    onClick={() => {
-                      setSelectedTask(task);
-                      setIsTaskDetailOpen(true);
-                    }}
-                  >
-                    <td className="py-3 pl-2 whitespace-nowrap">
-                      <span className={`inline-block w-2 h-2 rounded-full mr-2 
-                        ${task.status === 'COMPLETED' ? 'bg-green-500' : 
-                          task.status === 'FAILED' ? 'bg-red-500' : 
-                          task.status === 'EXECUTING' ? 'bg-blue-400 animate-pulse' : 'bg-gray-500'}`}>
-                      </span>
-                      <span className={
-                        task.status === 'COMPLETED' ? 'text-green-400' : 
-                        task.status === 'FAILED' ? 'text-red-400' : 'text-muted-foreground'
-                      }>{task.status}</span>
-                    </td>
-                    <td className="py-3 px-2 text-muted-foreground">{task.brainId}</td>
-                    <td className="py-3 px-2 text-muted-foreground">
-                      <Badge variant="default">{task.modelOverride || 'default'}</Badge>
-                    </td>
-                    <td className="py-3 px-2 font-medium text-foreground">
-                      <div>{task.title}</div>
-                      {task.description && (
-                        <div className="text-xs text-muted-foreground font-normal mt-1 line-clamp-1 max-w-md">
-                          {task.description}
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-3 text-right pr-2">
-                       <button 
-                         onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                         className="p-1.5 hover:bg-red-900/20 hover:text-red-400 rounded transition-colors text-muted-foreground opacity-0 group-hover:opacity-100"
-                         title="Delete Task"
-                       >
-                         <Trash2 className="w-4 h-4" />
-                       </button>
-                    </td>
-                  </tr>
-                ))}
-                {filteredTasks.length === 0 && (
-                   <tr><td colSpan={5} className="py-8 text-center text-muted-foreground">No tasks matching filter.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </Card>
-        </section>
-
-
-
-        <section className="lg:col-span-3">
+<section className="lg:col-span-3">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch min-h-[680px]">
             <div className="lg:col-span-2 h-full">
 
@@ -1392,6 +1318,99 @@ export default function Dashboard() {
           </div>
             </div>
           </div>
+        </section>
+
+<section className="lg:col-span-3 h-full">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground"><Terminal className="w-5 h-5 text-blue-300" /> Execution Stream</h2>
+              <span className="text-[10px] uppercase tracking-widest text-blue-200/70">Live</span>
+              <div className="flex items-center gap-1 bg-secondary/30 p-1 rounded-full border border-white/10">
+                {['ALL', 'READY', 'EXECUTING', 'COMPLETED', 'FAILED'].map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setStatusFilter(f)}
+                    className={`px-2 py-1 text-[10px] uppercase font-bold rounded transition-colors ${
+                      statusFilter === f ? 'bg-blue-600 text-white' : 'hover:bg-white/5 text-muted-foreground'
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">{filteredTasks.length} tasks</span>
+              <button
+                onClick={() => setIsAddTaskOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-md bg-blue-600/80 hover:bg-blue-600 text-white transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add Task
+              </button>
+            </div>
+          </div>
+          <Card className="h-[500px] overflow-y-auto font-mono text-sm">
+            <table className="w-full text-left border-collapse">
+              <thead className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur text-muted-foreground text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="pb-3 pl-2">Status</th>
+                  <th className="pb-3">Brain</th>
+                  <th className="pb-3">Model</th>
+                  <th className="pb-3">Task</th>
+                  <th className="pb-3 text-right pr-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredTasks.map((task) => (
+                  <tr 
+                    key={task.id} 
+                    className="group hover:bg-white/5 transition-colors cursor-pointer"
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setIsTaskDetailOpen(true);
+                    }}
+                  >
+                    <td className="py-3 pl-2 whitespace-nowrap">
+                      <span className={`inline-block w-2 h-2 rounded-full mr-2 
+                        ${task.status === 'COMPLETED' ? 'bg-green-500' : 
+                          task.status === 'FAILED' ? 'bg-red-500' : 
+                          task.status === 'EXECUTING' ? 'bg-blue-400 animate-pulse' : 'bg-gray-500'}`}>
+                      </span>
+                      <span className={
+                        task.status === 'COMPLETED' ? 'text-green-400' : 
+                        task.status === 'FAILED' ? 'text-red-400' : 'text-muted-foreground'
+                      }>{task.status}</span>
+                    </td>
+                    <td className="py-3 px-2 text-muted-foreground">{task.brainId}</td>
+                    <td className="py-3 px-2 text-muted-foreground">
+                      <Badge variant="default">{task.modelOverride || 'default'}</Badge>
+                    </td>
+                    <td className="py-3 px-2 font-medium text-foreground">
+                      <div>{task.title}</div>
+                      {task.description && (
+                        <div className="text-xs text-muted-foreground font-normal mt-1 line-clamp-1 max-w-md">
+                          {task.description}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 text-right pr-2">
+                       <button 
+                         onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
+                         className="p-1.5 hover:bg-red-900/20 hover:text-red-400 rounded transition-colors text-muted-foreground opacity-0 group-hover:opacity-100"
+                         title="Delete Task"
+                       >
+                         <Trash2 className="w-4 h-4" />
+                       </button>
+                    </td>
+                  </tr>
+                ))}
+                {filteredTasks.length === 0 && (
+                   <tr><td colSpan={5} className="py-8 text-center text-muted-foreground">No tasks matching filter.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </Card>
         </section>
       </main>
       )}
