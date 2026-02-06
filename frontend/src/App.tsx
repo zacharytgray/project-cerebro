@@ -79,7 +79,7 @@ const Modal = ({ isOpen, onClose, title, children }: { isOpen: boolean; onClose:
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card/95 text-foreground border border-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white/95 dark:bg-slate-900/95 text-foreground border border-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
         <div className="p-6 border-b border-border flex justify-between items-center">
           <h2 className="text-xl font-bold">{title}</h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">✕</button>
@@ -1107,6 +1107,75 @@ export default function Dashboard() {
 
       {currentView !== 'brain-detail' && (
       <main className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <section className="lg:col-span-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-gradient-to-br from-blue-600/15 via-white/5 to-transparent">
+              <div className="text-xs text-muted-foreground">Tasks</div>
+              <div className="text-2xl font-bold mt-1 text-foreground">{tasks.length}</div>
+              <div className="text-[11px] text-muted-foreground mt-2">All task entries</div>
+            </Card>
+            <Card className="bg-gradient-to-br from-emerald-500/15 via-white/5 to-transparent">
+              <div className="text-xs text-muted-foreground">Executing</div>
+              <div className="text-2xl font-bold mt-1 text-foreground">{tasks.filter(t => t.status === 'EXECUTING').length}</div>
+              <div className="text-[11px] text-muted-foreground mt-2">Currently running</div>
+            </Card>
+            <Card className="bg-gradient-to-br from-purple-500/15 via-white/5 to-transparent">
+              <div className="text-xs text-muted-foreground">Recurring</div>
+              <div className="text-2xl font-bold mt-1 text-foreground">{recurringTasks.length}</div>
+              <div className="text-[11px] text-muted-foreground mt-2">Scheduled automations</div>
+            </Card>
+          </div>
+        </section>
+
+        {/* File Ingestion */}
+        <section className="lg:col-span-3">
+          <Card className="bg-gradient-to-br from-blue-600/10 via-white/5 to-purple-600/10">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground"><Database className="w-5 h-5 text-blue-300" /> File Ingestion</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div>
+                <label className="text-xs text-muted-foreground">Target Brain</label>
+                <select
+                  className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
+                  value={getCfg('uiUploadTarget','default')}
+                  onChange={(e) => setCfg('uiUploadTarget', e.target.value)}
+                >
+                  <option value="default">Default Intake</option>
+                  {brains.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Choose File</label>
+                <input
+                  type="file"
+                  className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
+                  id="fileUploadInput"
+                />
+              </div>
+              <div>
+                <button
+                  className="w-full px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white"
+                  onClick={async () => {
+                    const input = document.getElementById('fileUploadInput') as HTMLInputElement | null;
+                    if (!input || !input.files || input.files.length === 0) return;
+                    const file = input.files[0];
+                    const form = new FormData();
+                    form.append('file', file);
+                    const target = getCfg('uiUploadTarget','default');
+                    form.append('brainId', target);
+                    await fetch('/api/upload', { method: 'POST', body: form });
+                    input.value = '';
+                  }}
+                >
+                  Upload
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">Uploads go to <code>data/&lt;brain&gt;/intake/</code> or <code>data/default/intake/</code>.</p>
+          </Card>
+        </section>
+
 
 
         <section className="lg:col-span-3 h-full">
@@ -1141,7 +1210,7 @@ export default function Dashboard() {
           </div>
           <Card className="h-[500px] overflow-y-auto font-mono text-sm">
             <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 z-10 bg-card/95 backdrop-blur text-muted-foreground text-xs uppercase tracking-wider">
+              <thead className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur text-muted-foreground text-xs uppercase tracking-wider">
                 <tr>
                   <th className="pb-3 pl-2">Status</th>
                   <th className="pb-3">Brain</th>
@@ -1629,7 +1698,7 @@ export default function Dashboard() {
             {selectedTask.description && (
               <div>
                 <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Description</div>
-                <div className="text-sm bg-secondary/80 text-foreground p-3 rounded-lg border border-border leading-relaxed">
+                <div className="text-sm bg-white/80 dark:bg-slate-900/80 text-foreground p-3 rounded-lg border border-border leading-relaxed">
                   {selectedTask.description}
                 </div>
               </div>
