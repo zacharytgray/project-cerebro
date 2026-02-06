@@ -12,7 +12,19 @@ const API_BASE = '';
 async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${url}`, options);
   if (!response.ok) {
-    throw new Error(`API error: ${response.statusText}`);
+    // Try to get error message from response body
+    let errorMessage = response.statusText;
+    try {
+      const errorData = await response.json();
+      if (errorData.error) {
+        errorMessage = errorData.error;
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      // If can't parse JSON, use statusText
+    }
+    throw new Error(errorMessage);
   }
   return response.json();
 }
