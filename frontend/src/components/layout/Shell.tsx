@@ -9,6 +9,7 @@ interface ShellProps {
   selectedBrainId: string | null;
   onNavigate: (view: 'dashboard' | 'brain-detail', brainId?: string) => void;
   theme: 'light' | 'dark';
+  mode: 'light' | 'dark' | 'system';
   onToggleTheme: () => void;
   children: React.ReactNode;
 }
@@ -19,6 +20,7 @@ export function Shell({
   selectedBrainId,
   onNavigate,
   theme,
+  mode,
   onToggleTheme,
   children,
 }: ShellProps) {
@@ -44,7 +46,7 @@ export function Shell({
 
         <div className="flex-1 flex flex-col min-h-screen">
           <Header
-            theme={theme}
+            mode={mode}
             onToggleTheme={onToggleTheme}
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           />

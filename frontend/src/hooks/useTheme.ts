@@ -1,36 +1,42 @@
 import { useState, useEffect } from 'react';
 
 export type Theme = 'light' | 'dark';
-export type ThemeSource = 'system' | 'manual';
+export type ThemeMode = 'light' | 'dark' | 'system';
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>('dark');
-  const [themeSource, setThemeSource] = useState<ThemeSource>('system');
+  const [mode, setMode] = useState<ThemeMode>('system');
+
+  const applyTheme = (nextMode: ThemeMode) => {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (nextMode === 'system') {
+      setTheme(prefersDark ? 'dark' : 'light');
+    } else {
+      setTheme(nextMode);
+    }
+  };
 
   useEffect(() => {
-    const stored = localStorage.getItem('cerebro-theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const stored = localStorage.getItem('cerebro-theme') as ThemeMode | null;
+    const initialMode: ThemeMode = stored === 'light' || stored === 'dark' || stored === 'system'
+      ? stored
+      : 'system';
 
-    if (stored === 'light' || stored === 'dark') {
-      setThemeSource('manual');
-      setTheme(stored);
-    } else {
-      setThemeSource('system');
-      setTheme(prefersDark ? 'dark' : 'light');
-    }
+    setMode(initialMode);
+    applyTheme(initialMode);
   }, []);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) => {
-      if (themeSource === 'system') {
+      if (mode === 'system') {
         setTheme(e.matches ? 'dark' : 'light');
       }
     };
 
     media.addEventListener('change', handler);
     return () => media.removeEventListener('change', handler);
-  }, [themeSource]);
+  }, [mode]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -46,15 +52,15 @@ export function useTheme() {
   }, [theme]);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    setThemeSource('manual');
-    localStorage.setItem('cerebro-theme', newTheme);
+    const nextMode: ThemeMode = mode === 'dark' ? 'light' : mode === 'light' ? 'system' : 'dark';
+    setMode(nextMode);
+    applyTheme(nextMode);
+    localStorage.setItem('cerebro-theme', nextMode);
   };
 
   return {
     theme,
-    themeSource,
+    mode,
     toggleTheme,
   };
 }

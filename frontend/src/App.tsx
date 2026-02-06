@@ -16,7 +16,7 @@ export default function App() {
   const { brains, loading: loadingBrains, toggleBrain, runBrain } = useBrains();
   const { tasks, loading: loadingTasks, createTask, deleteTask, executeTask, clearAllTasks } = useTasks();
   const { recurringTasks, loading: loadingRecurring, createRecurringTask, deleteRecurringTask, runRecurringTask } = useRecurring();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, mode, toggleTheme } = useTheme();
 
   const handleNavigate = (view: View | 'recurring-tasks', brainId?: string) => {
     if (view === 'recurring-tasks') {
@@ -46,6 +46,7 @@ export default function App() {
       selectedBrainId={selectedBrainId}
       onNavigate={handleNavigate}
       theme={theme}
+      mode={mode}
       onToggleTheme={toggleTheme}
     >
       {currentView === 'dashboard' && (
