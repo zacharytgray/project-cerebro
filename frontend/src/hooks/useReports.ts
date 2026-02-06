@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { api } from '../api/client';
-import { Report } from '../api/types';
+import type { Report } from '../api/types';
 
 export function useReports(brainId?: string) {
   const [reports, setReports] = useState<Report[]>([]);

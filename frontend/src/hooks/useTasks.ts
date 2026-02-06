@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { api } from '../api/client';
-import { Task } from '../api/types';
+import type { Task } from '../api/types';
 import { usePolling } from './usePolling';
 
 export function useTasks() {

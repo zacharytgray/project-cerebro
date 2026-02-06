@@ -5,7 +5,7 @@ export function useBrainConfig(brainId?: string) {
   const [config, setConfig] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const saveTimerRef = useRef<NodeJS.Timeout>();
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const loadConfig = useCallback(async (id: string) => {
     try {
