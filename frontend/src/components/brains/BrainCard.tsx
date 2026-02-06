@@ -1,5 +1,4 @@
 import { Play } from 'lucide-react';
-import { motion } from 'framer-motion';
 import type { BrainStatus } from '../../api/types';
 import { GlowCard } from '../ui/GlowCard';
 import { Badge } from '../ui/Badge';
@@ -70,17 +69,6 @@ export function BrainCard({ brain, onToggle, onRun, onClick }: BrainCardProps) {
         </Button>
       </div>
 
-      <motion.div
-        className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0"
-        initial={{ x: '-100%' }}
-        animate={{ x: '100%' }}
-        transition={{
-          repeat: Infinity,
-          duration: 3,
-          ease: 'linear',
-          repeatDelay: 5,
-        }}
-      />
     </GlowCard>
   );
 }

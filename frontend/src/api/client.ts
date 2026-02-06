@@ -38,7 +38,7 @@ export const api = {
     fetchApi<void>(`/api/tasks/${id}`, { method: 'DELETE' }),
 
   // Recurring Tasks
-  getRecurringTasks: () => fetchApi<RecurringTasksResponse>('/api/recurring-tasks'),
+  getRecurringTasks: () => fetchApi<RecurringTasksResponse>('/api/recurring'),
   createRecurringTask: (data: {
     brainId: string;
     title: string;
@@ -48,7 +48,7 @@ export const api = {
     intervalMinutes?: number;
     scheduleConfig?: Record<string, unknown>;
   }) =>
-    fetchApi<void>('/api/recurring-tasks', {
+    fetchApi<void>('/api/recurring', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -64,21 +64,21 @@ export const api = {
       scheduleConfig?: Record<string, unknown>;
     }
   ) =>
-    fetchApi<void>(`/api/recurring-tasks/${id}`, {
+    fetchApi<void>(`/api/recurring/${id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
   toggleRecurringTask: (id: string, enabled: boolean) =>
-    fetchApi<void>(`/api/recurring-tasks/${id}/toggle`, {
+    fetchApi<void>(`/api/recurring/${id}/toggle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled }),
     }),
   runRecurringTask: (id: string) =>
-    fetchApi<void>(`/api/recurring-tasks/${id}/run`, { method: 'POST' }),
+    fetchApi<void>(`/api/recurring/${id}/run`, { method: 'POST' }),
   deleteRecurringTask: (id: string) =>
-    fetchApi<void>(`/api/recurring-tasks/${id}`, { method: 'DELETE' }),
+    fetchApi<void>(`/api/recurring/${id}`, { method: 'DELETE' }),
 
   // Jobs
   getJobs: () => fetchApi<JobsResponse>('/api/jobs'),

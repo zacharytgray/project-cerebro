@@ -30,7 +30,11 @@ export interface RecurringTask {
   modelOverride?: string;
   scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
   intervalMs?: number;
-  scheduleConfig?: string;
+  scheduleConfig?: {
+    hour?: number;
+    minute?: number;
+    day?: number;
+  };
   nextRunAt: number;
   lastRunAt?: number;
   enabled: boolean;

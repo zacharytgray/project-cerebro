@@ -57,6 +57,8 @@ export function DashboardPage({
     description: '',
     scheduleType: 'DAILY' as 'DAILY' | 'HOURLY' | 'WEEKLY' | 'INTERVAL',
     intervalMinutes: 60,
+    time: '09:00',
+    dayOfWeek: '1', // Monday
   });
 
   const handleTaskClick = (task: Task) => {
@@ -74,7 +76,27 @@ export function DashboardPage({
 
   const handleCreateRecurring = async () => {
     if (!newRecurring.brainId || !newRecurring.title) return;
-    await onCreateRecurring(newRecurring);
+
+    // Build scheduleConfig based on schedule type
+    const scheduleConfig: Record<string, any> = {};
+    const [hours, minutes] = newRecurring.time.split(':').map(Number);
+
+    if (newRecurring.scheduleType === 'HOURLY') {
+      scheduleConfig.minute = minutes;
+    } else if (newRecurring.scheduleType === 'DAILY') {
+      scheduleConfig.hour = hours;
+      scheduleConfig.minute = minutes;
+    } else if (newRecurring.scheduleType === 'WEEKLY') {
+      scheduleConfig.day = Number(newRecurring.dayOfWeek);
+      scheduleConfig.hour = hours;
+      scheduleConfig.minute = minutes;
+    }
+
+    await onCreateRecurring({
+      ...newRecurring,
+      scheduleConfig,
+    });
+
     setIsAddRecurringOpen(false);
     setNewRecurring({
       brainId: '',
@@ -82,16 +104,28 @@ export function DashboardPage({
       description: '',
       scheduleType: 'DAILY',
       intervalMinutes: 60,
+      time: '09:00',
+      dayOfWeek: '1',
     });
   };
 
   const formatSchedule = (task: RecurringTask) => {
+    const config = task.scheduleConfig || {};
+
     switch (task.scheduleType) {
-      case 'HOURLY': return 'Hourly';
-      case 'DAILY': return 'Daily';
-      case 'WEEKLY': return 'Weekly';
-      case 'INTERVAL': return `Every ${task.intervalMs ? Math.round(task.intervalMs / 60000) : '?'} min`;
-      default: return task.scheduleType;
+      case 'HOURLY':
+        return `Hourly at :${config.minute?.toString().padStart(2, '0') || '00'}`;
+      case 'DAILY':
+        return `Daily at ${config.hour?.toString().padStart(2, '0') || '00'}:${config.minute?.toString().padStart(2, '0') || '00'}`;
+      case 'WEEKLY': {
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dayName = config.day !== undefined ? days[config.day] : 'Mon';
+        return `Weekly on ${dayName} at ${config.hour?.toString().padStart(2, '0') || '00'}:${config.minute?.toString().padStart(2, '0') || '00'}`;
+      }
+      case 'INTERVAL':
+        return `Every ${task.intervalMs ? Math.round(task.intervalMs / 60000) : '?'} min`;
+      default:
+        return task.scheduleType;
     }
   };
 
@@ -314,6 +348,39 @@ export function DashboardPage({
                 value={newRecurring.intervalMinutes}
                 onChange={(e) => setNewRecurring({ ...newRecurring, intervalMinutes: parseInt(e.target.value) || 60 })}
               />
+            </div>
+          )}
+
+          {(newRecurring.scheduleType === 'DAILY' || newRecurring.scheduleType === 'WEEKLY' || newRecurring.scheduleType === 'HOURLY') && (
+            <div>
+              <label className="text-sm font-medium">
+                {newRecurring.scheduleType === 'HOURLY' ? 'At minute' : 'Time'}
+              </label>
+              <input
+                type="time"
+                value={newRecurring.time}
+                onChange={(e) => setNewRecurring({ ...newRecurring, time: e.target.value })}
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+              />
+            </div>
+          )}
+
+          {newRecurring.scheduleType === 'WEEKLY' && (
+            <div>
+              <label className="text-sm font-medium">Day of Week</label>
+              <select
+                value={newRecurring.dayOfWeek}
+                onChange={(e) => setNewRecurring({ ...newRecurring, dayOfWeek: e.target.value })}
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+              >
+                <option value="0">Sunday</option>
+                <option value="1">Monday</option>
+                <option value="2">Tuesday</option>
+                <option value="3">Wednesday</option>
+                <option value="4">Thursday</option>
+                <option value="5">Friday</option>
+                <option value="6">Saturday</option>
+              </select>
             </div>
           )}
 
