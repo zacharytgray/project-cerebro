@@ -71,6 +71,26 @@ async function main() {
       brainService.register(brain);
     });
 
+    // Register nexus/default brain (general purpose brain)
+    const nexusChannelId = config.discord.channels[config.brains.nexus.channelKey];
+    if (nexusChannelId) {
+      const nexusBrain = new ContextBrain(
+        {
+          id: 'default',
+          name: 'Default (General)',
+          type: BrainType.CONTEXT,
+          description: 'General purpose brain with highest scope and privileges. Routes to #general channel.',
+          discordChannelId: nexusChannelId,
+          openClawAgentId: config.brains.nexus.openClawAgentId || 'nexus',
+        },
+        taskRepo,
+        discordAdapter,
+        openClawAdapter,
+        taskExecutorService
+      );
+      brainService.register(nexusBrain);
+    }
+
     // Register digest brain
     const digestChannelId = config.discord.channels[config.brains.digest.channelKey];
     if (digestChannelId) {

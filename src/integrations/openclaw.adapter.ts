@@ -66,10 +66,23 @@ export class OpenClawAdapter {
         // Extract text from result.payloads array (OpenClaw JSON format)
         if (jsonResponse.result?.payloads && Array.isArray(jsonResponse.result.payloads)) {
           const texts = jsonResponse.result.payloads
-            .map((p: any) => p.text)
-            .filter((t: string | null) => t && t.trim().length > 0);
-          if (texts.length > 0) {
-            return texts.join('\n');
+            .map((p: any) => p.text?.trim())
+            .filter((t: string | null) => t && t.length > 0);
+          
+          // Deduplicate texts (agent sometimes sends same content multiple times)
+          const uniqueTexts: string[] = [];
+          for (const text of texts) {
+            // Check if this text is a substring of any already-seen text (or vice versa)
+            const isDuplicate = uniqueTexts.some(
+              seen => seen.includes(text) || text.includes(seen)
+            );
+            if (!isDuplicate) {
+              uniqueTexts.push(text);
+            }
+          }
+          
+          if (uniqueTexts.length > 0) {
+            return uniqueTexts.join('\n\n');
           }
         }
         // Fallback to other common fields
