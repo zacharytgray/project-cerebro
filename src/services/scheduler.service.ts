@@ -60,12 +60,19 @@ export class SchedulerService {
    */
   markExecuted(taskId: string): void {
     const now = Date.now();
+    
+    // First, update lastExecutedAt so computeNextExecution uses the correct base time
+    this.recurringTaskRepo.update({
+      id: taskId,
+      lastExecutedAt: now,
+    });
+    
+    // Now get the updated task and compute next execution
     const task = this.recurringTaskRepo.getById(taskId);
     const nextExecutionAt = this.computeNextExecution(task);
 
     this.recurringTaskRepo.update({
       id: taskId,
-      lastExecutedAt: now,
       nextExecutionAt,
     });
 

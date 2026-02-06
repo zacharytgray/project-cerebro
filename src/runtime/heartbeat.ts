@@ -117,16 +117,27 @@ export class HeartbeatLoop {
   }
 
   /**
-   * Update task statuses (WAITING -> READY if time has come)
+   * Update task statuses (PENDING/WAITING -> READY if eligible for execution)
    */
   private async updateTaskStatuses(): Promise<void> {
-    const waitingTasks = this.taskRepo.findByStatus('WAITING' as any);
     const now = Date.now();
 
+    // Handle WAITING tasks (scheduled for specific time)
+    const waitingTasks = this.taskRepo.findByStatus('WAITING' as any);
     for (const task of waitingTasks) {
       if (task.executeAt && task.executeAt <= now) {
         this.taskRepo.updateStatus(task.id, 'READY' as any);
-        logger.debug('Task status updated to READY', { taskId: task.id });
+        logger.debug('Task status updated to READY (was WAITING)', { taskId: task.id });
+      }
+    }
+
+    // Handle PENDING tasks (immediately executable or scheduled)
+    const pendingTasks = this.taskRepo.findByStatus('PENDING' as any);
+    for (const task of pendingTasks) {
+      // If no executeAt, or executeAt has passed, mark as READY
+      if (!task.executeAt || task.executeAt <= now) {
+        this.taskRepo.updateStatus(task.id, 'READY' as any);
+        logger.debug('Task status updated to READY (was PENDING)', { taskId: task.id });
       }
     }
   }
