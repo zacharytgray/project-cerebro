@@ -13,6 +13,10 @@ export interface Task {
   status: string;
   modelOverride?: string;
   createdAt: number;
+  updatedAt?: number;
+  attempts?: number;
+  error?: string;
+  output?: string;
 }
 
 export interface RecurringTask {
