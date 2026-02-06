@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Terminal } from 'lucide-react';
+import { Terminal, Trash2 } from 'lucide-react';
 import type { Task, BrainStatus, TaskStatus } from '../../api/types';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
 import { TaskRow } from './TaskRow';
 import { Skeleton } from '../ui/Skeleton';
 
@@ -13,6 +14,7 @@ interface TaskStreamProps {
   onTaskClick: (task: Task) => void;
   onExecuteTask?: (taskId: string) => void;
   onDeleteTask?: (taskId: string) => void;
+  onClearAll?: () => void;
 }
 
 export function TaskStream({ 
@@ -21,7 +23,8 @@ export function TaskStream({
   loading, 
   onTaskClick,
   onExecuteTask,
-  onDeleteTask
+  onDeleteTask,
+  onClearAll
 }: TaskStreamProps) {
   const [filter, setFilter] = useState<TaskStatus | 'ALL'>('ALL');
 
@@ -42,17 +45,30 @@ export function TaskStream({
           <Terminal className="w-5 h-5 text-purple-400" />
           Execution Stream
         </h2>
-        <div className="flex gap-2">
-          {filters.map((f) => (
-            <div key={f} onClick={() => setFilter(f)}>
-              <Badge
-                variant={filter === f ? 'info' : 'default'}
-                className="cursor-pointer hover:scale-105 transition-transform"
-              >
-                {f}
-              </Badge>
-            </div>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="flex gap-2">
+            {filters.map((f) => (
+              <div key={f} onClick={() => setFilter(f)}>
+                <Badge
+                  variant={filter === f ? 'info' : 'default'}
+                  className="cursor-pointer hover:scale-105 transition-transform"
+                >
+                  {f}
+                </Badge>
+              </div>
+            ))}
+          </div>
+          {onClearAll && tasks.length > 0 && (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={onClearAll}
+              className="flex items-center gap-1 ml-2"
+            >
+              <Trash2 className="w-3 h-3" />
+              Clear All
+            </Button>
+          )}
         </div>
       </div>
 

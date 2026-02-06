@@ -124,6 +124,8 @@ export const api = {
   // Task Actions
   executeTask: (id: string) =>
     fetchApi<void>(`/api/tasks/${id}/execute`, { method: 'POST' }),
+  clearAllTasks: () =>
+    fetchApi<{ success: boolean; deletedCount: number }>('/api/tasks', { method: 'DELETE' }),
 
   // Config
   getModels: () => fetchApi<{ models: Array<{ alias: string; id: string; provider: string }> }>('/api/config/models'),

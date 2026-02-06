@@ -29,6 +29,7 @@ interface DashboardPageProps {
   onRunRecurring: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onExecuteTask: (id: string) => void;
+  onClearAllTasks: () => void;
 }
 
 export function DashboardPage({
@@ -46,12 +47,15 @@ export function DashboardPage({
   onRunRecurring,
   onDeleteTask,
   onExecuteTask,
+  onClearAllTasks,
 }: DashboardPageProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [isAddRecurringOpen, setIsAddRecurringOpen] = useState(false);
   const [recurringError, setRecurringError] = useState<string | null>(null);
+  const [editingRecurring, setEditingRecurring] = useState<RecurringTask | null>(null);
+  const [isEditRecurringOpen, setIsEditRecurringOpen] = useState(false);
   const [newRecurring, setNewRecurring] = useState({
     brainId: '',
     title: '',
@@ -231,7 +235,11 @@ export function DashboardPage({
                 recurringTasks.map((task) => (
                   <div
                     key={task.id}
-                    className="p-3 rounded-lg border border-border bg-secondary/30 text-sm"
+                    className="p-3 rounded-lg border border-border bg-secondary/30 text-sm cursor-pointer hover:bg-secondary/50 transition-colors"
+                    onClick={() => {
+                      setEditingRecurring(task);
+                      setIsEditRecurringOpen(true);
+                    }}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-medium truncate">{task.title}</span>
@@ -242,11 +250,14 @@ export function DashboardPage({
                     <div className="text-xs text-muted-foreground mt-1">
                       {getBrainName(task.brainId)} · {formatSchedule(task)}
                     </div>
-                    <div className="flex gap-1 mt-2">
+                    <div className="flex gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => onRunRecurring(task.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRunRecurring(task.id);
+                        }}
                         className="p-1"
                       >
                         <Play className="w-3 h-3" />
@@ -254,7 +265,10 @@ export function DashboardPage({
                       <Button
                         variant="danger"
                         size="sm"
-                        onClick={() => onDeleteRecurring(task.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteRecurring(task.id);
+                        }}
                         className="p-1"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -289,6 +303,7 @@ export function DashboardPage({
           onTaskClick={handleTaskClick}
           onExecuteTask={onExecuteTask}
           onDeleteTask={onDeleteTask}
+          onClearAll={onClearAllTasks}
         />
       </div>
 
@@ -424,6 +439,70 @@ export function DashboardPage({
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Edit Recurring Modal */}
+      <Modal
+        isOpen={isEditRecurringOpen}
+        onClose={() => {
+          setIsEditRecurringOpen(false);
+          setEditingRecurring(null);
+        }}
+        title="Edit Recurring Task"
+      >
+        {editingRecurring && (
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Title</label>
+              <Input
+                value={editingRecurring.title}
+                onChange={(e) => setEditingRecurring({ ...editingRecurring, title: e.target.value })}
+                placeholder="Task title"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Description</label>
+              <textarea
+                value={editingRecurring.description || ''}
+                onChange={(e) => setEditingRecurring({ ...editingRecurring, description: e.target.value })}
+                placeholder="Task description"
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[80px]"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Enabled</label>
+              <input
+                type="checkbox"
+                checked={editingRecurring.enabled}
+                onChange={(e) => setEditingRecurring({ ...editingRecurring, enabled: e.target.checked })}
+                className="w-4 h-4"
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button 
+                variant="secondary" 
+                onClick={() => {
+                  setIsEditRecurringOpen(false);
+                  setEditingRecurring(null);
+                }} 
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="primary" 
+                onClick={async () => {
+                  // Update via API - for now just close
+                  setIsEditRecurringOpen(false);
+                  setEditingRecurring(null);
+                }} 
+                className="flex-1"
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

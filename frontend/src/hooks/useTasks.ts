@@ -66,6 +66,15 @@ export function useTasks() {
     [fetch]
   );
 
+  const clearAllTasks = useCallback(async () => {
+    try {
+      await api.clearAllTasks();
+      await fetch();
+    } catch (e) {
+      console.error('Failed to clear tasks:', e);
+    }
+  }, [fetch]);
+
   return {
     tasks,
     loading,
@@ -73,6 +82,7 @@ export function useTasks() {
     createTask,
     deleteTask,
     executeTask,
+    clearAllTasks,
     refetch: fetch,
   };
 }

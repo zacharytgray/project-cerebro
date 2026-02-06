@@ -14,7 +14,7 @@ export default function App() {
   const [selectedBrainId, setSelectedBrainId] = useState<string | null>(null);
 
   const { brains, loading: loadingBrains, toggleBrain, runBrain } = useBrains();
-  const { tasks, loading: loadingTasks, createTask, deleteTask, executeTask } = useTasks();
+  const { tasks, loading: loadingTasks, createTask, deleteTask, executeTask, clearAllTasks } = useTasks();
   const { recurringTasks, loading: loadingRecurring, createRecurringTask, deleteRecurringTask, runRecurringTask } = useRecurring();
   const { theme, toggleTheme } = useTheme();
 
@@ -65,6 +65,7 @@ export default function App() {
           onRunRecurring={runRecurringTask}
           onDeleteTask={deleteTask}
           onExecuteTask={executeTask}
+          onClearAllTasks={clearAllTasks}
         />
       )}
 

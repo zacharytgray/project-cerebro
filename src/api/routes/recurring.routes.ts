@@ -3,8 +3,9 @@
  */
 
 import { FastifyInstance } from 'fastify';
-import { RecurringTaskRepository } from '../../data/repositories';
+import { RecurringTaskRepository, TaskRepository } from '../../data/repositories';
 import { CreateRecurringTaskInput } from '../../domain/types';
+import { TaskExecutorService } from '../../services/task-executor.service';
 
 function computeNextExecution(
   pattern: string,
@@ -54,7 +55,9 @@ function computeNextExecution(
 
 export function registerRecurringRoutes(
   server: FastifyInstance,
-  recurringRepo: RecurringTaskRepository
+  recurringRepo: RecurringTaskRepository,
+  taskRepo: TaskRepository,
+  taskExecutor: TaskExecutorService
 ): void {
   /**
    * GET /api/recurring
@@ -168,6 +171,41 @@ export function registerRecurringRoutes(
     const { id } = request.params;
     recurringRepo.delete(id);
     reply.code(204);
+  });
+
+  /**
+   * POST /api/recurring/:id/run
+   * Run recurring task immediately (creates a task instance)
+   */
+  server.post<{
+    Params: { id: string };
+  }>('/api/recurring/:id/run', async (request, reply) => {
+    const { id } = request.params;
+    const recurringTask = recurringRepo.getById(id);
+    
+    if (!recurringTask) {
+      reply.code(404);
+      return { error: 'Recurring task not found' };
+    }
+
+    // Create a task instance
+    const task = taskRepo.create({
+      brainId: recurringTask.brainId,
+      title: recurringTask.title,
+      description: recurringTask.description,
+      payload: {
+        ...recurringTask.payload,
+        recurringTaskId: recurringTask.id,
+      },
+      modelOverride: recurringTask.modelOverride,
+    });
+
+    // Execute immediately
+    taskExecutor.executeTask(task.id).catch((error) => {
+      console.error('Recurring task execution failed:', error);
+    });
+
+    return { success: true, taskId: task.id };
   });
 
   /**
