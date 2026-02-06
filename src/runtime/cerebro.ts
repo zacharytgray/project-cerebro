@@ -20,6 +20,7 @@ import {
 } from '../services';
 import { DiscordAdapter, OpenClawAdapter } from '../integrations';
 import { ApiServer } from '../api/server';
+import { OpenClawTaskExecutor } from './task-executor-impl';
 
 export class CerebroRuntime {
   // Core services
@@ -44,6 +45,9 @@ export class CerebroRuntime {
 
   // State
   private isRunning: boolean = false;
+
+  // Brain configs for executor
+  private brainConfigs: Map<string, any> = new Map();
 
   constructor() {
     const config = getConfig();
@@ -70,16 +74,37 @@ export class CerebroRuntime {
       config.openClawToken
     );
 
-    // Task executor will be initialized after we create the executor
-    // For now, create a placeholder
-    this.taskExecutorService = new TaskExecutorService(
-      this.taskRepo,
-      {
-        execute: async (task) => {
-          logger.warn('Task executor not fully initialized yet', { taskId: task.id });
-        },
+    // Store brain configs for task executor
+    config.brains.brains.forEach((brain) => {
+      const channelId = config.discord.channels[brain.channelKey];
+      if (channelId) {
+        this.brainConfigs.set(brain.id, {
+          openClawAgentId: brain.openClawAgentId,
+          discordChannelId: channelId,
+          description: brain.description,
+        });
       }
+    });
+
+    // Add digest brain config
+    const digestChannelId = config.discord.channels[config.brains.digest.channelKey];
+    if (digestChannelId) {
+      this.brainConfigs.set(config.brains.digest.id, {
+        openClawAgentId: config.brains.digest.openClawAgentId,
+        discordChannelId: digestChannelId,
+        description: config.brains.digest.description,
+      });
+    }
+
+    // Initialize task executor with OpenClaw implementation
+    const taskExecutor = new OpenClawTaskExecutor(
+      this.openClawAdapter,
+      this.discordAdapter,
+      this.brainConfigRepo,
+      this.brainConfigs
     );
+
+    this.taskExecutorService = new TaskExecutorService(this.taskRepo, taskExecutor);
 
     // Initialize API server
     this.apiServer = new ApiServer(config.port, {
