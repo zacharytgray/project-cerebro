@@ -6,6 +6,52 @@ import { FastifyInstance } from 'fastify';
 import { RecurringTaskRepository } from '../../data/repositories';
 import { CreateRecurringTaskInput } from '../../domain/types';
 
+function computeNextExecution(
+  pattern: string,
+  cronExpression: string | undefined,
+  scheduleConfig?: { hour?: number; minute?: number; day?: number },
+  intervalMinutes?: number
+): number {
+  const now = Date.now();
+  const date = new Date();
+
+  switch (pattern) {
+    case 'HOURLY':
+      // Next hour at specified minute
+      date.setMinutes(scheduleConfig?.minute || 0, 0, 0);
+      date.setHours(date.getHours() + 1);
+      return date.getTime();
+
+    case 'DAILY':
+      // Today at specified time, or tomorrow if passed
+      date.setHours(scheduleConfig?.hour || 0, scheduleConfig?.minute || 0, 0, 0);
+      if (date.getTime() <= now) {
+        date.setDate(date.getDate() + 1);
+      }
+      return date.getTime();
+
+    case 'WEEKLY':
+      // Next occurrence of this day at specified time
+      const targetDay = scheduleConfig?.day || 1; // Monday default
+      const currentDay = date.getDay();
+      let daysUntil = targetDay - currentDay;
+      if (daysUntil < 0 || (daysUntil === 0 && date.getTime() > now)) {
+        daysUntil += 7;
+      }
+      date.setDate(date.getDate() + daysUntil);
+      date.setHours(scheduleConfig?.hour || 0, scheduleConfig?.minute || 0, 0, 0);
+      return date.getTime();
+
+    case 'INTERVAL':
+      // Now + interval
+      return now + (intervalMinutes || 60) * 60 * 1000;
+
+    default:
+      // Default to 1 hour from now
+      return now + 60 * 60 * 1000;
+  }
+}
+
 export function registerRecurringRoutes(
   server: FastifyInstance,
   recurringRepo: RecurringTaskRepository
@@ -36,12 +82,71 @@ export function registerRecurringRoutes(
    * Create a new recurring task
    */
   server.post<{
-    Body: CreateRecurringTaskInput;
+    Body: {
+      brainId: string;
+      title: string;
+      description?: string;
+      scheduleType?: string;
+      pattern?: string;
+      scheduleConfig?: { hour?: number; minute?: number; day?: number };
+      intervalMinutes?: number;
+      modelOverride?: string;
+    };
   }>('/api/recurring', async (request, reply) => {
-    const input = request.body;
+    const body = request.body;
+
+    // Transform new format (scheduleType + scheduleConfig) to old format (pattern + cronExpression)
+    // Map HOURLY and INTERVAL to CUSTOM pattern since enum doesn't have them
+    let pattern: string = body.pattern || 'DAILY';
+    let cronExpression: string | undefined;
+
+    if (body.scheduleType === 'HOURLY' && body.scheduleConfig) {
+      // Every hour at specific minute -> use CUSTOM pattern
+      pattern = 'CUSTOM';
+      cronExpression = `${body.scheduleConfig.minute || 0} * * * *`;
+    } else if (body.scheduleType === 'DAILY' && body.scheduleConfig) {
+      // Daily at specific time
+      pattern = 'DAILY';
+      cronExpression = `${body.scheduleConfig.minute || 0} ${body.scheduleConfig.hour || 0} * * *`;
+    } else if (body.scheduleType === 'WEEKLY' && body.scheduleConfig) {
+      // Weekly on specific day at specific time
+      pattern = 'WEEKLY';
+      cronExpression = `${body.scheduleConfig.minute || 0} ${body.scheduleConfig.hour || 0} * * ${body.scheduleConfig.day || 1}`;
+    } else if (body.scheduleType === 'INTERVAL' && body.intervalMinutes) {
+      // Custom interval -> use CUSTOM pattern
+      pattern = 'CUSTOM';
+      cronExpression = undefined; // Use intervalMs from payload
+    }
+
+    // Compute next execution time
+    const nextExecutionAt = computeNextExecution(
+      pattern,
+      cronExpression,
+      body.scheduleConfig,
+      body.intervalMinutes
+    );
+
+    // Build payload for repository
+    const input: CreateRecurringTaskInput = {
+      brainId: body.brainId,
+      title: body.title,
+      description: body.description,
+      pattern: pattern as any,
+      cronExpression,
+      payload: body.intervalMinutes ? { intervalMinutes: body.intervalMinutes } : {},
+      modelOverride: body.modelOverride,
+    };
+
     const task = recurringRepo.create(input);
+
+    // Set nextExecutionAt after creation (repository doesn't handle this)
+    recurringRepo.update({
+      id: task.id,
+      nextExecutionAt,
+    });
+
     reply.code(201);
-    return task;
+    return { ...task, nextExecutionAt };
   });
 
   /**
