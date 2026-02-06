@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Toggle } from '../ui/Toggle';
+import { api } from '../../api/client';
 import type { BrainStatus } from '../../api/types';
 
 interface AddTaskModalProps {
@@ -12,14 +13,6 @@ interface AddTaskModalProps {
   onCreateRecurring: (taskData: any) => Promise<void>;
 }
 
-const models = [
-  { alias: 'default', id: 'google/gemini-3-flash-preview' },
-  { alias: 'full', id: 'google/gemini-3-pro-preview' },
-  { alias: 'cheap', id: 'google/gemini-2.5-flash' },
-  { alias: 'free', id: 'google/gemini-2.5-flash-lite' },
-  { alias: 'old-default', id: 'google/gemini-2.5-pro' },
-];
-
 export function AddTaskModal({
   isOpen,
   onClose,
@@ -27,17 +20,45 @@ export function AddTaskModal({
   onCreateTask,
   onCreateRecurring,
 }: AddTaskModalProps) {
+  const [models, setModels] = useState<Array<{ alias: string; id: string; provider: string }>>([]);
+  const [loadingModels, setLoadingModels] = useState(true);
+
+  // Use first brain as default instead of hardcoded 'nexus'
+  const defaultBrainId = brains.length > 0 ? brains[0].id : '';
+
   const [formData, setFormData] = useState({
-    brainId: 'nexus',
+    brainId: defaultBrainId,
     title: '',
     description: '',
-    modelOverride: 'default',
+    modelOverride: 'auto',
     isRecurring: false,
     scheduleType: 'DAILY' as 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY',
     intervalMinutes: 60,
     dailyTime: '09:00',
     weeklyDay: '1',
   });
+
+  // Fetch models from API when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      api.getModels()
+        .then((data) => {
+          setModels(data.models);
+          setLoadingModels(false);
+        })
+        .catch((err) => {
+          console.error('Failed to load models:', err);
+          setLoadingModels(false);
+        });
+    }
+  }, [isOpen]);
+
+  // Update brainId if brains change and current selection is invalid
+  useEffect(() => {
+    if (brains.length > 0 && !brains.find(b => b.id === formData.brainId)) {
+      setFormData(prev => ({ ...prev, brainId: brains[0].id }));
+    }
+  }, [brains, formData.brainId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,12 +146,17 @@ export function AddTaskModal({
               className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm"
               value={formData.modelOverride}
               onChange={(e) => setFormData({ ...formData, modelOverride: e.target.value })}
+              disabled={loadingModels}
             >
-              {models.map((m) => (
-                <option key={m.alias} value={m.alias}>
-                  {m.alias}
-                </option>
-              ))}
+              {loadingModels ? (
+                <option>Loading models...</option>
+              ) : (
+                models.map((m) => (
+                  <option key={m.id} value={m.alias}>
+                    {m.alias} ({m.provider})
+                  </option>
+                ))
+              )}
             </select>
           </div>
         </div>

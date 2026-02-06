@@ -112,4 +112,7 @@ export const api = {
   // Task Actions
   executeTask: (id: string) =>
     fetchApi<void>(`/api/tasks/${id}/execute`, { method: 'POST' }),
+
+  // Config
+  getModels: () => fetchApi<{ models: Array<{ alias: string; id: string; provider: string }> }>('/api/config/models'),
 };

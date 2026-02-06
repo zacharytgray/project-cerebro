@@ -24,8 +24,14 @@ export function Shell({
 }: ShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  const isDark = theme === 'dark';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0b0e14] via-[#0d111c] to-[#0a0f1a] dark:from-[#0b0e14] dark:via-[#0d111c] dark:to-[#0a0f1a] text-foreground">
+    <div className={
+      isDark 
+        ? "min-h-screen bg-gradient-to-br from-[#0b0e14] via-[#0d111c] to-[#0a0f1a] text-foreground"
+        : "min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-white text-foreground"
+    }>
       <div className="flex min-h-screen">
         <Sidebar
           brains={brains}

@@ -17,6 +17,7 @@ import {
   registerRecurringRoutes,
   registerReportRoutes,
   registerUploadRoutes,
+  registerConfigRoutes,
 } from './routes';
 import { BrainService, ReportService, TaskExecutorService } from '../services';
 import { TaskRepository, RecurringTaskRepository } from '../data/repositories';
@@ -86,6 +87,7 @@ export class ApiServer {
     registerRecurringRoutes(this.server, this.deps.recurringRepo);
     registerReportRoutes(this.server, this.deps.reportService);
     registerUploadRoutes(this.server);
+    registerConfigRoutes(this.server);
 
     logger.info('API routes registered');
   }
