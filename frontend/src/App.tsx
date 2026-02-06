@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { Shell } from './components/layout/Shell';
 import { DashboardPage } from './pages/DashboardPage';
 import { BrainDetailPage } from './pages/BrainDetailPage';
-import { RecurringTasksPage } from './pages/RecurringTasksPage';
 import { useBrains } from './hooks/useBrains';
 import { useTasks } from './hooks/useTasks';
 import { useRecurring } from './hooks/useRecurring';
 import { useTheme } from './hooks/useTheme';
 
-type View = 'dashboard' | 'brain-detail' | 'recurring-tasks';
+type View = 'dashboard' | 'brain-detail';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -19,8 +18,13 @@ export default function App() {
   const { recurringTasks, loading: loadingRecurring, createRecurringTask, deleteRecurringTask, runRecurringTask } = useRecurring();
   const { theme, toggleTheme } = useTheme();
 
-  const handleNavigate = (view: View, brainId?: string) => {
-    setCurrentView(view);
+  const handleNavigate = (view: View | 'recurring-tasks', brainId?: string) => {
+    if (view === 'recurring-tasks') {
+      // Recurring tasks is now on dashboard, just switch to dashboard
+      setCurrentView('dashboard');
+    } else {
+      setCurrentView(view);
+    }
     if (brainId) {
       setSelectedBrainId(brainId);
     }
@@ -48,13 +52,17 @@ export default function App() {
         <DashboardPage
           brains={brains}
           tasks={tasks}
+          recurringTasks={recurringTasks}
           loadingBrains={loadingBrains}
           loadingTasks={loadingTasks}
+          loadingRecurring={loadingRecurring}
           onToggleBrain={toggleBrain}
           onRunBrain={runBrain}
           onBrainClick={handleBrainClick}
           onCreateTask={createTask}
           onCreateRecurring={createRecurringTask}
+          onDeleteRecurring={deleteRecurringTask}
+          onRunRecurring={runRecurringTask}
           onDeleteTask={deleteTask}
           onExecuteTask={executeTask}
         />
@@ -65,17 +73,6 @@ export default function App() {
           brain={selectedBrain}
           onBack={() => setCurrentView('dashboard')}
           onToggle={toggleBrain}
-        />
-      )}
-
-      {currentView === 'recurring-tasks' && (
-        <RecurringTasksPage
-          brains={brains}
-          recurringTasks={recurringTasks}
-          loading={loadingRecurring}
-          onCreateRecurring={createRecurringTask}
-          onDeleteRecurring={deleteRecurringTask}
-          onRunRecurring={runRecurringTask}
         />
       )}
     </Shell>

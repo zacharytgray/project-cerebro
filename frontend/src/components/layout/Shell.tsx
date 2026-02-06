@@ -5,9 +5,9 @@ import type { BrainStatus } from '../../api/types';
 
 interface ShellProps {
   brains: BrainStatus[];
-  currentView: 'dashboard' | 'brain-detail' | 'recurring-tasks';
+  currentView: 'dashboard' | 'brain-detail';
   selectedBrainId: string | null;
-  onNavigate: (view: 'dashboard' | 'brain-detail' | 'recurring-tasks', brainId?: string) => void;
+  onNavigate: (view: 'dashboard' | 'brain-detail', brainId?: string) => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   children: React.ReactNode;
