@@ -107,5 +107,5 @@ export const api = {
       body: JSON.stringify({ enabled }),
     }),
   runBrain: (id: string) =>
-    fetchApi<void>(`/api/brains/${id}/run`, { method: 'POST' }),
+    fetchApi<void>(`/api/brains/${id}/force-run`, { method: 'POST' }),
 };
