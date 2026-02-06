@@ -51,6 +51,7 @@ export function DashboardPage({
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [isAddRecurringOpen, setIsAddRecurringOpen] = useState(false);
+  const [recurringError, setRecurringError] = useState<string | null>(null);
   const [newRecurring, setNewRecurring] = useState({
     brainId: '',
     title: '',
@@ -75,38 +76,59 @@ export function DashboardPage({
   const otherBrains = brains.filter(b => b.id !== 'nexus');
 
   const handleCreateRecurring = async () => {
-    if (!newRecurring.brainId || !newRecurring.title) return;
-
-    // Build scheduleConfig based on schedule type
-    const scheduleConfig: Record<string, any> = {};
-    const [hours, minutes] = newRecurring.time.split(':').map(Number);
-
-    if (newRecurring.scheduleType === 'HOURLY') {
-      scheduleConfig.minute = minutes;
-    } else if (newRecurring.scheduleType === 'DAILY') {
-      scheduleConfig.hour = hours;
-      scheduleConfig.minute = minutes;
-    } else if (newRecurring.scheduleType === 'WEEKLY') {
-      scheduleConfig.day = Number(newRecurring.dayOfWeek);
-      scheduleConfig.hour = hours;
-      scheduleConfig.minute = minutes;
+    if (!newRecurring.brainId || !newRecurring.title) {
+      setRecurringError('Please select a brain and enter a title');
+      return;
     }
 
-    await onCreateRecurring({
-      ...newRecurring,
-      scheduleConfig,
-    });
+    setRecurringError(null);
 
-    setIsAddRecurringOpen(false);
-    setNewRecurring({
-      brainId: '',
-      title: '',
-      description: '',
-      scheduleType: 'DAILY',
-      intervalMinutes: 60,
-      time: '09:00',
-      dayOfWeek: '1',
-    });
+    try {
+      // Build scheduleConfig based on schedule type
+      const scheduleConfig: Record<string, any> = {};
+      const [hours, minutes] = newRecurring.time.split(':').map(Number);
+
+      if (newRecurring.scheduleType === 'HOURLY') {
+        scheduleConfig.minute = minutes;
+      } else if (newRecurring.scheduleType === 'DAILY') {
+        scheduleConfig.hour = hours;
+        scheduleConfig.minute = minutes;
+      } else if (newRecurring.scheduleType === 'WEEKLY') {
+        scheduleConfig.day = Number(newRecurring.dayOfWeek);
+        scheduleConfig.hour = hours;
+        scheduleConfig.minute = minutes;
+      }
+
+      // Only send fields the API expects
+      const payload: any = {
+        brainId: newRecurring.brainId,
+        title: newRecurring.title,
+        description: newRecurring.description,
+        scheduleType: newRecurring.scheduleType,
+        scheduleConfig,
+      };
+
+      // Only include intervalMinutes for INTERVAL type
+      if (newRecurring.scheduleType === 'INTERVAL') {
+        payload.intervalMinutes = newRecurring.intervalMinutes;
+      }
+
+      await onCreateRecurring(payload);
+
+      setIsAddRecurringOpen(false);
+      setNewRecurring({
+        brainId: '',
+        title: '',
+        description: '',
+        scheduleType: 'DAILY',
+        intervalMinutes: 60,
+        time: '09:00',
+        dayOfWeek: '1',
+      });
+    } catch (err: any) {
+      setRecurringError(err.message || 'Failed to create recurring task');
+      console.error('Failed to create recurring task:', err);
+    }
   };
 
   const formatSchedule = (task: RecurringTask) => {
@@ -289,10 +311,18 @@ export function DashboardPage({
       {/* Add Recurring Modal */}
       <Modal
         isOpen={isAddRecurringOpen}
-        onClose={() => setIsAddRecurringOpen(false)}
+        onClose={() => {
+          setIsAddRecurringOpen(false);
+          setRecurringError(null);
+        }}
         title="Add Recurring Task"
       >
         <div className="space-y-4">
+          {recurringError && (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+              {recurringError}
+            </div>
+          )}
           <div>
             <label className="text-sm font-medium">Brain</label>
             <select
