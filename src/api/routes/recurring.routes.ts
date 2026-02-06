@@ -61,8 +61,8 @@ export function registerRecurringRoutes(
    * Get all recurring tasks
    */
   server.get('/api/recurring', async () => {
-    const tasks = recurringRepo.findAll();
-    return { tasks };
+    const recurringTasks = recurringRepo.findAll();
+    return { recurringTasks };
   });
 
   /**
@@ -178,7 +178,7 @@ export function registerRecurringRoutes(
     Params: { brainId: string };
   }>('/api/brains/:brainId/recurring', async (request, reply) => {
     const { brainId } = request.params;
-    const tasks = recurringRepo.findByBrainId(brainId);
-    return { tasks };
+    const recurringTasks = recurringRepo.findByBrainId(brainId);
+    return { recurringTasks };
   });
 }
