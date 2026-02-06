@@ -56,7 +56,7 @@ async function main() {
           discordAdapter,
           openClawAdapter,
           taskExecutorService,
-          jobRepo as any
+          jobRepo
         );
       } else {
         brain = new ContextBrain(
@@ -88,7 +88,7 @@ async function main() {
         discordAdapter,
         openClawAdapter,
         taskExecutorService,
-        digestService as any
+        digestService
       );
       brainService.register(digestBrain);
     }

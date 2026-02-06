@@ -8,10 +8,16 @@ import { DigestService } from '../../services';
 export class DigestBrain extends BaseBrain {
   private digestService: DigestService;
 
-  constructor(...args: ConstructorParameters<typeof BaseBrain>) {
-    super(...args);
-    // We'll pass this from runtime
-    this.digestService = (args as any)[5] as DigestService;
+  constructor(
+    config: any,
+    taskRepo: any,
+    discordAdapter: any,
+    openClawAdapter: any,
+    taskExecutor: any,
+    digestService: DigestService
+  ) {
+    super(config, taskRepo, discordAdapter, openClawAdapter, taskExecutor);
+    this.digestService = digestService;
   }
 
   /**

@@ -9,10 +9,16 @@ import { JobStatus } from '../../domain/types';
 export class JobBrain extends BaseBrain {
   private jobRepo: JobRepository;
 
-  constructor(...args: ConstructorParameters<typeof BaseBrain>) {
-    super(...args);
-    // We'll need to pass this in from the runtime
-    this.jobRepo = (args as any)[5] as JobRepository;
+  constructor(
+    config: any,
+    taskRepo: any,
+    discordAdapter: any,
+    openClawAdapter: any,
+    taskExecutor: any,
+    jobRepo: JobRepository
+  ) {
+    super(config, taskRepo, discordAdapter, openClawAdapter, taskExecutor);
+    this.jobRepo = jobRepo;
   }
 
   /**

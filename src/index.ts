@@ -1,92 +1,129 @@
-import { CerebroRuntime } from './core/Runtime';
-import { JobBrain } from './brains/JobBrain';
-import { ContextBrain } from './brains/ContextBrain';
-import { DigestBrain } from './brains/DigestBrain';
-import { ApiServer } from './api/Server';
-import * as fs from 'fs';
-import * as path from 'path';
+/**
+ * Main entry point for Cerebro - refactored architecture
+ */
 
-// Load config
-const configPath = path.join(__dirname, '../config/discord_ids.json');
-const brainsPath = path.join(__dirname, '../config/brains.json');
-const discordConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-const brainsConfig = JSON.parse(fs.readFileSync(brainsPath, 'utf-8'));
+import { logger, LogLevel } from './lib/logger';
+import { getConfig } from './lib/config';
+import { CerebroRuntime } from './runtime/cerebro';
+import { HeartbeatLoop } from './runtime/heartbeat';
+import { ContextBrain, JobBrain, DigestBrain } from './runtime/brains';
+import { BrainType } from './domain/types';
 
 async function main() {
-    const runtime = new CerebroRuntime();
+  try {
+    // Load configuration
+    const config = getConfig();
 
-    // Initialize Brains from config
-    const brains = brainsConfig.brains as Array<{
-        id: string;
-        name: string;
-        channelKey: string;
-        type: 'context' | 'job';
-        description: string;
-        openClawAgentId?: string;
-    }>;
+    // Set log level from config
+    logger.setLevel(config.logLevel as LogLevel);
 
-    // Register Core Brains
-    brains.forEach(b => {
-        const channelId = discordConfig.channels[b.channelKey];
-        if (channelId) {
-            let brain;
-            const config = {
-                id: b.id,
-                name: b.name,
-                description: b.description,
-                discordChannelId: channelId,
-                openClawAgentId: b.openClawAgentId
-            };
-
-            if (b.type === 'job') {
-                // @ts-ignore
-                brain = new JobBrain(config, (runtime as any).client, runtime.graph);
-            } else {
-                // @ts-ignore
-                brain = new ContextBrain(config, (runtime as any).client, runtime.graph);
-            }
-            
-            runtime.registerBrain(brain);
-        }
+    logger.info('Starting Cerebro', {
+      version: '2.0.0',
+      environment: process.env.NODE_ENV || 'development',
     });
 
-    // Register Nexus (Orchestrator)
-    const generalChannelId = discordConfig.channels[brainsConfig.nexus.channelKey];
-    if (generalChannelId) {
-        const nexusBrain = new ContextBrain({
-            id: brainsConfig.nexus.id,
-            name: 'Nexus',
-            description: brainsConfig.nexus.description,
-            discordChannelId: generalChannelId,
-            openClawAgentId: brainsConfig.nexus.openClawAgentId
-        }, (runtime as any).client, runtime.graph);
-        runtime.registerBrain(nexusBrain);
-    }
+    // Create runtime
+    const runtime = new CerebroRuntime();
+    const { brainService, taskExecutorService, schedulerService } = runtime.getServices();
+    const { taskRepo, recurringRepo, jobRepo } = runtime.getRepositories();
+    const { discordAdapter, openClawAdapter } = runtime.getIntegrations();
 
-    // Register Daily Digest Brain
-    const digestChannelId = discordConfig.channels[brainsConfig.digest.channelKey];
+    // Register brains from configuration
+    config.brains.brains.forEach((brainConfig) => {
+      const channelId = config.discord.channels[brainConfig.channelKey];
+      if (!channelId) {
+        logger.warn('Channel not found for brain', {
+          brainId: brainConfig.id,
+          channelKey: brainConfig.channelKey,
+        });
+        return;
+      }
+
+      const fullConfig = {
+        id: brainConfig.id,
+        name: brainConfig.name,
+        type: brainConfig.type === 'job' ? BrainType.JOB : BrainType.CONTEXT,
+        description: brainConfig.description,
+        discordChannelId: channelId,
+        openClawAgentId: brainConfig.openClawAgentId,
+      };
+
+      let brain;
+      if (brainConfig.type === 'job') {
+        brain = new JobBrain(
+          fullConfig,
+          taskRepo,
+          discordAdapter,
+          openClawAdapter,
+          taskExecutorService,
+          jobRepo
+        );
+      } else {
+        brain = new ContextBrain(
+          fullConfig,
+          taskRepo,
+          discordAdapter,
+          openClawAdapter,
+          taskExecutorService
+        );
+      }
+
+      brainService.register(brain);
+    });
+
+    // Register digest brain
+    const digestChannelId = config.discord.channels[config.brains.digest.channelKey];
     if (digestChannelId) {
-        const digestBrain = new DigestBrain({
-            id: brainsConfig.digest.id,
-            name: brainsConfig.digest.name,
-            description: brainsConfig.digest.description,
-            discordChannelId: digestChannelId,
-            openClawAgentId: brainsConfig.digest.openClawAgentId
-        }, (runtime as any).client, runtime.graph, brains.map(b => b.id));
-        runtime.registerBrain(digestBrain);
+      const digestService = runtime.getServices().digestService;
+      const digestBrain = new DigestBrain(
+        {
+          id: config.brains.digest.id,
+          name: config.brains.digest.name,
+          type: BrainType.DIGEST,
+          description: config.brains.digest.description,
+          discordChannelId: digestChannelId,
+          openClawAgentId: config.brains.digest.openClawAgentId,
+        },
+        taskRepo,
+        discordAdapter,
+        openClawAdapter,
+        taskExecutorService,
+        digestService
+      );
+      brainService.register(digestBrain);
     }
 
-    const token = process.env.DISCORD_TOKEN;
-    if (!token) {
-        console.error("DISCORD_TOKEN not found in environment");
-        process.exit(1);
-    }
+    // Start runtime
+    await runtime.start();
 
-    // Start API
-    const api = new ApiServer(runtime, 3000);
-    await api.start();
+    // Start heartbeat loop (every 60 seconds)
+    const heartbeat = new HeartbeatLoop(
+      brainService,
+      schedulerService,
+      taskRepo,
+      recurringRepo,
+      60000
+    );
+    heartbeat.start();
 
-    await runtime.start(token);
+    logger.info('Cerebro started successfully', {
+      brainsRegistered: brainService.getAll().length,
+    });
+
+    // Graceful shutdown
+    const shutdown = async () => {
+      logger.info('Shutting down Cerebro');
+      heartbeat.stop();
+      await runtime.stop();
+      process.exit(0);
+    };
+
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+  } catch (error) {
+    logger.error('Failed to start Cerebro', error as Error);
+    process.exit(1);
+  }
 }
 
-main().catch(console.error);
+main();

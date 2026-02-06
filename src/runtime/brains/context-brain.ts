@@ -12,8 +12,14 @@ export class ContextBrain extends BaseBrain {
   private reportService: ReportService;
   private storagePath: string;
 
-  constructor(...args: ConstructorParameters<typeof BaseBrain>) {
-    super(...args);
+  constructor(
+    config: any,
+    taskRepo: any,
+    discordAdapter: any,
+    openClawAdapter: any,
+    taskExecutor: any
+  ) {
+    super(config, taskRepo, discordAdapter, openClawAdapter, taskExecutor);
     this.reportService = new ReportService();
     this.storagePath = path.join(process.cwd(), 'data', this.id);
     this.ensureStorage();
