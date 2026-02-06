@@ -92,7 +92,10 @@ const Modal = ({ isOpen, onClose, title, children }: { isOpen: boolean; onClose:
 
 const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) => (
   <button
-    onClick={() => onChange(!checked)}
+    onClick={(e) => {
+      e.stopPropagation();
+      onChange(!checked);
+    }}
     className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
       checked ? 'bg-blue-500' : 'bg-gray-700'
     }`}
@@ -1019,6 +1022,9 @@ export default function Dashboard() {
   ) : null;
 
   const isDark = theme === 'dark';
+  const dashboardActiveClass = isDark ? 'bg-blue-600/20 text-blue-200 border border-blue-500/30' : 'bg-blue-200/70 text-blue-900 border border-blue-500/40';
+  const brainActiveClass = isDark ? 'bg-blue-600/20 text-blue-200 border border-blue-500/30' : 'bg-blue-200/70 text-blue-900 border border-blue-500/40';
+  const sidebarInactiveClass = 'text-muted-foreground hover:bg-white/5 hover:shadow-md hover:-translate-y-0.5 transition';
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-gradient-to-br from-[#0b0e14] via-[#0d111c] to-[#0a0f1a]' : 'bg-slate-50'} text-foreground`}>
@@ -1034,7 +1040,7 @@ export default function Dashboard() {
           <nav className="flex flex-col gap-1 text-sm">
             <button
               onClick={() => setCurrentView('dashboard')}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${currentView === 'dashboard' ? 'bg-blue-600/20 text-blue-200 border border-blue-500/30' : 'text-muted-foreground hover:bg-white/5 hover:shadow-md hover:-translate-y-0.5 transition'}`}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg ${currentView === 'dashboard' ? dashboardActiveClass : sidebarInactiveClass}`}
             >
               <Activity className="w-4 h-4" /> Dashboard
             </button>
@@ -1043,7 +1049,7 @@ export default function Dashboard() {
               <button
                 key={b.id}
                 onClick={() => { setSelectedBrainId(b.id); setCurrentView('brain-detail'); }}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${selectedBrainId === b.id && currentView === 'brain-detail' ? 'bg-blue-600/20 text-blue-200 border border-blue-500/30' : 'text-muted-foreground hover:bg-white/5'}`}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg ${selectedBrainId === b.id && currentView === 'brain-detail' ? brainActiveClass : sidebarInactiveClass}`}
               >
                 {getBrainIcon(b.id)}
                 {b.name}
@@ -1206,7 +1212,7 @@ export default function Dashboard() {
                      <span className="text-xs text-muted-foreground">Auto</span>
                      <div className="flex-1" />
                      {/* settings button removed (card click navigates) */}
-                     <button onClick={() => forceRun(brain.id)} className="p-1 hover:bg-white/10 rounded transition-colors" title="Force Run">
+                     <button onClick={(e) => { e.stopPropagation(); forceRun(brain.id); }} className="p-1 hover:bg-white/10 rounded transition-colors" title="Force Run">
                         <Play className="w-4 h-4 text-emerald-300" />
                      </button>
                   </div>
@@ -1238,7 +1244,7 @@ export default function Dashboard() {
                      <span className="text-xs text-muted-foreground">Auto</span>
                      <div className="flex-1" />
                      {/* settings button removed (card click navigates) */}
-                     <button onClick={() => forceRun(brain.id)} className="p-1 hover:bg-white/10 rounded transition-colors" title="Force Run">
+                     <button onClick={(e) => { e.stopPropagation(); forceRun(brain.id); }} className="p-1 hover:bg-white/10 rounded transition-colors" title="Force Run">
                         <Play className="w-4 h-4 text-emerald-300" />
                      </button>
                   </div>
