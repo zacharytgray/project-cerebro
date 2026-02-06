@@ -6,7 +6,6 @@ import { TaskStream } from '../components/tasks/TaskStream';
 import { TaskDetailModal } from '../components/tasks/TaskDetailModal';
 import { AddTaskModal } from '../components/tasks/AddTaskModal';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
 import { GradientText } from '../components/ui/GradientText';
 import { BrainCard } from '../components/brains/BrainCard';
 import { Card } from '../components/ui/Card';
@@ -263,30 +262,25 @@ export function DashboardPage({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-medium truncate">{task.title}</span>
-                      <Badge variant={task.enabled ? 'success' : 'default'}>
-                        {task.enabled ? 'On' : 'Off'}
-                      </Badge>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleRecurring(task.id, !task.enabled);
+                        }}
+                        className="p-1 rounded hover:bg-secondary/80 transition-colors"
+                        title={task.enabled ? 'Disable' : 'Enable'}
+                      >
+                        {task.enabled ? (
+                          <Power className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <PowerOff className="w-4 h-4 text-red-500" />
+                        )}
+                      </button>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       {getBrainName(task.brainId)} · {formatSchedule(task)}
                     </div>
                     <div className="flex gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleRecurring(task.id, !task.enabled);
-                        }}
-                        className="p-1"
-                        title={task.enabled ? 'Disable' : 'Enable'}
-                      >
-                        {task.enabled ? (
-                          <Power className="w-3 h-3 text-green-500" />
-                        ) : (
-                          <PowerOff className="w-3 h-3 text-red-500" />
-                        )}
-                      </Button>
                       <Button
                         variant="secondary"
                         size="sm"
