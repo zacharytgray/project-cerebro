@@ -101,9 +101,14 @@ export class OpenClawAdapter {
    * 
    * Note: --gateway and --token are not CLI flags; they're configured via
    * ~/.openclaw/openclaw.json or environment variables.
+   * 
+   * We use the full path to openclaw because the PATH may not be set correctly
+   * when running from a systemd service or backgrounded node process.
    */
   private buildCommand(agentId: string, payload: OpenClawTaskPayload): string {
-    const parts: string[] = ['openclaw', 'agent'];
+    // Use full path to openclaw CLI to ensure it's found regardless of PATH
+    const openclawPath = process.env.OPENCLAW_CLI_PATH || '/home/zgray/.npm-global/bin/openclaw';
+    const parts: string[] = [openclawPath, 'agent'];
     
     parts.push('--agent', agentId);
     
