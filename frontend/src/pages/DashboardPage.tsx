@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Repeat, Play, Trash2 } from 'lucide-react';
+import { api } from '../api/client';
 import type { BrainStatus, Task, RecurringTask } from '../api/types';
 import { SummaryCards } from '../components/dashboard/SummaryCards';
 import { TaskStream } from '../components/tasks/TaskStream';
@@ -64,7 +65,21 @@ export function DashboardPage({
     intervalMinutes: 60,
     time: '09:00',
     dayOfWeek: '1', // Monday
+    modelId: '', // Full model ID (not alias)
   });
+  const [availableModels, setAvailableModels] = useState<Array<{alias: string; id: string; provider: string}>>([]);
+
+  // Fetch models when add recurring modal opens
+  useEffect(() => {
+    if (isAddRecurringOpen) {
+      api.getModels().then(data => {
+        setAvailableModels(data.models);
+        if (!newRecurring.modelId && data.models.length > 0) {
+          setNewRecurring(prev => ({ ...prev, modelId: data.models[0].id }));
+        }
+      }).catch(() => setAvailableModels([]));
+    }
+  }, [isAddRecurringOpen]);
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
@@ -110,6 +125,7 @@ export function DashboardPage({
         description: newRecurring.description,
         scheduleType: newRecurring.scheduleType,
         scheduleConfig,
+        modelOverride: newRecurring.modelId || undefined, // Send full model ID
       };
 
       // Only include intervalMinutes for INTERVAL type
@@ -128,6 +144,7 @@ export function DashboardPage({
         intervalMinutes: 60,
         time: '09:00',
         dayOfWeek: '1',
+        modelId: '',
       });
     } catch (err: any) {
       const message = err instanceof Error ? err.message : String(err);
@@ -349,6 +366,20 @@ export function DashboardPage({
               <option value="">Select brain...</option>
               {brains.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Model</label>
+            <select
+              value={newRecurring.modelId}
+              onChange={(e) => setNewRecurring({ ...newRecurring, modelId: e.target.value })}
+              className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+            >
+              <option value="">Default (brain default)</option>
+              {availableModels.map((m) => (
+                <option key={m.id} value={m.id}>{m.alias} ({m.provider})</option>
               ))}
             </select>
           </div>
