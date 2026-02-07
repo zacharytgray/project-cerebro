@@ -114,6 +114,8 @@ export function JobProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  // Store raw input values for array fields to allow free typing
+  const [arrayInputs, setArrayInputs] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetch('/api/job-profile')
@@ -161,9 +163,17 @@ export function JobProfilePage() {
     setProfile(newProfile);
   };
 
-  const updateArray = (path: string, value: string) => {
-    const arr = value.split(',').map((s) => s.trim()).filter(Boolean);
-    updateProfile(path, arr);
+  // Handle array field input - store raw value for display, update array on blur
+  const handleArrayInputChange = (inputKey: string, value: string) => {
+    setArrayInputs((prev) => ({ ...prev, [inputKey]: value }));
+  };
+
+  const handleArrayInputBlur = (inputKey: string, profilePath: string) => {
+    const rawValue = arrayInputs[inputKey] ?? '';
+    const arr = rawValue.split(',').map((s) => s.trim()).filter(Boolean);
+    updateProfile(profilePath, arr);
+    // Normalize display value
+    setArrayInputs((prev) => ({ ...prev, [inputKey]: arr.join(', ') }));
   };
 
   // Work Experience helpers
@@ -759,48 +769,54 @@ export function JobProfilePage() {
           <div>
             <label className="text-sm font-medium">Programming Languages (comma-separated)</label>
             <Input
-              value={(profile.profile.skills?.programming_languages || []).join(', ')}
-              onChange={(e) => updateArray('profile.skills.programming_languages', e.target.value)}
+              value={arrayInputs['skills.programming_languages'] ?? (profile.profile.skills?.programming_languages || []).join(', ')}
+              onChange={(e) => handleArrayInputChange('skills.programming_languages', e.target.value)}
+              onBlur={() => handleArrayInputBlur('skills.programming_languages', 'profile.skills.programming_languages')}
               placeholder="Python, JavaScript, Go, TypeScript"
             />
           </div>
           <div>
             <label className="text-sm font-medium">Frameworks & Libraries (comma-separated)</label>
             <Input
-              value={(profile.profile.skills?.frameworks || []).join(', ')}
-              onChange={(e) => updateArray('profile.skills.frameworks', e.target.value)}
+              value={arrayInputs['skills.frameworks'] ?? (profile.profile.skills?.frameworks || []).join(', ')}
+              onChange={(e) => handleArrayInputChange('skills.frameworks', e.target.value)}
+              onBlur={() => handleArrayInputBlur('skills.frameworks', 'profile.skills.frameworks')}
               placeholder="React, Django, Node.js, FastAPI"
             />
           </div>
           <div>
             <label className="text-sm font-medium">Tools & Technologies (comma-separated)</label>
             <Input
-              value={(profile.profile.skills?.tools || []).join(', ')}
-              onChange={(e) => updateArray('profile.skills.tools', e.target.value)}
+              value={arrayInputs['skills.tools'] ?? (profile.profile.skills?.tools || []).join(', ')}
+              onChange={(e) => handleArrayInputChange('skills.tools', e.target.value)}
+              onBlur={() => handleArrayInputBlur('skills.tools', 'profile.skills.tools')}
               placeholder="Docker, AWS, Git, Kubernetes"
             />
           </div>
           <div>
             <label className="text-sm font-medium">Certifications (comma-separated)</label>
             <Input
-              value={(profile.profile.skills?.certifications || []).join(', ')}
-              onChange={(e) => updateArray('profile.skills.certifications', e.target.value)}
+              value={arrayInputs['skills.certifications'] ?? (profile.profile.skills?.certifications || []).join(', ')}
+              onChange={(e) => handleArrayInputChange('skills.certifications', e.target.value)}
+              onBlur={() => handleArrayInputBlur('skills.certifications', 'profile.skills.certifications')}
               placeholder="AWS Solutions Architect, PMP"
             />
           </div>
           <div>
             <label className="text-sm font-medium">Languages Spoken (comma-separated)</label>
             <Input
-              value={(profile.profile.skills?.languages || []).join(', ')}
-              onChange={(e) => updateArray('profile.skills.languages', e.target.value)}
+              value={arrayInputs['skills.languages'] ?? (profile.profile.skills?.languages || []).join(', ')}
+              onChange={(e) => handleArrayInputChange('skills.languages', e.target.value)}
+              onBlur={() => handleArrayInputBlur('skills.languages', 'profile.skills.languages')}
               placeholder="English (Native), Spanish (Conversational)"
             />
           </div>
           <div>
             <label className="text-sm font-medium">Soft Skills (comma-separated)</label>
             <Input
-              value={(profile.profile.skills?.soft_skills || []).join(', ')}
-              onChange={(e) => updateArray('profile.skills.soft_skills', e.target.value)}
+              value={arrayInputs['skills.soft_skills'] ?? (profile.profile.skills?.soft_skills || []).join(', ')}
+              onChange={(e) => handleArrayInputChange('skills.soft_skills', e.target.value)}
+              onBlur={() => handleArrayInputBlur('skills.soft_skills', 'profile.skills.soft_skills')}
               placeholder="Leadership, Communication, Problem Solving"
             />
           </div>
@@ -832,24 +848,27 @@ export function JobProfilePage() {
           <div>
             <label className="text-sm font-medium">Industries of Interest (comma-separated)</label>
             <Input
-              value={(profile.profile.preferences?.industries_of_interest || []).join(', ')}
-              onChange={(e) => updateArray('profile.preferences.industries_of_interest', e.target.value)}
+              value={arrayInputs['prefs.industries'] ?? (profile.profile.preferences?.industries_of_interest || []).join(', ')}
+              onChange={(e) => handleArrayInputChange('prefs.industries', e.target.value)}
+              onBlur={() => handleArrayInputBlur('prefs.industries', 'profile.preferences.industries_of_interest')}
               placeholder="Tech, Fintech, Healthcare"
             />
           </div>
           <div>
             <label className="text-sm font-medium">Company Size Preference (comma-separated)</label>
             <Input
-              value={(profile.profile.preferences?.company_size_preference || []).join(', ')}
-              onChange={(e) => updateArray('profile.preferences.company_size_preference', e.target.value)}
+              value={arrayInputs['prefs.companySize'] ?? (profile.profile.preferences?.company_size_preference || []).join(', ')}
+              onChange={(e) => handleArrayInputChange('prefs.companySize', e.target.value)}
+              onBlur={() => handleArrayInputBlur('prefs.companySize', 'profile.preferences.company_size_preference')}
               placeholder="Startup, Mid-size, Enterprise"
             />
           </div>
           <div className="md:col-span-2">
             <label className="text-sm font-medium">Deal Breakers (comma-separated)</label>
             <Input
-              value={(profile.profile.preferences?.deal_breakers || []).join(', ')}
-              onChange={(e) => updateArray('profile.preferences.deal_breakers', e.target.value)}
+              value={arrayInputs['prefs.dealbreakers'] ?? (profile.profile.preferences?.deal_breakers || []).join(', ')}
+              onChange={(e) => handleArrayInputChange('prefs.dealbreakers', e.target.value)}
+              onBlur={() => handleArrayInputBlur('prefs.dealbreakers', 'profile.preferences.deal_breakers')}
               placeholder="No remote option, On-call 24/7, Less than 2 weeks PTO"
             />
           </div>
@@ -928,48 +947,54 @@ export function JobProfilePage() {
           <div>
             <label className="text-sm font-medium">Job Titles to Search (comma-separated)</label>
             <Input
-              value={profile.search_criteria.job_titles.join(', ')}
-              onChange={(e) => updateArray('search_criteria.job_titles', e.target.value)}
+              value={arrayInputs['search.job_titles'] ?? profile.search_criteria.job_titles.join(', ')}
+              onChange={(e) => handleArrayInputChange('search.job_titles', e.target.value)}
+              onBlur={() => handleArrayInputBlur('search.job_titles', 'search_criteria.job_titles')}
               placeholder="Software Engineer, Backend Developer, Full Stack Engineer"
             />
           </div>
           <div>
             <label className="text-sm font-medium">Required Keywords (comma-separated)</label>
             <Input
-              value={profile.search_criteria.keywords_required.join(', ')}
-              onChange={(e) => updateArray('search_criteria.keywords_required', e.target.value)}
+              value={arrayInputs['search.keywords_required'] ?? profile.search_criteria.keywords_required.join(', ')}
+              onChange={(e) => handleArrayInputChange('search.keywords_required', e.target.value)}
+              onBlur={() => handleArrayInputBlur('search.keywords_required', 'search_criteria.keywords_required')}
               placeholder="python, api"
             />
           </div>
           <div>
             <label className="text-sm font-medium">Preferred Keywords (comma-separated)</label>
             <Input
-              value={profile.search_criteria.keywords_preferred.join(', ')}
-              onChange={(e) => updateArray('search_criteria.keywords_preferred', e.target.value)}
+              value={arrayInputs['search.keywords_preferred'] ?? profile.search_criteria.keywords_preferred.join(', ')}
+              onChange={(e) => handleArrayInputChange('search.keywords_preferred', e.target.value)}
+              onBlur={() => handleArrayInputBlur('search.keywords_preferred', 'search_criteria.keywords_preferred')}
               placeholder="aws, kubernetes, machine learning"
             />
           </div>
           <div>
             <label className="text-sm font-medium">Excluded Keywords (comma-separated)</label>
             <Input
-              value={profile.search_criteria.keywords_excluded.join(', ')}
-              onChange={(e) => updateArray('search_criteria.keywords_excluded', e.target.value)}
+              value={arrayInputs['search.keywords_excluded'] ?? profile.search_criteria.keywords_excluded.join(', ')}
+              onChange={(e) => handleArrayInputChange('search.keywords_excluded', e.target.value)}
+              onBlur={() => handleArrayInputBlur('search.keywords_excluded', 'search_criteria.keywords_excluded')}
               placeholder="java, frontend-only, unpaid"
             />
           </div>
           <div>
             <label className="text-sm font-medium">Experience Levels (comma-separated)</label>
             <Input
-              value={profile.search_criteria.experience_levels.join(', ')}
-              onChange={(e) => updateArray('search_criteria.experience_levels', e.target.value)}
+              value={arrayInputs['search.experience_levels'] ?? profile.search_criteria.experience_levels.join(', ')}
+              onChange={(e) => handleArrayInputChange('search.experience_levels', e.target.value)}
+              onBlur={() => handleArrayInputBlur('search.experience_levels', 'search_criteria.experience_levels')}
               placeholder="entry-level, mid-level, senior"
             />
           </div>
           <div>
             <label className="text-sm font-medium">Company Blacklist (comma-separated)</label>
             <Input
-              value={profile.search_criteria.company_blacklist.join(', ')}
-              onChange={(e) => updateArray('search_criteria.company_blacklist', e.target.value)}
+              value={arrayInputs['search.company_blacklist'] ?? profile.search_criteria.company_blacklist.join(', ')}
+              onChange={(e) => handleArrayInputChange('search.company_blacklist', e.target.value)}
+              onBlur={() => handleArrayInputBlur('search.company_blacklist', 'search_criteria.company_blacklist')}
               placeholder="Companies you don't want to apply to"
             />
           </div>
