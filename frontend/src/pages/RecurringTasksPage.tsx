@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
+import { Toggle } from '../components/ui/Toggle';
 
 interface RecurringTasksPageProps {
   brains: BrainStatus[];
@@ -19,6 +20,9 @@ interface RecurringTasksPageProps {
     modelOverride?: string;
     scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
     intervalMinutes?: number;
+    sendDiscordNotification?: boolean;
+    triggersReport?: boolean;
+    reportDelayMinutes?: number;
   }) => Promise<void>;
   onDeleteRecurring: (id: string) => void;
   onRunRecurring: (id: string) => void;
@@ -33,6 +37,9 @@ interface RecurringTasksPageProps {
       scheduleType?: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
       intervalMinutes?: number;
       enabled?: boolean;
+      sendDiscordNotification?: boolean;
+      triggersReport?: boolean;
+      reportDelayMinutes?: number;
     }
   ) => Promise<void>;
 }
@@ -58,6 +65,9 @@ export function RecurringTasksPage({
     modelOverride: string;
     scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
     intervalMinutes: number;
+    sendDiscordNotification: boolean;
+    triggersReport: boolean;
+    reportDelayMinutes: number;
   }>({
     brainId: '',
     title: '',
@@ -65,6 +75,9 @@ export function RecurringTasksPage({
     modelOverride: '',
     scheduleType: 'DAILY',
     intervalMinutes: 60,
+    sendDiscordNotification: true,
+    triggersReport: false,
+    reportDelayMinutes: 0,
   });
 
   const handleCreate = async () => {
@@ -78,6 +91,9 @@ export function RecurringTasksPage({
       modelOverride: '',
       scheduleType: 'DAILY',
       intervalMinutes: 60,
+      sendDiscordNotification: true,
+      triggersReport: false,
+      reportDelayMinutes: 0,
     });
   };
 
@@ -316,6 +332,46 @@ export function RecurringTasksPage({
             </div>
           )}
 
+          {/* Notification & Report Settings */}
+          <div className="space-y-3 pt-2 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium">Send Discord Notification</div>
+                <div className="text-xs text-muted-foreground">Notify on completion</div>
+              </div>
+              <Toggle
+                checked={newTask.sendDiscordNotification}
+                onChange={(v) => setNewTask({ ...newTask, sendDiscordNotification: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium">Trigger Report</div>
+                <div className="text-xs text-muted-foreground">Generate report after task</div>
+              </div>
+              <Toggle
+                checked={newTask.triggersReport}
+                onChange={(v) => setNewTask({ ...newTask, triggersReport: v })}
+              />
+            </div>
+            {newTask.triggersReport && (
+              <div>
+                <label className="text-sm font-medium">Report Delay (minutes)</label>
+                <Input
+                  type="number"
+                  value={newTask.reportDelayMinutes}
+                  onChange={(e) =>
+                    setNewTask({
+                      ...newTask,
+                      reportDelayMinutes: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  placeholder="0"
+                />
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-2 pt-4">
             <Button variant="secondary" onClick={() => setIsAddOpen(false)} className="flex-1">
               Cancel
@@ -428,6 +484,46 @@ export function RecurringTasksPage({
               </div>
             )}
 
+            {/* Notification & Report Settings */}
+            <div className="space-y-3 pt-2 border-t border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium">Send Discord Notification</div>
+                  <div className="text-xs text-muted-foreground">Notify on completion</div>
+                </div>
+                <Toggle
+                  checked={editingTask.sendDiscordNotification ?? true}
+                  onChange={(v) => setEditingTask({ ...editingTask, sendDiscordNotification: v })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium">Trigger Report</div>
+                  <div className="text-xs text-muted-foreground">Generate report after task</div>
+                </div>
+                <Toggle
+                  checked={editingTask.triggersReport ?? false}
+                  onChange={(v) => setEditingTask({ ...editingTask, triggersReport: v })}
+                />
+              </div>
+              {editingTask.triggersReport && (
+                <div>
+                  <label className="text-sm font-medium">Report Delay (minutes)</label>
+                  <Input
+                    type="number"
+                    value={editingTask.reportDelayMinutes ?? 0}
+                    onChange={(e) =>
+                      setEditingTask({
+                        ...editingTask,
+                        reportDelayMinutes: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    placeholder="0"
+                  />
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-2 pt-4">
               <Button
                 variant="secondary"
@@ -447,6 +543,9 @@ export function RecurringTasksPage({
                       modelOverride: editingTask.modelOverride,
                       scheduleType: editingTask.scheduleType,
                       intervalMinutes: editingTask.intervalMs ? Math.round(editingTask.intervalMs / 60000) : undefined,
+                      sendDiscordNotification: editingTask.sendDiscordNotification,
+                      triggersReport: editingTask.triggersReport,
+                      reportDelayMinutes: editingTask.reportDelayMinutes,
                     });
                     setIsEditOpen(false);
                     setEditingTask(null);
