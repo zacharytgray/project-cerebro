@@ -151,6 +151,33 @@ export class OpenClawAdapter {
   }
 
   /**
+   * Send a message via OpenClaw CLI
+   */
+  async sendMessage(to: string, message: string): Promise<void> {
+    const openclawPath = process.env.OPENCLAW_CLI_PATH || '/home/zgray/.npm-global/bin/openclaw';
+    const parts: string[] = [openclawPath, 'message', 'send'];
+    
+    // Target channel or user
+    parts.push('--to', to); // OpenClaw CLI uses --to which maps to target in the message tool
+    
+    // Message content (escaped)
+    const escapedMessage = message.replace(/'/g, "'\\''");
+    parts.push('--message', `'${escapedMessage}'`);
+
+    const command = parts.join(' ');
+
+    logger.debug('Sending message via OpenClaw', { to, command: command.substring(0, 50) + '...' });
+
+    try {
+      await execAsync(command);
+      logger.info('Message sent via OpenClaw', { to });
+    } catch (error: any) {
+      logger.error('Failed to send message via OpenClaw', error as Error, { to });
+      throw new OpenClawError(`Failed to send message: ${error.message}`);
+    }
+  }
+
+  /**
    * Get schedule context (calls get-schedule.js script)
    */
   async getScheduleContext(): Promise<string> {

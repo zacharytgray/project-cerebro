@@ -68,11 +68,11 @@ export class CerebroRuntime {
     this.digestService = new DigestService(this.reportService);
 
     // Initialize integrations
-    this.discordAdapter = new DiscordAdapter(config.discordToken);
     this.openClawAdapter = new OpenClawAdapter(
       config.openClawGatewayUrl,
       config.openClawToken
     );
+    this.discordAdapter = new DiscordAdapter(config.discordToken, this.openClawAdapter);
 
     // Store brain configs for task executor
     config.brains.brains.forEach((brain) => {
@@ -129,8 +129,8 @@ export class CerebroRuntime {
 
     logger.info('Starting Cerebro runtime');
 
-    // Connect to Discord
-    await this.discordAdapter.connect();
+    // Connect to Discord - Disabled, OpenClaw handles this
+    // await this.discordAdapter.connect();
 
     // Initialize brains
     await this.brainService.initAll();
@@ -156,8 +156,8 @@ export class CerebroRuntime {
     // Stop API server
     await this.apiServer.stop();
 
-    // Disconnect from Discord
-    await this.discordAdapter.disconnect();
+    // Disconnect from Discord - Disabled, OpenClaw handles this
+    // await this.discordAdapter.disconnect();
 
     // Close database
     closeDatabase();

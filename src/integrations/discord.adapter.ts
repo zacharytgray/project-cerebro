@@ -1,128 +1,71 @@
 /**
- * Discord adapter - wraps Discord client for cleaner interface
+ * Discord adapter - wraps Discord client for cleaner interface.
+ * CURRENTLY DISABLED - ALL MESSAGES ARE ROUTED VIA OPENCLAW ADAPTER.
  */
 
-import { Client, GatewayIntentBits, TextChannel, Message } from 'discord.js';
 import { logger } from '../lib/logger';
 import { DiscordError } from '../lib/errors';
+import { OpenClawAdapter } from './openclaw.adapter'; // Import OpenClawAdapter
 
 export class DiscordAdapter {
-  private client: Client;
-  private ready: boolean = false;
+  // We no longer manage a direct Discord client.
+  // Instead, we'll use the OpenClawAdapter to send messages.
+  private openClawAdapter: OpenClawAdapter;
 
-  constructor(private token: string) {
-    this.client = new Client({
-      intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent,
-      ],
-    });
-
-    this.client.on('ready', () => {
-      this.ready = true;
-      logger.info('Discord client ready', {
-        username: this.client.user?.username,
-        id: this.client.user?.id,
-      });
-    });
-
-    this.client.on('error', (error) => {
-      logger.error('Discord client error', error);
-    });
+  constructor(token: string, openClawAdapter: OpenClawAdapter) {
+    // Inject OpenClawAdapter
+    this.openClawAdapter = openClawAdapter;
+    logger.warn('DiscordAdapter initialized but is DISABLED for direct Discord connections. All messages will be routed via OpenClawAdapter.');
   }
 
   /**
-   * Connect to Discord
+   * Connect to Discord - Disabled, connections are now handled by OpenClaw Gateway.
    */
   async connect(): Promise<void> {
-    try {
-      await this.client.login(this.token);
-      logger.info('Discord client logged in');
-    } catch (error) {
-      logger.error('Failed to connect to Discord', error as Error);
-      throw new DiscordError('Failed to connect to Discord');
-    }
+    logger.warn('DiscordAdapter.connect() called, but direct Discord connections are disabled. No action taken.');
+    // throw new DiscordError('Direct Discord connections are disabled. Use OpenClaw Gateway.');
   }
 
   /**
-   * Disconnect from Discord
+   * Disconnect from Discord - Disabled.
    */
   async disconnect(): Promise<void> {
-    try {
-      await this.client.destroy();
-      this.ready = false;
-      logger.info('Discord client disconnected');
-    } catch (error) {
-      logger.error('Failed to disconnect from Discord', error as Error);
-      throw new DiscordError('Failed to disconnect from Discord');
-    }
+    logger.warn('DiscordAdapter.disconnect() called, but direct Discord connections are disabled. No action taken.');
   }
 
   /**
-   * Send a message to a channel
+   * Send a message to a channel - now routed via OpenClawAdapter.
    */
   async sendMessage(channelId: string, content: string): Promise<void> {
-    if (!this.ready) {
-      throw new DiscordError('Discord client not ready');
-    }
-
     try {
-      const channel = await this.client.channels.fetch(channelId);
-      if (!channel || !channel.isTextBased()) {
-        throw new DiscordError(`Channel ${channelId} not found or not text-based`);
-      }
-
-      await (channel as TextChannel).send(content);
-      logger.debug('Message sent to Discord', {
+      await this.openClawAdapter.sendMessage(`channel:${channelId}`, content);
+      logger.debug('Message sent via OpenClaw Discord integration', {
         channelId,
         contentLength: content.length,
       });
     } catch (error) {
-      logger.error('Failed to send message to Discord', error as Error, { channelId });
-      throw new DiscordError('Failed to send message to Discord');
+      logger.error('Failed to send message via OpenClaw Discord integration', error as Error, { channelId });
+      throw new DiscordError('Failed to send message via OpenClaw Discord integration');
     }
   }
 
   /**
-   * Register a message handler for a specific channel
+   * Register a message handler for a specific channel - Disabled.
+   * Incoming messages are now handled by OpenClaw Gateway.
    */
   onMessage(channelId: string, handler: (message: string) => void | Promise<void>): void {
-    this.client.on('messageCreate', async (message: Message) => {
-      // Ignore bot messages
-      if (message.author.bot) {
-        return;
-      }
-
-      // Only handle messages from the specified channel
-      if (message.channelId !== channelId) {
-        return;
-      }
-
-      try {
-        await handler(message.content);
-      } catch (error) {
-        logger.error('Message handler error', error as Error, {
-          channelId,
-          messageId: message.id,
-        });
-      }
-    });
-
-    logger.debug('Message handler registered', { channelId });
+    logger.warn('DiscordAdapter.onMessage() called, but direct Discord message handling is disabled. No action taken.');
+    // If you need to handle incoming messages, configure OpenClaw Gateway to
+    // route them to the appropriate Cerebro endpoint or Brain.
   }
 
-  /**
-   * Get the underlying Discord client
-   */
-  getClient(): Client {
-    return this.client;
+  // Dummy methods for compatibility if needed elsewhere
+  getClient(): any {
+    logger.warn('DiscordAdapter.getClient() called, but direct Discord client is disabled. Returning null.');
+    return null;
   }
 
-  /**
-   * Check if client is ready
-   */
   isReady(): boolean {
-    return this.ready;
+    return true; // We're always "ready" if OpenClaw is.
   }
 }
