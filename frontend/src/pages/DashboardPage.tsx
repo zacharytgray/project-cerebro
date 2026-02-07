@@ -37,6 +37,8 @@ interface DashboardPageProps {
       intervalMinutes?: number;
       enabled?: boolean;
       sendDiscordNotification?: boolean;
+      triggersReport?: boolean;
+      reportDelayMinutes?: number;
     }
   ) => Promise<void>;
   onToggleRecurring: (id: string, enabled: boolean) => Promise<void>;
@@ -680,7 +682,60 @@ export function DashboardPage({
                 />
               </button>
             </div>
-            
+
+            {/* Trigger Report Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+              <div>
+                <label className="text-sm font-medium">Auto-Trigger Report</label>
+                <p className="text-xs text-muted-foreground">
+                  Create a report task after this task completes
+                </p>
+              </div>
+              <button
+                onClick={() =>
+                  setEditingRecurring({
+                    ...editingRecurring,
+                    triggersReport: !editingRecurring.triggersReport,
+                  })
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  editingRecurring.triggersReport
+                    ? 'bg-green-500'
+                    : 'bg-gray-500'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    editingRecurring.triggersReport
+                      ? 'translate-x-6'
+                      : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Report Delay (only show if triggersReport is enabled) */}
+            {editingRecurring.triggersReport && (
+              <div>
+                <label className="text-sm font-medium">Report Delay (minutes)</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={editingRecurring.reportDelayMinutes ?? 0}
+                  onChange={(e) =>
+                    setEditingRecurring({
+                      ...editingRecurring,
+                      reportDelayMinutes: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  placeholder="0 = immediate"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Delay before creating the report task (0 = immediate)
+                </p>
+              </div>
+            )}
+
             <div className="flex gap-2 pt-4">
               <Button 
                 variant="secondary" 
@@ -692,8 +747,8 @@ export function DashboardPage({
               >
                 Cancel
               </Button>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 onClick={async () => {
                   if (editingRecurring) {
                     const payload: any = {
@@ -704,6 +759,8 @@ export function DashboardPage({
                       scheduleType: editingRecurring.scheduleType,
                       scheduleConfig: editingRecurring.scheduleConfig,
                       sendDiscordNotification: editingRecurring.sendDiscordNotification,
+                      triggersReport: editingRecurring.triggersReport,
+                      reportDelayMinutes: editingRecurring.reportDelayMinutes,
                     };
 
                     if (editingRecurring.scheduleType === 'INTERVAL') {
@@ -713,7 +770,7 @@ export function DashboardPage({
                     setIsEditRecurringOpen(false);
                     setEditingRecurring(null);
                   }
-                }} 
+                }}
                 className="flex-1"
               >
                 Save

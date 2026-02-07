@@ -101,7 +101,9 @@ export class CerebroRuntime {
       this.openClawAdapter,
       this.discordAdapter,
       this.brainConfigRepo,
-      this.brainConfigs
+      this.brainConfigs,
+      this.taskRepo,
+      this.recurringRepo
     );
 
     this.taskExecutorService = new TaskExecutorService(this.taskRepo, taskExecutor);

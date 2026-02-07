@@ -123,6 +123,22 @@ export class DatabaseConnection {
         // Column already exists
       }
 
+      // Migration: Add triggersReport column to recurring_tasks table
+      try {
+        this.db.exec(`ALTER TABLE recurring_tasks ADD COLUMN triggersReport INTEGER DEFAULT 0`);
+        logger.info('Added triggersReport column to recurring_tasks table');
+      } catch (e) {
+        // Column already exists
+      }
+
+      // Migration: Add reportDelayMinutes column to recurring_tasks table
+      try {
+        this.db.exec(`ALTER TABLE recurring_tasks ADD COLUMN reportDelayMinutes INTEGER DEFAULT 0`);
+        logger.info('Added reportDelayMinutes column to recurring_tasks table');
+      } catch (e) {
+        // Column already exists
+      }
+
       this.isInitialized = true;
       logger.info('Database schema initialized');
     } catch (error) {

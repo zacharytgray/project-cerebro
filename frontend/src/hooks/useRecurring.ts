@@ -32,6 +32,9 @@ export function useRecurring() {
       scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
       intervalMinutes?: number;
       scheduleConfig?: Record<string, unknown>;
+      sendDiscordNotification?: boolean;
+      triggersReport?: boolean;
+      reportDelayMinutes?: number;
     }) => {
       try {
         await api.createRecurringTask(taskData);
@@ -56,6 +59,8 @@ export function useRecurring() {
         intervalMinutes?: number;
         scheduleConfig?: Record<string, unknown>;
         sendDiscordNotification?: boolean;
+        triggersReport?: boolean;
+        reportDelayMinutes?: number;
       }
     ) => {
       try {

@@ -6,14 +6,16 @@ import { logger } from '../lib/logger';
 import { Task } from '../domain/types';
 import { TaskExecutor } from '../services/task-executor.service';
 import { OpenClawAdapter, DiscordAdapter } from '../integrations';
-import { BrainConfigRepository } from '../data/repositories';
+import { BrainConfigRepository, TaskRepository, RecurringTaskRepository } from '../data/repositories';
 
 export class OpenClawTaskExecutor implements TaskExecutor {
   constructor(
     private openClawAdapter: OpenClawAdapter,
     private discordAdapter: DiscordAdapter,
     private brainConfigRepo: BrainConfigRepository,
-    private brainConfigs: Map<string, { openClawAgentId?: string; discordChannelId: string; description: string }>
+    private brainConfigs: Map<string, { openClawAgentId?: string; discordChannelId: string; description: string }>,
+    private taskRepo?: TaskRepository,
+    private recurringRepo?: RecurringTaskRepository
   ) {}
 
   /**
@@ -60,6 +62,58 @@ export class OpenClawTaskExecutor implements TaskExecutor {
         discordChannelId,
         `✅ **Task completed:** ${task.title}\n\n${output.slice(0, 1000)}${output.length > 1000 ? '...' : ''}`
       );
+    }
+
+    // Trigger report task if this task was from a recurring task with triggersReport enabled
+    await this.triggerReportTaskIfNeeded(task);
+  }
+
+  /**
+   * Create a report task if the parent recurring task has triggersReport enabled
+   */
+  private async triggerReportTaskIfNeeded(task: Task): Promise<void> {
+    if (!this.recurringRepo || !this.taskRepo) {
+      return;
+    }
+
+    const recurringTaskId = task.payload?.recurringTaskId;
+    if (!recurringTaskId) {
+      return;
+    }
+
+    try {
+      const recurringTask = this.recurringRepo.findById(recurringTaskId);
+      if (!recurringTask || !recurringTask.triggersReport) {
+        return;
+      }
+
+      const delayMs = (recurringTask.reportDelayMinutes ?? 0) * 60 * 1000;
+      const executeAt = Date.now() + delayMs;
+
+      // Create report task
+      const reportTask = this.taskRepo.create({
+        brainId: task.brainId,
+        title: `${task.title} - Report`,
+        description: `REPORT_KIND\n\nAuto-generated report for: ${task.title}\nOriginal task ID: ${task.id}`,
+        payload: {
+          parentTaskId: task.id,
+          recurringTaskId: recurringTaskId,
+          autoTriggered: true,
+        },
+        executeAt: delayMs > 0 ? executeAt : undefined, // If no delay, create as READY
+      });
+
+      logger.info('Report task created', {
+        reportTaskId: reportTask.id,
+        parentTaskId: task.id,
+        recurringTaskId: recurringTaskId,
+        delayMinutes: recurringTask.reportDelayMinutes ?? 0,
+      });
+    } catch (error) {
+      logger.error('Failed to create report task', error as Error, {
+        taskId: task.id,
+        recurringTaskId,
+      });
     }
   }
 

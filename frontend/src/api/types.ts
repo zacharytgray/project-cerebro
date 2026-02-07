@@ -40,6 +40,8 @@ export interface RecurringTask {
   lastRunAt?: number;
   enabled: boolean;
   sendDiscordNotification?: boolean;
+  triggersReport?: boolean;
+  reportDelayMinutes?: number;
 }
 
 export interface Job {

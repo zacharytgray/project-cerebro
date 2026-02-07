@@ -74,6 +74,9 @@ export const api = {
     scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
     intervalMinutes?: number;
     scheduleConfig?: Record<string, unknown>;
+    sendDiscordNotification?: boolean;
+    triggersReport?: boolean;
+    reportDelayMinutes?: number;
   }) =>
     fetchApi<void>('/api/recurring', {
       method: 'POST',
@@ -91,6 +94,8 @@ export const api = {
       intervalMinutes?: number;
       scheduleConfig?: Record<string, unknown>;
       sendDiscordNotification?: boolean;
+      triggersReport?: boolean;
+      reportDelayMinutes?: number;
     }
   ) => {
     console.log('API updateRecurringTask called:', id, data);

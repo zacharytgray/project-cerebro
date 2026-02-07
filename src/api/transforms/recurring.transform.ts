@@ -23,6 +23,8 @@ export interface ApiRecurringTask {
   lastRunAt?: number;
   enabled: boolean;
   sendDiscordNotification?: boolean;
+  triggersReport?: boolean;
+  reportDelayMinutes?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -89,6 +91,8 @@ export function toApiRecurringTask(task: RecurringTask): ApiRecurringTask {
     lastRunAt: task.lastExecutedAt,
     enabled: task.active,
     sendDiscordNotification: task.sendDiscordNotification,
+    triggersReport: task.triggersReport,
+    reportDelayMinutes: task.reportDelayMinutes,
     createdAt: task.createdAt,
     updatedAt: task.updatedAt,
   };
@@ -108,6 +112,8 @@ export function fromApiUpdate(data: Partial<ApiRecurringTask>): Partial<{
   active?: boolean;
   nextExecutionAt?: number;
   sendDiscordNotification?: boolean;
+  triggersReport?: boolean;
+  reportDelayMinutes?: number;
 }> {
   const result: any = {};
   
@@ -164,7 +170,13 @@ export function fromApiUpdate(data: Partial<ApiRecurringTask>): Partial<{
   if (data.sendDiscordNotification !== undefined) {
     result.sendDiscordNotification = data.sendDiscordNotification;
   }
-  
+  if (data.triggersReport !== undefined) {
+    result.triggersReport = data.triggersReport;
+  }
+  if (data.reportDelayMinutes !== undefined) {
+    result.reportDelayMinutes = data.reportDelayMinutes;
+  }
+
   return result;
 }
 

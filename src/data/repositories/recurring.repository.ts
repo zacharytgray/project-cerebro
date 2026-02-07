@@ -34,6 +34,8 @@ export class RecurringTaskRepository {
       updatedAt: now,
       nextExecutionAt,
       sendDiscordNotification: input.sendDiscordNotification ?? true,
+      triggersReport: input.triggersReport ?? false,
+      reportDelayMinutes: input.reportDelayMinutes ?? 0,
     };
 
     try {
@@ -42,8 +44,8 @@ export class RecurringTaskRepository {
         INSERT INTO recurring_tasks (
           id, brainId, title, description, pattern, cronExpression,
           payload, modelOverride, active, createdAt, updatedAt, nextExecutionAt,
-          scheduleType, enabled, sendDiscordNotification
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          scheduleType, enabled, sendDiscordNotification, triggersReport, reportDelayMinutes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       stmt.run(
@@ -61,7 +63,9 @@ export class RecurringTaskRepository {
         task.nextExecutionAt,
         task.pattern, // scheduleType = pattern for backward compatibility
         task.active ? 1 : 0, // enabled = active for backward compatibility
-        task.sendDiscordNotification ? 1 : 0
+        task.sendDiscordNotification ? 1 : 0,
+        task.triggersReport ? 1 : 0,
+        task.reportDelayMinutes
       );
 
       logger.info('Recurring task created', { taskId: task.id, brainId: task.brainId });
@@ -220,6 +224,14 @@ export class RecurringTaskRepository {
         updates.push('sendDiscordNotification = ?');
         values.push(input.sendDiscordNotification ? 1 : 0);
       }
+      if (input.triggersReport !== undefined) {
+        updates.push('triggersReport = ?');
+        values.push(input.triggersReport ? 1 : 0);
+      }
+      if (input.reportDelayMinutes !== undefined) {
+        updates.push('reportDelayMinutes = ?');
+        values.push(input.reportDelayMinutes);
+      }
 
       updates.push('updatedAt = ?');
       values.push(now);
@@ -275,6 +287,8 @@ export class RecurringTaskRepository {
       lastExecutedAt: row.lastExecutedAt,
       nextExecutionAt: row.nextExecutionAt,
       sendDiscordNotification: row.sendDiscordNotification === 1,
+      triggersReport: row.triggersReport === 1,
+      reportDelayMinutes: row.reportDelayMinutes ?? 0,
     };
   }
 
