@@ -155,9 +155,9 @@ export class OpenClawAdapter {
    */
   async getScheduleContext(): Promise<string> {
     try {
-      const { stdout } = await execAsync('node dist/scripts/get-schedule.js', {
-        cwd: process.cwd(),
-      });
+      // Use absolute path to ensure script is found regardless of cwd
+      const scriptPath = '/home/zgray/.openclaw/workspace/project-cerebro/dist/scripts/get-schedule.js';
+      const { stdout } = await execAsync(`node ${scriptPath}`);
       logger.debug('Schedule context retrieved', {
         outputLength: stdout.length,
       });

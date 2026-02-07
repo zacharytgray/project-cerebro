@@ -6,7 +6,9 @@ const execAsync = promisify(exec);
 const TIMEZONE = 'America/Chicago';
 
 async function getSchedule(): Promise<string> {
-  const { stdout } = await execAsync('node dist/scripts/get-schedule.js', { cwd: process.cwd() });
+  // Use absolute path to ensure script is found regardless of cwd
+  const scriptPath = '/home/zgray/.openclaw/workspace/project-cerebro/dist/scripts/get-schedule.js';
+  const { stdout } = await execAsync(`node ${scriptPath}`);
   return stdout;
 }
 

@@ -88,9 +88,12 @@ export abstract class Brain {
             const needsSchedule = this.id === 'personal' || this.id === 'school' || this.id === 'digest';
             if (needsSchedule && task.description && (task.description.includes('PERSONAL_PLANNING_KIND') || task.description.includes('SCHOOL_PLANNING_KIND') || task.description.includes('REPORT_KIND'))) {
                 try {
-                    const { stdout } = await execAsync('node dist/scripts/get-schedule.js', { cwd: process.cwd() });
+                    // Use absolute path to ensure script is found regardless of cwd
+                    const scriptPath = '/home/zgray/.openclaw/workspace/project-cerebro/dist/scripts/get-schedule.js';
+                    const { stdout } = await execAsync(`node ${scriptPath}`);
                     scheduleContext = `\n\nMerged Schedule (America/Chicago) — deterministic output from get-schedule.js:\n\n${stdout}`;
                 } catch (e) {
+                    console.error(`[${this.name}] Failed to get schedule:`, e);
                     scheduleContext = `\n\nWARNING: Failed to run get-schedule.js: ${String(e)}`;
                 }
             }
