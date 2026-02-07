@@ -591,12 +591,16 @@ export function DashboardPage({
                 </label>
                 <input
                   type="time"
-                  value={new Date(editingRecurring.nextRunAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })} // Needs to be dynamic based on scheduleConfig
+                  value={`${String(editingRecurring.scheduleConfig?.hour || 0).padStart(2, '0')}:${String(editingRecurring.scheduleConfig?.minute || 0).padStart(2, '0')}`}
                   onChange={(e) => {
                     const [hour, minute] = e.target.value.split(':').map(Number);
                     setEditingRecurring({
                       ...editingRecurring,
-                      scheduleConfig: { ...editingRecurring.scheduleConfig, hour, minute },
+                      scheduleConfig: { 
+                        ...editingRecurring.scheduleConfig, 
+                        hour, 
+                        minute 
+                      },
                     });
                   }}
                   className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
@@ -608,11 +612,14 @@ export function DashboardPage({
               <div>
                 <label className="text-sm font-medium">Day of Week</label>
                 <select
-                  value={editingRecurring.scheduleConfig?.day?.toString() || '0'}
+                  value={editingRecurring.scheduleConfig?.day?.toString() || '1'}
                   onChange={(e) =>
                     setEditingRecurring({
                       ...editingRecurring,
-                      scheduleConfig: { ...editingRecurring.scheduleConfig, day: parseInt(e.target.value) },
+                      scheduleConfig: { 
+                        ...editingRecurring.scheduleConfig, 
+                        day: parseInt(e.target.value) 
+                      },
                     })
                   }
                   className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"

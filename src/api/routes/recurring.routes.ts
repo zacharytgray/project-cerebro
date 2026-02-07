@@ -174,6 +174,20 @@ export function registerRecurringRoutes(
   });
 
   /**
+   * POST /api/recurring/:id/toggle
+   * Toggle recurring task enabled/disabled
+   */
+  server.post<{
+    Params: { id: string };
+    Body: { enabled: boolean };
+  }>('/api/recurring/:id/toggle', async (request, reply) => {
+    const { id } = request.params;
+    const { enabled } = request.body;
+    const task = recurringRepo.update({ id, active: enabled });
+    return task;
+  });
+
+  /**
    * POST /api/recurring/:id/run
    * Run recurring task immediately (creates a task instance)
    */
