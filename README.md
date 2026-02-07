@@ -189,6 +189,25 @@ openclaw agent --agent school --message "test" --json
 - Background now properly switches between dark/white gradients
 - Theme preference saved to localStorage
 
+## Known Issues & Architecture Notes
+
+### Recurring Task Schema (Historical)
+The database schema has dual columns due to migration history:
+- **New columns**: `pattern` (string), `active` (boolean)
+- **Legacy columns**: `scheduleType` (string), `enabled` (boolean)
+
+**Implementation:** The API uses a transformation layer (`src/api/transforms/recurring.transform.ts`) that converts between:
+- **API format**: `{ scheduleType, enabled, scheduleConfig }`
+- **DB format**: `{ pattern, active, cronExpression }`
+
+The repository updates BOTH columns on writes for backward compatibility, and reads use `(active === 1) || (enabled === 1)` to handle mixed states.
+
+### Task Status Flow
+- Tasks start as **READY** (PENDING was removed entirely)
+- Only READY tasks are eligible for execution
+- Recurring task instances bypass Auto Mode and always execute
+- Failed tasks store error details accessible via task detail modal
+
 ## Development
 
 ```bash
