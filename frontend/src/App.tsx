@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Shell } from './components/layout/Shell';
 import { DashboardPage } from './pages/DashboardPage';
 import { BrainDetailPage } from './pages/BrainDetailPage';
+import { JobApplicationsPage } from './pages/JobApplicationsPage';
+import { JobProfilePage } from './pages/JobProfilePage';
 import { useBrains } from './hooks/useBrains';
 import { useTasks } from './hooks/useTasks';
 import { useRecurring } from './hooks/useRecurring';
@@ -9,7 +11,7 @@ import { useTheme } from './hooks/useTheme';
 import { api } from './api/client';
 import type { ModelAlias } from './api/types';
 
-type View = 'dashboard' | 'brain-detail';
+type View = 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -40,6 +42,10 @@ export default function App() {
     if (view === 'recurring-tasks') {
       // Recurring tasks is now on dashboard, just switch to dashboard
       setCurrentView('dashboard');
+    } else if (view === 'job-applications') {
+      setCurrentView('job-applications');
+    } else if (view === 'job-profile') {
+      setCurrentView('job-profile');
     } else {
       setCurrentView(view);
     }
@@ -99,6 +105,10 @@ export default function App() {
           onToggle={toggleBrain}
         />
       )}
+
+      {currentView === 'job-applications' && <JobApplicationsPage />}
+
+      {currentView === 'job-profile' && <JobProfilePage />}
     </Shell>
   );
 }

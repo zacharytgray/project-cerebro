@@ -21,6 +21,7 @@ import {
   registerBrainConfigRoutes,
   registerBrainsCrudRoutes,
   registerJobApplicationsRoutes,
+  registerJobProfileRoutes,
 } from './routes';
 import { BrainService, ReportService, TaskExecutorService } from '../services';
 import {
@@ -103,6 +104,7 @@ export class ApiServer {
     registerBrainConfigRoutes(this.server, this.deps.brainConfigRepo);
     registerBrainsCrudRoutes(this.server, this.deps.brainsRepo);
     registerJobApplicationsRoutes(this.server, this.deps.jobApplicationsRepo);
+    registerJobProfileRoutes(this.server);
 
     logger.info('API routes registered');
   }

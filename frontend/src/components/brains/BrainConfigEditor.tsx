@@ -197,14 +197,17 @@ export function BrainConfigEditor({
           </div>
         </div>
 
-        {/* Advanced */}
+        {/* Debug View (read-only) */}
         <details className="mt-4">
-          <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-            Advanced Configuration (JSON)
+          <summary className="cursor-pointer text-xs text-muted-foreground/50 hover:text-muted-foreground">
+            🔍 Debug: View raw config (read-only)
           </summary>
-          <pre className="mt-3 p-4 bg-black/20 rounded-lg text-xs overflow-auto max-h-96">
+          <pre className="mt-3 p-4 bg-black/20 rounded-lg text-xs overflow-auto max-h-96 select-all opacity-60">
             {JSON.stringify(config, null, 2)}
           </pre>
+          <p className="text-xs text-muted-foreground/50 mt-1">
+            This is a read-only view. Edit fields above to modify config.
+          </p>
         </details>
       </div>
     </Card>

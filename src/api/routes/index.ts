@@ -12,3 +12,4 @@ export * from './report.routes';
 export * from './upload.routes';
 export * from './config.routes';
 export * from './job-applications.routes';
+export * from './job-profile.routes';

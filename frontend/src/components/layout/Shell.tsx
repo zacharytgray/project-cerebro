@@ -5,9 +5,9 @@ import type { BrainStatus } from '../../api/types';
 
 interface ShellProps {
   brains: BrainStatus[];
-  currentView: 'dashboard' | 'brain-detail';
+  currentView: 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile';
   selectedBrainId: string | null;
-  onNavigate: (view: 'dashboard' | 'brain-detail', brainId?: string) => void;
+  onNavigate: (view: 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile', brainId?: string) => void;
   theme: 'light' | 'dark';
   mode: 'light' | 'dark' | 'system';
   onToggleTheme: () => void;

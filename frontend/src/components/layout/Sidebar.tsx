@@ -1,4 +1,4 @@
-import { Activity } from 'lucide-react';
+import { Activity, Briefcase, User } from 'lucide-react';
 import type { BrainStatus } from '../../api/types';
 import { getBrainIcon } from '../../utils/brainIcons';
 import { cn } from '../../utils/cn';
@@ -6,9 +6,9 @@ import { GradientText } from '../ui/GradientText';
 
 interface SidebarProps {
   brains: BrainStatus[];
-  currentView: 'dashboard' | 'brain-detail';
+  currentView: 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile';
   selectedBrainId: string | null;
-  onNavigate: (view: 'dashboard' | 'brain-detail', brainId?: string) => void;
+  onNavigate: (view: 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile', brainId?: string) => void;
   isOpen: boolean;
   theme: 'light' | 'dark';
 }
@@ -61,6 +61,26 @@ export function Sidebar({
           )}
         >
           <Activity className="w-4 h-4" /> Dashboard
+        </button>
+
+        <button
+          onClick={() => onNavigate('job-applications')}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
+            currentView === 'job-applications' ? activeClass : inactiveClass
+          )}
+        >
+          <Briefcase className="w-4 h-4" /> Job Applications
+        </button>
+
+        <button
+          onClick={() => onNavigate('job-profile')}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
+            currentView === 'job-profile' ? activeClass : inactiveClass
+          )}
+        >
+          <User className="w-4 h-4" /> Job Profile
         </button>
 
         <div className="mt-4 text-[11px] uppercase tracking-widest text-muted-foreground">
