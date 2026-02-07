@@ -46,6 +46,20 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
+  updateTask: (
+    id: string,
+    data: {
+      brainId?: string;
+      title?: string;
+      description?: string;
+      modelOverride?: string;
+    }
+  ) =>
+    fetchApi<void>(`/api/tasks/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
   deleteTask: (id: string) =>
     fetchApi<void>(`/api/tasks/${id}`, { method: 'DELETE' }),
 

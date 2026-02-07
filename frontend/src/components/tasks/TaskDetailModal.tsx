@@ -1,8 +1,10 @@
-import { Trash2, AlertTriangle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Trash2, AlertTriangle, Play } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import type { Task } from '../../api/types';
+import { Input } from '../ui/Input';
+import type { Task, BrainStatus, ModelAlias } from '../../api/types';
 import { formatDateTime } from '../../utils/format';
 
 interface TaskDetailModalProps {
@@ -10,7 +12,18 @@ interface TaskDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDelete: (id: string) => void;
-  brainName: string;
+  onUpdate?: (
+    id: string,
+    data: {
+      brainId?: string;
+      title?: string;
+      description?: string;
+      modelOverride?: string;
+    }
+  ) => Promise<void>;
+  onExecute?: (id: string) => void;
+  brains: BrainStatus[];
+  models: ModelAlias[];
 }
 
 export function TaskDetailModal({
@@ -18,31 +31,109 @@ export function TaskDetailModal({
   isOpen,
   onClose,
   onDelete,
-  brainName,
+  onUpdate,
+  onExecute,
+  brains,
+  models,
 }: TaskDetailModalProps) {
-  if (!task) return null;
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  // Initialize editing state when task changes
+  useEffect(() => {
+    if (task) {
+      setEditingTask({ ...task });
+    }
+  }, [task]);
+
+  if (!task || !editingTask) return null;
 
   const handleDelete = () => {
     onDelete(task.id);
     onClose();
   };
 
+  const handleSave = async () => {
+    if (onUpdate && editingTask) {
+      await onUpdate(editingTask.id, {
+        brainId: editingTask.brainId,
+        title: editingTask.title,
+        description: editingTask.description,
+        modelOverride: editingTask.modelOverride,
+      });
+      onClose();
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Task Details">
       <div className="space-y-4">
+        {/* Brain Selection */}
         <div>
-          <h3 className="font-semibold text-lg">{task.title}</h3>
-          <p className="text-sm text-muted-foreground">{brainName}</p>
+          <label className="text-sm font-medium">Brain</label>
+          <select
+            value={editingTask.brainId}
+            onChange={(e) =>
+              setEditingTask({ ...editingTask, brainId: e.target.value })
+            }
+            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+          >
+            {brains.map((brain) => (
+              <option key={brain.id} value={brain.id}>
+                {brain.name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {task.description && (
-          <div>
-            <label className="text-xs text-muted-foreground">Description</label>
-            <p className="mt-1 text-sm">{task.description}</p>
-          </div>
-        )}
+        {/* Title */}
+        <div>
+          <label className="text-sm font-medium">Title</label>
+          <Input
+            value={editingTask.title}
+            onChange={(e) =>
+              setEditingTask({ ...editingTask, title: e.target.value })
+            }
+            placeholder="Task title"
+          />
+        </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* Description */}
+        <div>
+          <label className="text-sm font-medium">Description (optional)</label>
+          <textarea
+            value={editingTask.description || ''}
+            onChange={(e) =>
+              setEditingTask({ ...editingTask, description: e.target.value })
+            }
+            placeholder="Task description"
+            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[80px]"
+          />
+        </div>
+
+        {/* Model Override */}
+        <div>
+          <label className="text-sm font-medium">Model (optional)</label>
+          <select
+            value={editingTask.modelOverride || ''}
+            onChange={(e) =>
+              setEditingTask({
+                ...editingTask,
+                modelOverride: e.target.value || undefined,
+              })
+            }
+            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+          >
+            <option value="">Default</option>
+            {models.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.alias} ({model.id})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Status & Created (read-only) */}
+        <div className="grid grid-cols-2 gap-4 p-3 rounded-lg bg-secondary/30">
           <div>
             <label className="text-xs text-muted-foreground">Status</label>
             <div className="mt-1">
@@ -55,14 +146,7 @@ export function TaskDetailModal({
           </div>
         </div>
 
-        {task.modelOverride && (
-          <div>
-            <label className="text-xs text-muted-foreground">Model Override</label>
-            <p className="mt-1 text-sm font-mono">{task.modelOverride}</p>
-          </div>
-        )}
-
-        {/* Show error details for failed tasks */}
+        {/* Error details for failed tasks */}
         {task.status === 'FAILED' && task.error && (
           <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
             <div className="flex items-start gap-2">
@@ -77,10 +161,49 @@ export function TaskDetailModal({
           </div>
         )}
 
+        {/* Output for completed tasks */}
+        {task.status === 'COMPLETED' && task.output && (
+          <div>
+            <label className="text-xs text-muted-foreground">Output</label>
+            <div className="mt-1 p-3 rounded-lg bg-secondary/30 max-h-[200px] overflow-y-auto">
+              <pre className="text-sm whitespace-pre-wrap font-mono text-xs">
+                {task.output}
+              </pre>
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
         <div className="flex gap-2 pt-4 border-t border-border">
-          <Button variant="secondary" onClick={onClose} className="flex-1">
-            Close
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            className="flex-1"
+          >
+            Cancel
           </Button>
+          {onUpdate && (
+            <Button
+              variant="primary"
+              onClick={handleSave}
+              className="flex-1"
+            >
+              Save
+            </Button>
+          )}
+          {onExecute && task.status === 'READY' && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                onExecute(task.id);
+                onClose();
+              }}
+              className="flex items-center gap-2"
+            >
+              <Play className="w-4 h-4" />
+              Run
+            </Button>
+          )}
           <Button
             variant="danger"
             onClick={handleDelete}

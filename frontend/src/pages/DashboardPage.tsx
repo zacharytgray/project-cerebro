@@ -41,6 +41,15 @@ interface DashboardPageProps {
   onToggleRecurring: (id: string, enabled: boolean) => Promise<void>;
   onDeleteTask: (id: string) => void;
   onExecuteTask: (id: string) => void;
+  onUpdateTask?: (
+    id: string,
+    data: {
+      brainId?: string;
+      title?: string;
+      description?: string;
+      modelOverride?: string;
+    }
+  ) => Promise<void>;
   onClearAllTasks: () => void;
   models: ModelAlias[];
 }
@@ -62,6 +71,7 @@ export function DashboardPage({
   onToggleRecurring,
   onDeleteTask,
   onExecuteTask,
+  onUpdateTask,
   onClearAllTasks,
   models,
 }: DashboardPageProps) {
@@ -345,7 +355,10 @@ export function DashboardPage({
         isOpen={isTaskDetailOpen}
         onClose={() => setIsTaskDetailOpen(false)}
         onDelete={onDeleteTask}
-        brainName={selectedTask ? getBrainName(selectedTask.brainId) : ''}
+        onUpdate={onUpdateTask}
+        onExecute={onExecuteTask}
+        brains={brains}
+        models={models}
       />
 
       <AddTaskModal

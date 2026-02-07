@@ -75,6 +75,27 @@ export function useTasks() {
     }
   }, [fetch]);
 
+  const updateTask = useCallback(
+    async (
+      id: string,
+      data: {
+        brainId?: string;
+        title?: string;
+        description?: string;
+        modelOverride?: string;
+      }
+    ) => {
+      try {
+        await api.updateTask(id, data);
+        await fetch();
+      } catch (e) {
+        console.error('Failed to update task:', e);
+        throw e;
+      }
+    },
+    [fetch]
+  );
+
   return {
     tasks,
     loading,
@@ -82,6 +103,7 @@ export function useTasks() {
     createTask,
     deleteTask,
     executeTask,
+    updateTask,
     clearAllTasks,
     refetch: fetch,
   };

@@ -17,7 +17,7 @@ export default function App() {
   const [models, setModels] = useState<ModelAlias[]>([]);
 
   const { brains, loading: loadingBrains, toggleBrain, runBrain } = useBrains();
-  const { tasks, loading: loadingTasks, createTask, deleteTask, executeTask, clearAllTasks } = useTasks();
+  const { tasks, loading: loadingTasks, createTask, deleteTask, executeTask, updateTask, clearAllTasks } = useTasks();
   const {
     recurringTasks,
     loading: loadingRecurring,
@@ -86,8 +86,9 @@ export default function App() {
           onToggleRecurring={toggleRecurringTask} // New prop
           onDeleteTask={deleteTask}
           onExecuteTask={executeTask}
+          onUpdateTask={updateTask}
           onClearAllTasks={clearAllTasks}
-          models={models} // New prop
+          models={models}
         />
       )}
 
