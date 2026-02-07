@@ -467,21 +467,34 @@ export function JobProfilePage() {
                       <label className="text-sm font-medium">End Date</label>
                       <Input
                         type="month"
-                        value={exp.endDate}
+                        value={exp.currentJob ? '' : exp.endDate}
                         onChange={(e) => updateWorkExperience(exp.id, 'endDate', e.target.value)}
-                        disabled={exp.currentJob}
+                        disabled={!!exp.currentJob}
+                        className={exp.currentJob ? 'opacity-50 cursor-not-allowed' : ''}
                       />
+                      {exp.currentJob && (
+                        <span className="text-xs text-muted-foreground">Present</span>
+                      )}
                     </div>
                   </div>
                   <div className="md:col-span-2 flex items-center gap-2">
                     <Toggle
-                      checked={exp.currentJob}
+                      checked={!!exp.currentJob}
                       onChange={(v) => {
                         updateWorkExperience(exp.id, 'currentJob', v);
                         if (v) updateWorkExperience(exp.id, 'endDate', '');
                       }}
                     />
-                    <span className="text-sm">I currently work here</span>
+                    <span 
+                      className="text-sm cursor-pointer select-none"
+                      onClick={() => {
+                        const newVal = !exp.currentJob;
+                        updateWorkExperience(exp.id, 'currentJob', newVal);
+                        if (newVal) updateWorkExperience(exp.id, 'endDate', '');
+                      }}
+                    >
+                      I currently work here
+                    </span>
                   </div>
                   <div className="md:col-span-2">
                     <label className="text-sm font-medium">Responsibilities & Achievements</label>
