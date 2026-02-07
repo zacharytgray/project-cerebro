@@ -6,52 +6,12 @@ import { FastifyInstance } from 'fastify';
 import { RecurringTaskRepository, TaskRepository } from '../../data/repositories';
 import { CreateRecurringTaskInput } from '../../domain/types';
 import { TaskExecutorService } from '../../services/task-executor.service';
-
-function computeNextExecution(
-  pattern: string,
-  cronExpression: string | undefined,
-  scheduleConfig?: { hour?: number; minute?: number; day?: number },
-  intervalMinutes?: number
-): number {
-  const now = Date.now();
-  const date = new Date();
-
-  switch (pattern) {
-    case 'HOURLY':
-      // Next hour at specified minute
-      date.setMinutes(scheduleConfig?.minute || 0, 0, 0);
-      date.setHours(date.getHours() + 1);
-      return date.getTime();
-
-    case 'DAILY':
-      // Today at specified time, or tomorrow if passed
-      date.setHours(scheduleConfig?.hour || 0, scheduleConfig?.minute || 0, 0, 0);
-      if (date.getTime() <= now) {
-        date.setDate(date.getDate() + 1);
-      }
-      return date.getTime();
-
-    case 'WEEKLY':
-      // Next occurrence of this day at specified time
-      const targetDay = scheduleConfig?.day || 1; // Monday default
-      const currentDay = date.getDay();
-      let daysUntil = targetDay - currentDay;
-      if (daysUntil < 0 || (daysUntil === 0 && date.getTime() > now)) {
-        daysUntil += 7;
-      }
-      date.setDate(date.getDate() + daysUntil);
-      date.setHours(scheduleConfig?.hour || 0, scheduleConfig?.minute || 0, 0, 0);
-      return date.getTime();
-
-    case 'INTERVAL':
-      // Now + interval
-      return now + (intervalMinutes || 60) * 60 * 1000;
-
-    default:
-      // Default to 1 hour from now
-      return now + 60 * 60 * 1000;
-  }
-}
+import { 
+  toApiRecurringTask, 
+  fromApiUpdate, 
+  computeNextExecutionFromApi,
+  ApiRecurringTask 
+} from '../transforms/recurring.transform';
 
 export function registerRecurringRoutes(
   server: FastifyInstance,
@@ -64,8 +24,8 @@ export function registerRecurringRoutes(
    * Get all recurring tasks
    */
   server.get('/api/recurring', async () => {
-    const recurringTasks = recurringRepo.findAll();
-    return { recurringTasks };
+    const tasks = recurringRepo.findAll();
+    return { recurringTasks: tasks.map(toApiRecurringTask) };
   });
 
   /**
@@ -77,7 +37,7 @@ export function registerRecurringRoutes(
   }>('/api/recurring/:id', async (request, reply) => {
     const { id } = request.params;
     const task = recurringRepo.getById(id);
-    return task;
+    return toApiRecurringTask(task);
   });
 
   /**
@@ -89,62 +49,74 @@ export function registerRecurringRoutes(
       brainId: string;
       title: string;
       description?: string;
-      scheduleType?: string;
-      pattern?: string;
-      scheduleConfig?: { hour?: number; minute?: number; day?: number };
-      intervalMinutes?: number;
       modelOverride?: string;
+      scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
+      intervalMinutes?: number;
+      scheduleConfig?: { hour?: number; minute?: number; day?: number };
     };
   }>('/api/recurring', async (request, reply) => {
     const body = request.body;
-
-    // Transform new format (scheduleType + scheduleConfig) to old format (pattern + cronExpression)
-    // Map HOURLY and INTERVAL to CUSTOM pattern since enum doesn't have them
-    let pattern: string = body.pattern || 'DAILY';
-    let cronExpression: string | undefined;
-
-    if (body.scheduleType === 'HOURLY' && body.scheduleConfig) {
-      // Every hour at specific minute -> use CUSTOM pattern
-      pattern = 'CUSTOM';
-      cronExpression = `${body.scheduleConfig.minute || 0} * * * *`;
-    } else if (body.scheduleType === 'DAILY' && body.scheduleConfig) {
-      // Daily at specific time
-      pattern = 'DAILY';
-      cronExpression = `${body.scheduleConfig.minute || 0} ${body.scheduleConfig.hour || 0} * * *`;
-    } else if (body.scheduleType === 'WEEKLY' && body.scheduleConfig) {
-      // Weekly on specific day at specific time
-      pattern = 'WEEKLY';
-      cronExpression = `${body.scheduleConfig.minute || 0} ${body.scheduleConfig.hour || 0} * * ${body.scheduleConfig.day || 1}`;
-    } else if (body.scheduleType === 'INTERVAL' && body.intervalMinutes) {
-      // Custom interval -> use CUSTOM pattern
-      pattern = 'CUSTOM';
-      cronExpression = undefined; // Use intervalMs from payload
+    
+    // Validate required fields
+    if (!body.brainId || !body.title || !body.scheduleType) {
+      reply.code(400);
+      return { error: 'Missing required fields: brainId, title, scheduleType' };
     }
 
-    // Compute next execution time
-    const nextExecutionAt = computeNextExecution(
-      pattern,
-      cronExpression,
-      body.scheduleConfig,
-      body.intervalMinutes
-    );
+    try {
+      // Compute next execution time
+      const nextExecutionAt = computeNextExecutionFromApi(
+        body.scheduleType,
+        body.scheduleConfig,
+        body.intervalMinutes ? body.intervalMinutes * 60000 : undefined
+      );
 
-    // Build payload for repository
-    const input: CreateRecurringTaskInput = {
-      brainId: body.brainId,
-      title: body.title,
-      description: body.description,
-      pattern: pattern as any,
-      cronExpression,
-      payload: body.intervalMinutes ? { intervalMinutes: body.intervalMinutes } : {},
-      modelOverride: body.modelOverride,
-      nextExecutionAt,
-    };
+      // Map scheduleType to pattern and cronExpression
+      let pattern: string;
+      let cronExpression: string | undefined;
+      let payload: Record<string, any> = {};
 
-    const task = recurringRepo.create(input);
+      switch (body.scheduleType) {
+        case 'HOURLY':
+          pattern = 'CUSTOM';
+          cronExpression = `${body.scheduleConfig?.minute || 0} * * * *`;
+          break;
+        case 'DAILY':
+          pattern = 'DAILY';
+          cronExpression = `${body.scheduleConfig?.minute || 0} ${body.scheduleConfig?.hour || 0} * * *`;
+          break;
+        case 'WEEKLY':
+          pattern = 'WEEKLY';
+          cronExpression = `${body.scheduleConfig?.minute || 0} ${body.scheduleConfig?.hour || 0} * * ${body.scheduleConfig?.day || 1}`;
+          break;
+        case 'INTERVAL':
+          pattern = 'CUSTOM';
+          payload = { intervalMinutes: body.intervalMinutes || 60 };
+          break;
+        default:
+          pattern = 'DAILY';
+      }
 
-    reply.code(201);
-    return task;
+      // Build payload for repository
+      const input: CreateRecurringTaskInput = {
+        brainId: body.brainId,
+        title: body.title,
+        description: body.description,
+        pattern: pattern as any,
+        cronExpression,
+        payload,
+        modelOverride: body.modelOverride,
+        nextExecutionAt,
+      };
+
+      const task = recurringRepo.create(input);
+      reply.code(201);
+      return toApiRecurringTask(task);
+    } catch (error) {
+      console.error('Failed to create recurring task:', error);
+      reply.code(500);
+      return { error: 'Failed to create recurring task' };
+    }
   });
 
   /**
@@ -153,12 +125,31 @@ export function registerRecurringRoutes(
    */
   server.patch<{
     Params: { id: string };
-    Body: Partial<CreateRecurringTaskInput> & { active?: boolean };
+    Body: Partial<ApiRecurringTask>;
   }>('/api/recurring/:id', async (request, reply) => {
     const { id } = request.params;
     const updates = request.body;
-    const task = recurringRepo.update({ id, ...updates });
-    return task;
+    
+    try {
+      // Transform API updates to internal format
+      const internalUpdates = fromApiUpdate(updates);
+      
+      // Recompute next execution if schedule changed
+      if (updates.scheduleType && updates.scheduleConfig) {
+        internalUpdates.nextExecutionAt = computeNextExecutionFromApi(
+          updates.scheduleType,
+          updates.scheduleConfig,
+          updates.intervalMs
+        );
+      }
+      
+      const task = recurringRepo.update({ id, ...internalUpdates } as any);
+      return toApiRecurringTask(task);
+    } catch (error) {
+      console.error('Failed to update recurring task:', error);
+      reply.code(500);
+      return { error: 'Failed to update recurring task' };
+    }
   });
 
   /**
@@ -169,8 +160,15 @@ export function registerRecurringRoutes(
     Params: { id: string };
   }>('/api/recurring/:id', async (request, reply) => {
     const { id } = request.params;
-    recurringRepo.delete(id);
-    reply.code(204);
+    
+    try {
+      recurringRepo.delete(id);
+      reply.code(204);
+    } catch (error) {
+      console.error('Failed to delete recurring task:', error);
+      reply.code(500);
+      return { error: 'Failed to delete recurring task' };
+    }
   });
 
   /**
@@ -183,8 +181,21 @@ export function registerRecurringRoutes(
   }>('/api/recurring/:id/toggle', async (request, reply) => {
     const { id } = request.params;
     const { enabled } = request.body;
-    const task = recurringRepo.update({ id, active: enabled });
-    return task;
+    
+    try {
+      const task = recurringRepo.getById(id);
+      if (!task) {
+        reply.code(404);
+        return { error: 'Recurring task not found' };
+      }
+
+      const updated = recurringRepo.update({ id, active: enabled });
+      return { success: true, task: toApiRecurringTask(updated) };
+    } catch (error) {
+      console.error('Failed to toggle recurring task:', error);
+      reply.code(500);
+      return { error: 'Failed to toggle recurring task' };
+    }
   });
 
   /**
@@ -195,52 +206,38 @@ export function registerRecurringRoutes(
     Params: { id: string };
   }>('/api/recurring/:id/run', async (request, reply) => {
     const { id } = request.params;
-    const recurringTask = recurringRepo.getById(id);
     
-    if (!recurringTask) {
-      reply.code(404);
-      return { error: 'Recurring task not found' };
+    try {
+      const recurringTask = recurringRepo.getById(id);
+      
+      if (!recurringTask) {
+        reply.code(404);
+        return { error: 'Recurring task not found' };
+      }
+
+      // Create a task instance
+      const task = taskRepo.create({
+        brainId: recurringTask.brainId,
+        title: recurringTask.title,
+        description: recurringTask.description,
+        payload: {
+          ...recurringTask.payload,
+          recurringTaskId: recurringTask.id,
+        },
+        modelOverride: recurringTask.modelOverride,
+      });
+
+      // Execute immediately (async)
+      taskExecutor.executeTask(task.id).catch((error) => {
+        console.error('Recurring task execution failed:', error);
+      });
+
+      return { success: true, taskId: task.id };
+    } catch (error) {
+      console.error('Failed to run recurring task:', error);
+      reply.code(500);
+      return { error: 'Failed to run recurring task' };
     }
-
-    // Create a task instance
-    const task = taskRepo.create({
-      brainId: recurringTask.brainId,
-      title: recurringTask.title,
-      description: recurringTask.description,
-      payload: {
-        ...recurringTask.payload,
-        recurringTaskId: recurringTask.id,
-      },
-      modelOverride: recurringTask.modelOverride,
-    });
-
-    // Execute immediately
-    taskExecutor.executeTask(task.id).catch((error) => {
-      console.error('Recurring task execution failed:', error);
-    });
-
-    return { success: true, taskId: task.id };
-  });
-
-  /**
-   * POST /api/recurring/:id/toggle
-   * Toggle recurring task enabled/disabled
-   */
-  server.post<{
-    Params: { id: string };
-    Body: { enabled: boolean };
-  }>('/api/recurring/:id/toggle', async (request, reply) => {
-    const { id } = request.params;
-    const { enabled } = request.body;
-    
-    const task = recurringRepo.getById(id);
-    if (!task) {
-      reply.code(404);
-      return { error: 'Recurring task not found' };
-    }
-
-    const updated = recurringRepo.update({ id, active: enabled });
-    return { success: true, task: updated };
   });
 
   /**
@@ -251,7 +248,7 @@ export function registerRecurringRoutes(
     Params: { brainId: string };
   }>('/api/brains/:brainId/recurring', async (request, reply) => {
     const { brainId } = request.params;
-    const recurringTasks = recurringRepo.findByBrainId(brainId);
-    return { recurringTasks };
+    const tasks = recurringRepo.findByBrainId(brainId);
+    return { recurringTasks: tasks.map(toApiRecurringTask) };
   });
 }
