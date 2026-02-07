@@ -33,9 +33,12 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       throw new Error(`Brain ${task.brainId} has no OpenClaw agent configured`);
     }
 
+    // Load brain config from DB (system prompt, tools, skills, report template)
+    const brainConfigData = this.brainConfigRepo.get(task.brainId) || {};
+
     // Build the prompt
     const scheduleContext = await this.getScheduleContext(task);
-    const prompt = this.buildPrompt(task, description, discordChannelId, scheduleContext);
+    const prompt = this.buildPrompt(task, description, discordChannelId, scheduleContext, brainConfigData);
 
     logger.info('Executing task with OpenClaw', {
       taskId: task.id,
@@ -124,12 +127,33 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     task: Task,
     brainDescription: string,
     channelId: string,
-    scheduleContext: string
+    scheduleContext: string,
+    brainConfig: Record<string, any>
   ): string {
     const parts: string[] = [];
 
+    const systemPrompt = brainConfig.systemPrompt || brainDescription;
     parts.push(`You are executing a task for the brain with this context:`);
-    parts.push(`\nContext: ${brainDescription}`);
+    parts.push(`\nSystem Prompt: ${systemPrompt}`);
+
+    // Tools and skills
+    const toolConfig = brainConfig.tools || {};
+    const enabledTools = toolConfig.enabled || {};
+    const toolSettings = toolConfig.config || {};
+    const enabledToolList = Object.entries(enabledTools)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+
+    if (enabledToolList.length > 0) {
+      parts.push(`\nEnabled Tools: ${enabledToolList.join(', ')}`);
+      parts.push(`\nTool Settings: ${JSON.stringify(toolSettings, null, 2)}`);
+    }
+
+    const skills = brainConfig.skills || [];
+    if (skills.length > 0) {
+      parts.push(`\nSkills: ${JSON.stringify(skills, null, 2)}`);
+    }
+
     parts.push(`\nYour task is: ${task.title}`);
 
     if (task.description) {
@@ -138,6 +162,12 @@ export class OpenClawTaskExecutor implements TaskExecutor {
 
     if (scheduleContext) {
       parts.push(scheduleContext);
+    }
+
+    // Report template (if this is a report task)
+    if (task.description?.includes('REPORT_KIND') && brainConfig.reportTemplate) {
+      parts.push(`\n\nReport Template (JSON expected):\n${brainConfig.reportTemplate}`);
+      parts.push(`\n\nIMPORTANT: Output MUST be valid JSON matching the template.`);
     }
 
     parts.push(
