@@ -91,7 +91,7 @@ export const api = {
     }
   ) =>
     fetchApi<void>(`/api/recurring/${id}`, {
-      method: 'POST',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
