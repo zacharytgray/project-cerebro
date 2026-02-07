@@ -184,10 +184,18 @@ export function JobProfilePage() {
 
   const updateWorkExperience = (id: string, field: keyof WorkExperience, value: any) => {
     if (!profile) return;
-    const updated = (profile.profile.work_experience || []).map((exp) =>
+    const workExp = profile.profile.work_experience || [];
+    const updated = workExp.map((exp) =>
       exp.id === id ? { ...exp, [field]: value } : exp
     );
-    updateProfile('profile.work_experience', updated);
+    // Direct state update for work experience
+    setProfile({
+      ...profile,
+      profile: {
+        ...profile.profile,
+        work_experience: updated,
+      },
+    });
   };
 
   const removeWorkExperience = (id: string) => {
@@ -216,10 +224,18 @@ export function JobProfilePage() {
 
   const updateEducation = (id: string, field: keyof Education, value: any) => {
     if (!profile) return;
-    const updated = (profile.profile.education || []).map((edu) =>
+    const education = profile.profile.education || [];
+    const updated = education.map((edu) =>
       edu.id === id ? { ...edu, [field]: value } : edu
     );
-    updateProfile('profile.education', updated);
+    // Direct state update for education
+    setProfile({
+      ...profile,
+      profile: {
+        ...profile.profile,
+        education: updated,
+      },
+    });
   };
 
   const removeEducation = (id: string) => {
