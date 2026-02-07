@@ -10,6 +10,8 @@ import {
   RecurringTaskRepository,
   JobRepository,
   BrainConfigRepository,
+  BrainsRepository,
+  JobApplicationsRepository,
 } from '../data/repositories';
 import {
   BrainService,
@@ -35,6 +37,8 @@ export class CerebroRuntime {
   private recurringRepo: RecurringTaskRepository;
   private jobRepo: JobRepository;
   private brainConfigRepo: BrainConfigRepository;
+  private brainsRepo: BrainsRepository;
+  private jobApplicationsRepo: JobApplicationsRepository;
 
   // Integrations
   private discordAdapter: DiscordAdapter;
@@ -60,6 +64,11 @@ export class CerebroRuntime {
     this.recurringRepo = new RecurringTaskRepository(db);
     this.jobRepo = new JobRepository(db);
     this.brainConfigRepo = new BrainConfigRepository(db);
+    this.brainsRepo = new BrainsRepository(db);
+    this.jobApplicationsRepo = new JobApplicationsRepository(db);
+
+    // Seed brains from JSON config (migration - only runs if DB is empty)
+    this.brainsRepo.seedFromJson(config.brains);
 
     // Initialize services
     this.brainService = new BrainService();
@@ -116,6 +125,8 @@ export class CerebroRuntime {
       reportService: this.reportService,
       taskExecutor: this.taskExecutorService,
       brainConfigRepo: this.brainConfigRepo,
+      brainsRepo: this.brainsRepo,
+      jobApplicationsRepo: this.jobApplicationsRepo,
     });
 
     logger.info('Cerebro runtime initialized');
@@ -191,6 +202,8 @@ export class CerebroRuntime {
       recurringRepo: this.recurringRepo,
       jobRepo: this.jobRepo,
       brainConfigRepo: this.brainConfigRepo,
+      brainsRepo: this.brainsRepo,
+      jobApplicationsRepo: this.jobApplicationsRepo,
     };
   }
 

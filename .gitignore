@@ -5,7 +5,7 @@ dist/
 
 # App data
 cerebro.db
-data/
+/data/
 memory/
 frontend/dist/
 

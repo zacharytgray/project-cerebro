@@ -139,6 +139,58 @@ export class DatabaseConnection {
         // Column already exists
       }
 
+      // Brains table (source of truth for brain definitions)
+      this.db.exec(`
+        CREATE TABLE IF NOT EXISTS brains (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          channelKey TEXT NOT NULL,
+          type TEXT DEFAULT 'context',
+          description TEXT,
+          openClawAgentId TEXT,
+          discordChannelId TEXT,
+          enabled INTEGER DEFAULT 1,
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL
+        )
+      `);
+
+      // Enhanced jobs table for job application tracking
+      this.db.exec(`
+        CREATE TABLE IF NOT EXISTS job_applications (
+          id TEXT PRIMARY KEY,
+          jobId TEXT UNIQUE,
+          company TEXT NOT NULL,
+          position TEXT NOT NULL,
+          url TEXT,
+          source TEXT,
+          status TEXT NOT NULL DEFAULT 'SAVED',
+          salary TEXT,
+          location TEXT,
+          jobType TEXT,
+          description TEXT,
+          notes TEXT,
+          resumeUsed TEXT,
+          coverLetterGenerated INTEGER DEFAULT 0,
+          appliedAt INTEGER,
+          followUpAt INTEGER,
+          followUpSentAt INTEGER,
+          lastContactAt INTEGER,
+          responseAt INTEGER,
+          interviewAt INTEGER,
+          rejectedAt INTEGER,
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL
+        )
+      `);
+
+      // Create indexes for job_applications
+      this.db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_job_applications_status ON job_applications(status);
+        CREATE INDEX IF NOT EXISTS idx_job_applications_company ON job_applications(company);
+        CREATE INDEX IF NOT EXISTS idx_job_applications_followUpAt ON job_applications(followUpAt);
+      `);
+
       this.isInitialized = true;
       logger.info('Database schema initialized');
     } catch (error) {

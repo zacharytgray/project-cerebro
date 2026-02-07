@@ -19,9 +19,17 @@ import {
   registerUploadRoutes,
   registerConfigRoutes,
   registerBrainConfigRoutes,
+  registerBrainsCrudRoutes,
+  registerJobApplicationsRoutes,
 } from './routes';
 import { BrainService, ReportService, TaskExecutorService } from '../services';
-import { TaskRepository, RecurringTaskRepository, BrainConfigRepository } from '../data/repositories';
+import {
+  TaskRepository,
+  RecurringTaskRepository,
+  BrainConfigRepository,
+  BrainsRepository,
+  JobApplicationsRepository,
+} from '../data/repositories';
 
 export interface ApiServerDependencies {
   brainService: BrainService;
@@ -30,6 +38,8 @@ export interface ApiServerDependencies {
   reportService: ReportService;
   taskExecutor: TaskExecutorService;
   brainConfigRepo: BrainConfigRepository;
+  brainsRepo: BrainsRepository;
+  jobApplicationsRepo: JobApplicationsRepository;
 }
 
 export class ApiServer {
@@ -91,6 +101,8 @@ export class ApiServer {
     registerUploadRoutes(this.server);
     registerConfigRoutes(this.server);
     registerBrainConfigRoutes(this.server, this.deps.brainConfigRepo);
+    registerBrainsCrudRoutes(this.server, this.deps.brainsRepo);
+    registerJobApplicationsRoutes(this.server, this.deps.jobApplicationsRepo);
 
     logger.info('API routes registered');
   }
