@@ -38,6 +38,7 @@ export interface CreateRecurringTaskInput {
 
 export interface UpdateRecurringTaskInput {
   id: string;
+  brainId?: string;
   title?: string;
   description?: string;
   pattern?: RecurrencePattern;

@@ -96,13 +96,31 @@ export function toApiRecurringTask(task: RecurringTask): ApiRecurringTask {
  * Transform API update data to internal format
  */
 export function fromApiUpdate(data: Partial<ApiRecurringTask>): Partial<{
-  pattern: string;
+  brainId?: string;
+  title?: string;
+  description?: string;
+  modelOverride?: string;
+  pattern?: string;
   cronExpression?: string;
   payload?: Record<string, any>;
   active?: boolean;
   nextExecutionAt?: number;
 }> {
   const result: any = {};
+  
+  // Basic fields
+  if (data.brainId !== undefined) {
+    result.brainId = data.brainId;
+  }
+  if (data.title !== undefined) {
+    result.title = data.title;
+  }
+  if (data.description !== undefined) {
+    result.description = data.description;
+  }
+  if (data.modelOverride !== undefined) {
+    result.modelOverride = data.modelOverride;
+  }
   
   if (data.enabled !== undefined) {
     result.active = data.enabled;

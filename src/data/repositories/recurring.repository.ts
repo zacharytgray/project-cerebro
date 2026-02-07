@@ -171,6 +171,10 @@ export class RecurringTaskRepository {
       const updates: string[] = [];
       const values: any[] = [];
 
+      if (input.brainId !== undefined) {
+        updates.push('brainId = ?');
+        values.push(input.brainId);
+      }
       if (input.title !== undefined) {
         updates.push('title = ?');
         values.push(input.title);
