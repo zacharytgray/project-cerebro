@@ -48,6 +48,7 @@ export function useRecurring() {
     async (
       id: string,
       taskData: {
+        brainId?: string;
         title?: string;
         description?: string;
         modelOverride?: string;
@@ -57,7 +58,9 @@ export function useRecurring() {
       }
     ) => {
       try {
+        console.log('Updating recurring task:', id, taskData);
         await api.updateRecurringTask(id, taskData);
+        console.log('Update successful, refreshing...');
         await fetch();
       } catch (e) {
         console.error('Failed to update recurring task:', e);

@@ -82,6 +82,7 @@ export const api = {
   updateRecurringTask: (
     id: string,
     data: {
+      brainId?: string;
       title?: string;
       description?: string;
       modelOverride?: string;
@@ -89,12 +90,14 @@ export const api = {
       intervalMinutes?: number;
       scheduleConfig?: Record<string, unknown>;
     }
-  ) =>
-    fetchApi<void>(`/api/recurring/${id}`, {
+  ) => {
+    console.log('API updateRecurringTask called:', id, data);
+    return fetchApi<void>(`/api/recurring/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    }),
+    });
+  },
   toggleRecurringTask: (id: string, enabled: boolean) =>
     fetchApi<void>(`/api/recurring/${id}/toggle`, {
       method: 'POST',
