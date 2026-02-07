@@ -189,7 +189,9 @@ export function registerRecurringRoutes(
         return { error: 'Recurring task not found' };
       }
 
-      const updated = recurringRepo.update({ id, active: enabled });
+      recurringRepo.update({ id, active: enabled });
+      // Re-fetch to get updated state
+      const updated = recurringRepo.getById(id);
       return { success: true, task: toApiRecurringTask(updated) };
     } catch (error) {
       console.error('Failed to toggle recurring task:', error);

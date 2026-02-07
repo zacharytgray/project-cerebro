@@ -198,6 +198,9 @@ export class RecurringTaskRepository {
       if (input.active !== undefined) {
         updates.push('active = ?');
         values.push(input.active ? 1 : 0);
+        // Also update legacy enabled column for backward compatibility
+        updates.push('enabled = ?');
+        values.push(input.active ? 1 : 0);
       }
       if (input.lastExecutedAt !== undefined) {
         updates.push('lastExecutedAt = ?');
