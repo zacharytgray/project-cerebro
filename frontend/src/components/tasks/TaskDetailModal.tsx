@@ -19,6 +19,7 @@ interface TaskDetailModalProps {
       title?: string;
       description?: string;
       modelOverride?: string;
+      sendDiscordNotification?: boolean;
     }
   ) => Promise<void>;
   onExecute?: (id: string) => void;
@@ -59,6 +60,7 @@ export function TaskDetailModal({
         title: editingTask.title,
         description: editingTask.description,
         modelOverride: editingTask.modelOverride,
+        sendDiscordNotification: editingTask.sendDiscordNotification,
       });
       onClose();
     }
@@ -130,6 +132,37 @@ export function TaskDetailModal({
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Discord Notification Toggle */}
+        <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+          <div>
+            <label className="text-sm font-medium">Send Discord Notification</label>
+            <p className="text-xs text-muted-foreground">
+              Notify Discord when this task completes
+            </p>
+          </div>
+          <button
+            onClick={() =>
+              setEditingTask({
+                ...editingTask,
+                sendDiscordNotification: !editingTask.sendDiscordNotification,
+              })
+            }
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              editingTask.sendDiscordNotification !== false
+                ? 'bg-green-500'
+                : 'bg-gray-500'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                editingTask.sendDiscordNotification !== false
+                  ? 'translate-x-6'
+                  : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
 
         {/* Status & Created (read-only) */}

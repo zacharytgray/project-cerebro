@@ -23,6 +23,7 @@ export interface RecurringTask {
   updatedAt: number;
   lastExecutedAt?: number;
   nextExecutionAt?: number;
+  sendDiscordNotification?: boolean;
 }
 
 export interface CreateRecurringTaskInput {
@@ -34,6 +35,7 @@ export interface CreateRecurringTaskInput {
   payload?: Record<string, any>;
   modelOverride?: string;
   nextExecutionAt?: number;
+  sendDiscordNotification?: boolean;
 }
 
 export interface UpdateRecurringTaskInput {
@@ -48,4 +50,5 @@ export interface UpdateRecurringTaskInput {
   active?: boolean;
   lastExecutedAt?: number;
   nextExecutionAt?: number;
+  sendDiscordNotification?: boolean;
 }

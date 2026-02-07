@@ -55,6 +55,7 @@ export function useRecurring() {
         scheduleType?: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
         intervalMinutes?: number;
         scheduleConfig?: Record<string, unknown>;
+        sendDiscordNotification?: boolean;
       }
     ) => {
       try {

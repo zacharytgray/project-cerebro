@@ -36,6 +36,7 @@ interface DashboardPageProps {
       scheduleType?: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
       intervalMinutes?: number;
       enabled?: boolean;
+      sendDiscordNotification?: boolean;
     }
   ) => Promise<void>;
   onToggleRecurring: (id: string, enabled: boolean) => Promise<void>;
@@ -48,6 +49,7 @@ interface DashboardPageProps {
       title?: string;
       description?: string;
       modelOverride?: string;
+      sendDiscordNotification?: boolean;
     }
   ) => Promise<void>;
   onClearAllTasks: () => void;
@@ -647,6 +649,37 @@ export function DashboardPage({
                 </select>
               </div>
             )}
+
+            {/* Discord Notification Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+              <div>
+                <label className="text-sm font-medium">Send Discord Notification</label>
+                <p className="text-xs text-muted-foreground">
+                  Notify Discord when this task completes
+                </p>
+              </div>
+              <button
+                onClick={() =>
+                  setEditingRecurring({
+                    ...editingRecurring,
+                    sendDiscordNotification: !editingRecurring.sendDiscordNotification,
+                  })
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  editingRecurring.sendDiscordNotification !== false
+                    ? 'bg-green-500'
+                    : 'bg-gray-500'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    editingRecurring.sendDiscordNotification !== false
+                      ? 'translate-x-6'
+                      : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
             
             <div className="flex gap-2 pt-4">
               <Button 
@@ -670,6 +703,7 @@ export function DashboardPage({
                       modelOverride: editingRecurring.modelOverride,
                       scheduleType: editingRecurring.scheduleType,
                       scheduleConfig: editingRecurring.scheduleConfig,
+                      sendDiscordNotification: editingRecurring.sendDiscordNotification,
                     };
 
                     if (editingRecurring.scheduleType === 'INTERVAL') {

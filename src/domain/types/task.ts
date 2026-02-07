@@ -51,6 +51,9 @@ export interface Task {
   retryPolicy?: TaskRetryPolicy;
   error?: string;
   output?: string; // Path to artifact or summary
+
+  // Notification settings
+  sendDiscordNotification?: boolean;
 }
 
 export interface CreateTaskInput {
@@ -62,6 +65,7 @@ export interface CreateTaskInput {
   dependencies?: TaskDependency[];
   executeAt?: number;
   retryPolicy?: TaskRetryPolicy;
+  sendDiscordNotification?: boolean;
 }
 
 export interface UpdateTaskInput {
@@ -76,4 +80,5 @@ export interface UpdateTaskInput {
   error?: string;
   output?: string;
   attempts?: number;
+  sendDiscordNotification?: boolean;
 }

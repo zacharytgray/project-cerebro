@@ -20,6 +20,7 @@ export interface Task {
   error?: string;
   output?: string;
   executeAt?: number;
+  sendDiscordNotification?: boolean;
 }
 
 export interface RecurringTask {
@@ -38,6 +39,7 @@ export interface RecurringTask {
   nextRunAt: number;
   lastRunAt?: number;
   enabled: boolean;
+  sendDiscordNotification?: boolean;
 }
 
 export interface Job {

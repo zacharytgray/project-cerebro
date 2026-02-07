@@ -54,11 +54,13 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       outputLength: output.length,
     });
 
-    // Send completion message to Discord
-    await this.discordAdapter.sendMessage(
-      discordChannelId,
-      `✅ **Task completed:** ${task.title}\n\n${output.slice(0, 1000)}${output.length > 1000 ? '...' : ''}`
-    );
+    // Send completion message to Discord (if enabled)
+    if (task.sendDiscordNotification !== false) {
+      await this.discordAdapter.sendMessage(
+        discordChannelId,
+        `✅ **Task completed:** ${task.title}\n\n${output.slice(0, 1000)}${output.length > 1000 ? '...' : ''}`
+      );
+    }
   }
 
   /**

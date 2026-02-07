@@ -53,6 +53,7 @@ export const api = {
       title?: string;
       description?: string;
       modelOverride?: string;
+      sendDiscordNotification?: boolean;
     }
   ) =>
     fetchApi<void>(`/api/tasks/${id}`, {
@@ -89,6 +90,7 @@ export const api = {
       scheduleType?: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
       intervalMinutes?: number;
       scheduleConfig?: Record<string, unknown>;
+      sendDiscordNotification?: boolean;
     }
   ) => {
     console.log('API updateRecurringTask called:', id, data);

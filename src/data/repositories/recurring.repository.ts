@@ -33,6 +33,7 @@ export class RecurringTaskRepository {
       createdAt: now,
       updatedAt: now,
       nextExecutionAt,
+      sendDiscordNotification: input.sendDiscordNotification ?? true,
     };
 
     try {
@@ -41,8 +42,8 @@ export class RecurringTaskRepository {
         INSERT INTO recurring_tasks (
           id, brainId, title, description, pattern, cronExpression,
           payload, modelOverride, active, createdAt, updatedAt, nextExecutionAt,
-          scheduleType, enabled
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          scheduleType, enabled, sendDiscordNotification
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       stmt.run(
@@ -59,7 +60,8 @@ export class RecurringTaskRepository {
         task.updatedAt,
         task.nextExecutionAt,
         task.pattern, // scheduleType = pattern for backward compatibility
-        task.active ? 1 : 0 // enabled = active for backward compatibility
+        task.active ? 1 : 0, // enabled = active for backward compatibility
+        task.sendDiscordNotification ? 1 : 0
       );
 
       logger.info('Recurring task created', { taskId: task.id, brainId: task.brainId });
@@ -214,6 +216,10 @@ export class RecurringTaskRepository {
         updates.push('nextExecutionAt = ?');
         values.push(input.nextExecutionAt);
       }
+      if (input.sendDiscordNotification !== undefined) {
+        updates.push('sendDiscordNotification = ?');
+        values.push(input.sendDiscordNotification ? 1 : 0);
+      }
 
       updates.push('updatedAt = ?');
       values.push(now);
@@ -268,6 +274,7 @@ export class RecurringTaskRepository {
       updatedAt: row.updatedAt,
       lastExecutedAt: row.lastExecutedAt,
       nextExecutionAt: row.nextExecutionAt,
+      sendDiscordNotification: row.sendDiscordNotification === 1,
     };
   }
 

@@ -83,6 +83,7 @@ export function useTasks() {
         title?: string;
         description?: string;
         modelOverride?: string;
+        sendDiscordNotification?: boolean;
       }
     ) => {
       try {
