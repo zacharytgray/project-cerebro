@@ -153,12 +153,16 @@ export class OpenClawAdapter {
   /**
    * Send a message via OpenClaw CLI
    */
-  async sendMessage(to: string, message: string): Promise<void> {
+  async sendMessage(to: string, message: string, channelType: string = 'discord'): Promise<void> {
     const openclawPath = process.env.OPENCLAW_CLI_PATH || '/home/zgray/.npm-global/bin/openclaw';
     const parts: string[] = [openclawPath, 'message', 'send'];
     
-    // Target channel or user
-    parts.push('--to', to); // OpenClaw CLI uses --to which maps to target in the message tool
+    // Target channel or user - strip 'channel:' prefix if present
+    const target = to.replace(/^channel:/, '');
+    parts.push('--target', target);
+    
+    // Channel type (discord, telegram, etc.)
+    parts.push('--channel', channelType);
     
     // Message content (escaped)
     const escapedMessage = message.replace(/'/g, "'\\''");
@@ -166,14 +170,20 @@ export class OpenClawAdapter {
 
     const command = parts.join(' ');
 
-    logger.debug('Sending message via OpenClaw', { to, command: command.substring(0, 50) + '...' });
+    logger.debug('Sending message via OpenClaw', { to: target, channel: channelType, command: command.substring(0, 100) + '...' });
 
     try {
-      await execAsync(command);
-      logger.info('Message sent via OpenClaw', { to });
+      const { stdout, stderr } = await execAsync(command);
+      logger.info('Message sent via OpenClaw', { to: target, channel: channelType, stdout: stdout?.substring(0, 200), stderr: stderr?.substring(0, 200) });
     } catch (error: any) {
-      logger.error('Failed to send message via OpenClaw', error as Error, { to });
-      throw new OpenClawError(`Failed to send message: ${error.message}`);
+      logger.error('Failed to send message via OpenClaw', error as Error, { 
+        to: target, 
+        channel: channelType,
+        stdout: error.stdout?.substring(0, 500),
+        stderr: error.stderr?.substring(0, 500),
+        code: error.code 
+      });
+      throw new OpenClawError(`Failed to send message: ${error.message}. stderr: ${error.stderr?.substring(0, 200)}`);
     }
   }
 
