@@ -119,7 +119,10 @@ export function JobProfilePage() {
     fetch('/api/job-profile')
       .then((r) => r.json())
       .then((data) => {
-        setProfile(data.profile || getDefaultProfile());
+        // Migrate old profile format to new format
+        const loaded = data.profile || getDefaultProfile();
+        const migrated = migrateProfile(loaded);
+        setProfile(migrated);
         setLoading(false);
       })
       .catch(() => {
@@ -970,6 +973,73 @@ export function JobProfilePage() {
       </div>
     </div>
   );
+}
+
+function migrateProfile(old: any): JobProfile {
+  const defaults = getDefaultProfile();
+  
+  // Deep merge with defaults
+  const profile = {
+    profile: {
+      personal: { ...defaults.profile.personal, ...old.profile?.personal },
+      work_authorization: { ...defaults.profile.work_authorization, ...old.profile?.work_authorization },
+      veteran_status: { ...defaults.profile.veteran_status, ...old.profile?.veteran_status },
+      job_type_preference: { ...defaults.profile.job_type_preference, ...old.profile?.job_type_preference },
+      // Ensure arrays
+      work_experience: Array.isArray(old.profile?.work_experience) ? old.profile.work_experience : [],
+      education: Array.isArray(old.profile?.education) ? old.profile.education : [],
+      skills: { ...defaults.profile.skills, ...old.profile?.skills },
+      preferences: { 
+        ...defaults.profile.preferences, 
+        ...old.profile?.preferences,
+        salary_expectations: { 
+          ...defaults.profile.preferences.salary_expectations, 
+          ...old.profile?.preferences?.salary_expectations 
+        }
+      },
+      documents: { ...defaults.profile.documents, ...old.profile?.documents },
+      screening_answers: { ...defaults.profile.screening_answers, ...old.profile?.screening_answers },
+    },
+    search_criteria: { ...defaults.search_criteria, ...old.search_criteria },
+  };
+
+  // Migrate old education object format to array format
+  if (old.profile?.education && !Array.isArray(old.profile.education)) {
+    const oldEdu = old.profile.education;
+    if (oldEdu.university || oldEdu.highest_degree || oldEdu.field_of_study) {
+      profile.profile.education = [{
+        id: generateId(),
+        institution: oldEdu.university || '',
+        degree: oldEdu.highest_degree || '',
+        fieldOfStudy: oldEdu.field_of_study || '',
+        location: '',
+        startDate: '',
+        endDate: '',
+        graduated: !!oldEdu.graduation_year && oldEdu.graduation_year <= new Date().getFullYear(),
+        expectedGraduation: '',
+        gpa: '',
+      }];
+    }
+  }
+
+  // Migrate old experience object format
+  if (old.profile?.experience && !Array.isArray(old.profile.work_experience)) {
+    const oldExp = old.profile.experience;
+    if (oldExp.current_title) {
+      profile.profile.work_experience = [{
+        id: generateId(),
+        jobTitle: oldExp.current_title || '',
+        company: '',
+        location: '',
+        startDate: '',
+        endDate: '',
+        currentJob: true,
+        responsibilities: (oldExp.specializations || []).join(', '),
+      }];
+    }
+  }
+
+  return profile as JobProfile;
 }
 
 function getDefaultProfile(): JobProfile {
