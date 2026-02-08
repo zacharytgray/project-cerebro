@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Repeat, Play, Trash2, Power, PowerOff } from 'lucide-react';
 import type { BrainStatus, Task, RecurringTask, ModelAlias } from '../api/types';
 import { SummaryCards } from '../components/dashboard/SummaryCards';
+import { FileIngestion } from '../components/dashboard/FileIngestion';
 import { TaskStream } from '../components/tasks/TaskStream';
 import { TaskDetailModal } from '../components/tasks/TaskDetailModal';
 import { AddTaskModal } from '../components/tasks/AddTaskModal';
@@ -247,6 +248,12 @@ export function DashboardPage({
                 />
               ))}
             </div>
+          </div>
+
+          {/* File Ingestion */}
+          <div>
+            <h2 className="text-xl font-bold mb-4">File Ingestion</h2>
+            <FileIngestion brains={brains} defaultBrainId="nexus" />
           </div>
         </div>
 
