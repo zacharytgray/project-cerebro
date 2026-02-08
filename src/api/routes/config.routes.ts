@@ -39,11 +39,10 @@ export function registerConfigRoutes(server: FastifyInstance): void {
           };
         });
       
-      // Add the primary auto model at the top
-      const primary = openclawConfig?.agents?.defaults?.model?.primary;
-      if (primary) {
+      // Add the auto model at the top if it exists
+      if (modelEntries['openrouter/auto']) {
         models.unshift({
-          id: primary,
+          id: 'openrouter/auto',
           alias: 'auto',
           provider: 'openrouter',
         });
