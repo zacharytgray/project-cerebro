@@ -67,6 +67,8 @@ export function JobApplicationsPage() {
     location: '',
     notes: '',
   });
+  const [jobSearchTaskId, setJobSearchTaskId] = useState<string | null>(null);
+  const [jobSearchRunning, setJobSearchRunning] = useState(false);
 
   const fetchApplications = useCallback(async () => {
     try {
@@ -85,9 +87,23 @@ export function JobApplicationsPage() {
     }
   }, []);
 
+  const fetchJobAutomation = useCallback(async () => {
+    try {
+      const res = await fetch('/api/brains/job/recurring');
+      const data = await res.json();
+      const jobSearchTask = (data.recurringTasks || []).find((task: any) =>
+        String(task.title || '').toLowerCase().includes('job search')
+      );
+      setJobSearchTaskId(jobSearchTask?.id ?? null);
+    } catch (e) {
+      console.error('Failed to fetch job automation:', e);
+    }
+  }, []);
+
   useEffect(() => {
     fetchApplications();
-  }, [fetchApplications]);
+    fetchJobAutomation();
+  }, [fetchApplications, fetchJobAutomation]);
 
   const handleCreate = async () => {
     if (!newApp.company || !newApp.position) return;
@@ -141,6 +157,18 @@ export function JobApplicationsPage() {
     }
   };
 
+  const handleRunJobSearch = async () => {
+    if (!jobSearchTaskId) return;
+    try {
+      setJobSearchRunning(true);
+      await fetch(`/api/recurring/${jobSearchTaskId}/run`, { method: 'POST' });
+    } catch (e) {
+      console.error('Failed to run job search:', e);
+    } finally {
+      setJobSearchRunning(false);
+    }
+  };
+
   const getAppsByStatus = (status: string) => {
     return applications.filter((a) => a.status === status);
   };
@@ -180,6 +208,12 @@ export function JobApplicationsPage() {
               List
             </button>
           </div>
+          {jobSearchTaskId && (
+            <Button variant="secondary" onClick={handleRunJobSearch} disabled={jobSearchRunning}>
+              <Clock className="w-4 h-4 mr-2" />
+              {jobSearchRunning ? 'Running Job Search...' : 'Run Job Search'}
+            </Button>
+          )}
           <Button variant="primary" onClick={() => setIsAddOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Application
