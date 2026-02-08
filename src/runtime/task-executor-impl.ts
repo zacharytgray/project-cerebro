@@ -47,6 +47,14 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       promptLength: prompt.length,
     });
 
+    // Send start message to Discord (if enabled)
+    if (task.sendDiscordNotification !== false) {
+      await this.discordAdapter.sendMessage(
+        discordChannelId,
+        `▶️ **Task started:** ${task.title}`
+      );
+    }
+
     // Execute with OpenClaw
     const output = await this.openClawAdapter.executeTask(openClawAgentId, {
       prompt,
@@ -58,6 +66,14 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       taskId: task.id,
       outputLength: output.length,
     });
+
+    // Persist output for visibility
+    if (this.taskRepo) {
+      this.taskRepo.update({
+        id: task.id,
+        output: output || '(no output)',
+      });
+    }
 
     // Send completion message to Discord (if enabled)
     if (task.sendDiscordNotification !== false) {
