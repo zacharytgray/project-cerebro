@@ -77,10 +77,9 @@ export function FileIngestion({ brains, defaultBrainId }: FileIngestionProps) {
 
       const formData = new FormData();
       formData.append('file', uploadFile.file);
-      formData.append('brainId', selectedBrainId);
 
       try {
-        const response = await fetch('/api/upload', {
+        const response = await fetch(`/api/upload?brainId=${encodeURIComponent(selectedBrainId)}`, {
           method: 'POST',
           body: formData,
         });
