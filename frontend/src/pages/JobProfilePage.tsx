@@ -73,11 +73,10 @@ interface JobProfile {
       languages: string[];
     };
     preferences: {
-      salary_expectations: {
+      hourly_rate: {
         minimum: number;
         preferred: number;
         currency: string;
-        period: string;
       };
       industries_of_interest: string[];
       deal_breakers: string[];
@@ -828,22 +827,36 @@ export function JobProfilePage() {
         <h2 className="text-lg font-semibold mb-4">Preferences</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium">Minimum Salary ($)</label>
+            <label className="text-sm font-medium">Minimum Hourly Rate ($)</label>
             <Input
               type="number"
-              value={profile.profile.preferences?.salary_expectations?.minimum || ''}
-              onChange={(e) => updateProfile('profile.preferences.salary_expectations.minimum', parseInt(e.target.value) || 0)}
-              placeholder="80000"
+              value={profile.profile.preferences?.hourly_rate?.minimum || ''}
+              onChange={(e) => updateProfile('profile.preferences.hourly_rate.minimum', parseInt(e.target.value) || 0)}
+              placeholder="50"
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Preferred Salary ($)</label>
+            <label className="text-sm font-medium">Preferred Hourly Rate ($)</label>
             <Input
               type="number"
-              value={profile.profile.preferences?.salary_expectations?.preferred || ''}
-              onChange={(e) => updateProfile('profile.preferences.salary_expectations.preferred', parseInt(e.target.value) || 0)}
-              placeholder="120000"
+              value={profile.profile.preferences?.hourly_rate?.preferred || ''}
+              onChange={(e) => updateProfile('profile.preferences.hourly_rate.preferred', parseInt(e.target.value) || 0)}
+              placeholder="75"
             />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Currency</label>
+            <select
+              value={profile.profile.preferences?.hourly_rate?.currency || 'USD'}
+              onChange={(e) => updateProfile('profile.preferences.hourly_rate.currency', e.target.value)}
+              className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+            >
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="CAD">CAD (C$)</option>
+              <option value="AUD">AUD (A$)</option>
+            </select>
           </div>
           <div>
             <label className="text-sm font-medium">Industries of Interest (comma-separated)</label>
@@ -1048,9 +1061,9 @@ function migrateProfile(old: any): JobProfile {
       preferences: { 
         ...defaults.profile.preferences, 
         ...old.profile?.preferences,
-        salary_expectations: { 
-          ...defaults.profile.preferences.salary_expectations, 
-          ...old.profile?.preferences?.salary_expectations 
+        hourly_rate: { 
+          ...defaults.profile.preferences.hourly_rate, 
+          ...old.profile?.preferences?.hourly_rate 
         }
       },
       documents: { ...defaults.profile.documents, ...old.profile?.documents },
@@ -1137,7 +1150,7 @@ function getDefaultProfile(): JobProfile {
         languages: [],
       },
       preferences: {
-        salary_expectations: { minimum: 0, preferred: 0, currency: 'USD', period: 'annual' },
+        hourly_rate: { minimum: 0, preferred: 0, currency: 'USD' },
         industries_of_interest: [],
         deal_breakers: [],
         company_size_preference: [],

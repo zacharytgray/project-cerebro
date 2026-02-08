@@ -8,6 +8,8 @@ import { CerebroRuntime } from './runtime/cerebro';
 import { HeartbeatLoop } from './runtime/heartbeat';
 import { ContextBrain, JobBrain, DigestBrain } from './runtime/brains';
 import { BrainType } from './domain/types';
+import * as fs from 'fs';
+import * as path from 'path';
 
 async function main() {
   try {
@@ -21,6 +23,21 @@ async function main() {
       version: '2.0.0',
       environment: process.env.NODE_ENV || 'development',
     });
+
+    // Load job profile for JobBrain
+    let jobProfileData: any = null;
+    const jobProfilePath = path.join(process.cwd(), 'data', 'job_profile.json');
+    try {
+      if (fs.existsSync(jobProfilePath)) {
+        const raw = fs.readFileSync(jobProfilePath, 'utf-8');
+        jobProfileData = JSON.parse(raw);
+        logger.info('Loaded job profile for JobBrain', { path: jobProfilePath });
+      } else {
+        logger.warn('Job profile not found, JobBrain will work without profile data', { path: jobProfilePath });
+      }
+    } catch (err) {
+      logger.error('Failed to load job profile', err as Error);
+    }
 
     // Create runtime
     const runtime = new CerebroRuntime();
@@ -50,8 +67,13 @@ async function main() {
 
       let brain;
       if (brainConfig.type === 'job') {
+        // Add job profile to agentConfig for JobBrain
+        const jobBrainConfig = {
+          ...fullConfig,
+          agentConfig: jobProfileData ? { jobProfile: jobProfileData } : undefined,
+        };
         brain = new JobBrain(
-          fullConfig,
+          jobBrainConfig,
           taskRepo,
           discordAdapter,
           openClawAdapter,
@@ -128,6 +150,7 @@ async function main() {
 
     logger.info('Cerebro started successfully', {
       brainsRegistered: brainService.getAll().length,
+      jobProfileLoaded: !!jobProfileData,
     });
 
     // Graceful shutdown

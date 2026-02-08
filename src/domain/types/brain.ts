@@ -21,6 +21,12 @@ export interface BrainConfig {
   description: string;
   discordChannelId: string;
   openClawAgentId?: string;
+  /**
+   * Arbitrary configuration object passed to sub-agents spawned by this brain.
+   * Allows brains to provide structured data (e.g., job profile) without
+   * polluting the task description text.
+   */
+  agentConfig?: Record<string, any>;
 }
 
 export interface BrainState {
