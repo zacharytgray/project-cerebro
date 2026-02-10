@@ -15,6 +15,7 @@ interface TaskStreamProps {
   onExecuteTask?: (taskId: string) => void;
   onDeleteTask?: (taskId: string) => void;
   onClearAll?: () => void;
+  className?: string;
 }
 
 export function TaskStream({ 
@@ -24,7 +25,8 @@ export function TaskStream({
   onTaskClick,
   onExecuteTask,
   onDeleteTask,
-  onClearAll
+  onClearAll,
+  className
 }: TaskStreamProps) {
   const [filter, setFilter] = useState<TaskStatus | 'ALL'>('ALL');
 
@@ -39,7 +41,7 @@ export function TaskStream({
   const filters: Array<TaskStatus | 'ALL'> = ['ALL', 'READY', 'EXECUTING', 'COMPLETED', 'FAILED'];
 
   return (
-    <Card>
+    <Card className={className ? `flex flex-col ${className}` : 'flex flex-col'}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Terminal className="w-5 h-5 text-purple-400" />
@@ -72,7 +74,7 @@ export function TaskStream({
         </div>
       </div>
 
-      <div className="space-y-3 max-h-[600px] overflow-y-auto">
+      <div className="space-y-3 flex-1 overflow-y-auto">
         {loading ? (
           <>
             {[...Array(5)].map((_, i) => (

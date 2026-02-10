@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Plus, Repeat, Play, Trash2, Power, PowerOff } from 'lucide-react';
+import { Plus, Repeat } from 'lucide-react';
 import type { BrainStatus, Task, RecurringTask, ModelAlias } from '../api/types';
 import { SummaryCards } from '../components/dashboard/SummaryCards';
 import { TaskStream } from '../components/tasks/TaskStream';
+import { RecurringTaskRow } from '../components/tasks/RecurringTaskRow';
 import { TaskDetailModal } from '../components/tasks/TaskDetailModal';
 import { AddTaskModal } from '../components/tasks/AddTaskModal';
 import { Button } from '../components/ui/Button';
@@ -237,6 +238,7 @@ export function DashboardPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div className="lg:col-span-2">
           <TaskStream
+            className="h-[680px]"
             tasks={tasks}
             brains={brains}
             loading={loadingTasks}
@@ -248,90 +250,46 @@ export function DashboardPage({
         </div>
 
         {/* Recurring Tasks */}
-        <Card className="flex flex-col">
+        <Card className="flex flex-col h-[680px]">
           <div className="flex items-center justify-between p-5 pb-3 border-b border-border">
             <div className="flex items-center gap-2">
               <Repeat className="w-5 h-5 text-purple-400" />
               <h2 className="text-lg font-semibold">Recurring Tasks</h2>
             </div>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={() => setIsAddRecurringOpen(true)}
-              className="rounded-full bg-white/5 hover:bg-white/10 px-4"
+              className="px-3 py-2 rounded-lg"
+              title="Add recurring task"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Add
+              <Plus className="w-4 h-4" />
             </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-2 p-4 max-h-[600px]">
-              {loadingRecurring ? (
-                <div className="text-center text-muted-foreground py-4">Loading...</div>
-              ) : recurringTasks.length === 0 ? (
-                <div className="text-center text-muted-foreground py-4">
-                  No recurring tasks
-                </div>
-              ) : (
-                recurringTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="p-3 rounded-lg border border-border bg-secondary/30 text-sm cursor-pointer hover:bg-secondary/50 transition-colors"
-                    onClick={() => {
-                      setEditingRecurring(task);
-                      setIsEditRecurringOpen(true);
-                    }}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium truncate">{task.title}</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleRecurring(task.id, !task.enabled);
-                        }}
-                        className="p-1 rounded hover:bg-secondary/80 transition-colors"
-                        title={task.enabled ? 'Disable' : 'Enable'}
-                      >
-                        {task.enabled ? (
-                          <Power className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <PowerOff className="w-4 h-4 text-red-500" />
-                        )}
-                      </button>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {getBrainName(task.brainId)} · {formatSchedule(task)}
-                    </div>
-                    <div className="flex gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRunRecurring(task.id);
-                        }}
-                        className="p-1"
-                        title="Run now"
-                      >
-                        <Play className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteRecurring(task.id);
-                        }}
-                        className="p-1"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+          <div className="flex-1 overflow-y-auto space-y-3 p-4">
+            {loadingRecurring ? (
+              <div className="text-center text-muted-foreground py-6">Loading...</div>
+            ) : recurringTasks.length === 0 ? (
+              <div className="text-center text-muted-foreground py-6">No recurring tasks</div>
+            ) : (
+              recurringTasks.map((task) => (
+                <RecurringTaskRow
+                  key={task.id}
+                  task={task}
+                  brainName={getBrainName(task.brainId)}
+                  scheduleText={formatSchedule(task)}
+                  onClick={() => {
+                    setEditingRecurring(task);
+                    setIsEditRecurringOpen(true);
+                  }}
+                  onToggle={onToggleRecurring}
+                  onRun={onRunRecurring}
+                  onDelete={onDeleteRecurring}
+                />
+              ))
+            )}
+          </div>
             <div className="p-3 border-t border-border text-xs text-muted-foreground">
               Click a task to edit. Use <span className="text-foreground">Add</span> to create a new recurring task.
             </div>
