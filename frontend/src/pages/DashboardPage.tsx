@@ -330,9 +330,9 @@ export function DashboardPage({
               document.body.style.cursor = 'col-resize';
             }}
             className={cn(
-              'w-1.5 h-full rounded-full cursor-col-resize transition-colors',
-              'bg-gradient-to-b from-blue-400/50 via-purple-400/40 to-blue-400/50',
-              'hover:from-blue-500/70 hover:via-purple-500/60 hover:to-blue-500/70',
+              'w-1 h-full rounded-full cursor-col-resize transition-colors',
+              'bg-gradient-to-b from-blue-400/25 via-purple-400/20 to-blue-400/25',
+              'hover:from-blue-500/45 hover:via-purple-500/40 hover:to-blue-500/45',
               'shadow-[0_0_0_1px_rgba(0,0,0,0.08)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08)]'
             )}
           />
