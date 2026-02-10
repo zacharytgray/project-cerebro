@@ -7,11 +7,13 @@ dist/
 config/brains.json
 config/discord_ids.json
 config/brain_targets.json
+data/job_profile.json
 
 # App data
 cerebro.db
 cerebro.db-*
-/data/
+/data/*
+!/data/job_profile.template.json
 memory/
 frontend/dist/
 

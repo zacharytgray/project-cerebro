@@ -17,27 +17,11 @@
       "openClawAgentId": "school"
     },
     {
-      "id": "research",
-      "name": "Research Brain",
-      "channelKey": "research_brain",
-      "type": "context",
-      "description": "Deep research, summaries, citations, knowledge capture",
-      "openClawAgentId": "research"
-    },
-    {
-      "id": "money",
-      "name": "Money Making Brain",
-      "channelKey": "money_making_brain",
-      "type": "context",
-      "description": "Revenue ideas, monetization experiments, business ops",
-      "openClawAgentId": "money"
-    },
-    {
       "id": "job",
-      "name": "Job Application Brain",
+      "name": "Job Application Brain (optional)",
       "channelKey": "job_application_brain",
       "type": "job",
-      "description": "Job search pipeline, applications, tracking, follow-ups",
+      "description": "Job search pipeline, applications, tracking, follow-ups (optional module)",
       "openClawAgentId": "job"
     }
   ],

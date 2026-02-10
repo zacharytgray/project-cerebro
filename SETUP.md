@@ -6,7 +6,7 @@ This guide walks you through setting up **Project Cerebro** — an autonomous AI
 
 1. **OpenClaw** installed and running (`openclaw status`)
 2. **Node.js** v18+ (`node --version`)
-3. **Discord bot token** (if using Discord integration)
+3. **A messaging channel in OpenClaw** (Discord/Telegram/Signal/etc.)
 4. Optional: **Google Calendar access** via `gog` CLI (for calendar-based planning)
 
 ## Installation
@@ -51,6 +51,9 @@ Copy template config files:
 ```bash
 cp config/brains.template.json config/brains.json
 cp config/brain_targets.template.json config/brain_targets.json
+
+# Optional (Job module only)
+cp data/job_profile.template.json data/job_profile.json
 ```
 
 Edit `config/brain_targets.json` to choose where each brain sends notifications.

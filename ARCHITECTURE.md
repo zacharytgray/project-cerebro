@@ -2,7 +2,7 @@
 
 ## Overview
 
-Cerebro is an autonomous agent runtime that manages "Brains" - specialized AI agents that execute tasks on a schedule. It provides a formal execution pipeline with heartbeat-driven scheduling, recurring task management, and Discord integration for notifications.
+Cerebro is an autonomous agent runtime that manages "Brains" — specialized AI agents that execute tasks on a schedule. It provides a formal execution pipeline with heartbeat-driven scheduling, recurring task management, and **channel-agnostic** notifications routed via OpenClaw.
 
 ## Directory Structure
 
