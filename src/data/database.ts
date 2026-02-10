@@ -139,6 +139,22 @@ export class DatabaseConnection {
         // Column already exists
       }
 
+      // Back-compat columns used by the API layer / UI schema
+      // (The repo historically used scheduleType/enabled; the DB now stores pattern/active.)
+      try {
+        this.db.exec(`ALTER TABLE recurring_tasks ADD COLUMN scheduleType TEXT`);
+        logger.info('Added scheduleType column to recurring_tasks table');
+      } catch (e) {
+        // Column already exists
+      }
+
+      try {
+        this.db.exec(`ALTER TABLE recurring_tasks ADD COLUMN enabled INTEGER DEFAULT 1`);
+        logger.info('Added enabled column to recurring_tasks table');
+      } catch (e) {
+        // Column already exists
+      }
+
       // Brains table (source of truth for brain definitions)
       this.db.exec(`
         CREATE TABLE IF NOT EXISTS brains (
