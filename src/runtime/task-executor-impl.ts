@@ -7,6 +7,7 @@ import { Task } from '../domain/types';
 import { TaskExecutor } from '../services/task-executor.service';
 import { OpenClawAdapter, DiscordAdapter } from '../integrations';
 import { BrainConfigRepository, TaskRepository, RecurringTaskRepository } from '../data/repositories';
+import { ReportService } from '../services';
 
 export class OpenClawTaskExecutor implements TaskExecutor {
   constructor(
@@ -14,6 +15,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     private discordAdapter: DiscordAdapter,
     private brainConfigRepo: BrainConfigRepository,
     private brainConfigs: Map<string, { openClawAgentId?: string; discordChannelId: string; description: string }>,
+    private reportService: ReportService,
     private taskRepo?: TaskRepository,
     private recurringRepo?: RecurringTaskRepository
   ) {}
@@ -197,15 +199,18 @@ export class OpenClawTaskExecutor implements TaskExecutor {
    * Get schedule context if needed for planning tasks
    */
   private async getScheduleContext(task: Task): Promise<string> {
-    const needsSchedule =
+    const needsAnyContext =
       task.brainId === 'personal' ||
       task.brainId === 'school' ||
       task.brainId === 'digest';
 
-    if (!needsSchedule) {
+    if (!needsAnyContext) {
       return '';
     }
 
+    const blocks: string[] = [];
+
+    // 1) Schedule context (only when explicitly requested by task kind)
     if (
       task.description &&
       (task.description.includes('PERSONAL_PLANNING_KIND') ||
@@ -213,9 +218,35 @@ export class OpenClawTaskExecutor implements TaskExecutor {
         task.description.includes('REPORT_KIND'))
     ) {
       const schedule = await this.openClawAdapter.getScheduleContext();
-      return `\n\nMerged Schedule (America/Chicago) — deterministic output from get-schedule.js:\n\n${schedule}`;
+      blocks.push(
+        `Merged Schedule (America/Chicago) — deterministic output from get-schedule.js:\n\n${schedule}`
+      );
     }
 
-    return '';
+    // 2) Digest context: today's reports across brains (only when explicitly requested)
+    if (task.brainId === 'digest' && task.description?.includes('DAILY_DIGEST_KIND')) {
+      const today = new Date().toISOString().split('T')[0];
+      const brainIds = Array.from(this.brainConfigs.keys()).filter((id) => id !== 'digest');
+      const reports = await this.reportService.getAllReportsForDate(brainIds, today);
+
+      if (reports.length === 0) {
+        blocks.push(`Reports for ${today}: (none found)`);
+      } else {
+        const reportText = reports
+          .map((r) => {
+            const header = `## ${r.brainId.toUpperCase()} — ${r.kind.toUpperCase()}`;
+            // Keep prompt bounded
+            const content = (r.content || '').trim().slice(-6000);
+            return `${header}\n\n${content}`;
+          })
+          .join('\n\n');
+
+        blocks.push(`Reports for ${today} (by brain):\n\n${reportText}`);
+      }
+    }
+
+    if (blocks.length === 0) return '';
+
+    return `\n\nContext:\n\n${blocks.join('\n\n---\n\n')}`;
   }
 }

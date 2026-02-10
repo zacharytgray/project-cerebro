@@ -111,6 +111,7 @@ export class CerebroRuntime {
       this.discordAdapter,
       this.brainConfigRepo,
       this.brainConfigs,
+      this.reportService,
       this.taskRepo,
       this.recurringRepo
     );
