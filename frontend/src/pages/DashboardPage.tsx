@@ -222,7 +222,7 @@ export function DashboardPage({
           <h2 className="text-xl font-bold">Brains</h2>
           <p className="text-xs text-muted-foreground">Scroll →</p>
         </div>
-        <div className="flex gap-4 overflow-x-auto overflow-y-visible pb-4 pt-2 pr-2">
+        <div className="flex gap-4 overflow-x-auto overflow-y-visible pb-4 pt-2 px-3">
           {[nexusBrain, ...otherBrains].filter(Boolean).map((brain: any) => (
             <BrainTile
               key={brain.id}
