@@ -239,7 +239,7 @@ export function DashboardPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div className="lg:col-span-2">
           <TaskStream
-            className="h-[680px]"
+            className="h-[680px] bg-gradient-to-br from-blue-600/5 to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift"
             tasks={tasks}
             brains={brains}
             loading={loadingTasks}
@@ -251,7 +251,7 @@ export function DashboardPage({
         </div>
 
         {/* Recurring Tasks */}
-        <Card className="flex flex-col h-[680px] p-6 bg-purple-500/5 dark:bg-purple-500/5">
+        <Card className="flex flex-col h-[680px] p-6 bg-gradient-to-br from-blue-600/5 to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Repeat className="w-5 h-5 text-purple-400" />

@@ -33,9 +33,9 @@ export function RecurringTaskRow({
       transition={{ duration: 0.14, ease: 'easeOut' }}
       className={cn(
         'p-5 rounded-2xl',
-        'bg-purple-500/5 hover:bg-purple-500/10 dark:bg-purple-500/10 dark:hover:bg-purple-500/15',
+        'bg-gradient-to-r from-blue-600/5 to-purple-600/5 bg-[length:200%_auto] hover:from-blue-600/10 hover:to-purple-600/10 dark:from-blue-600/10 dark:to-purple-600/10 dark:hover:from-blue-600/15 dark:hover:to-purple-600/15',
         'shadow-[0_10px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.35)]',
-        'transition-all duration-200 hover:-translate-y-0.5',
+        'transition-all duration-200 hover:-translate-y-0.5 animate-gradient-shift',
         'cursor-pointer'
       )}
       onClick={() => onClick(task)}
