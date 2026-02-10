@@ -1,3 +1,8 @@
+---
+name: project-cerebro
+description: "Project Cerebro - Control Surface: modular multi-brain execution dashboard built on OpenClaw"
+---
+
 # Project Cerebro - Control Surface
 
 A highly modular, agent-friendly **execution control surface** for running multiple OpenClaw “brains” (agents) with:
