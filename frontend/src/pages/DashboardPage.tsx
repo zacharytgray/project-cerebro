@@ -319,7 +319,7 @@ export function DashboardPage({
         </div>
 
         {/* Drag handle (desktop only) */}
-        <div className="hidden lg:flex w-6 items-stretch justify-center">
+        <div className="hidden lg:flex w-6 self-stretch items-stretch justify-center">
           <div
             role="separator"
             aria-orientation="vertical"
@@ -330,7 +330,7 @@ export function DashboardPage({
               document.body.style.cursor = 'col-resize';
             }}
             className={cn(
-              'w-1.5 rounded-full cursor-col-resize transition-colors',
+              'w-1.5 h-full rounded-full cursor-col-resize transition-colors',
               'bg-gradient-to-b from-blue-400/50 via-purple-400/40 to-blue-400/50',
               'hover:from-blue-500/70 hover:via-purple-500/60 hover:to-blue-500/70',
               'shadow-[0_0_0_1px_rgba(0,0,0,0.08)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08)]'
