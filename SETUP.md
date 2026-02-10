@@ -37,12 +37,32 @@ OPENCLAW_TOKEN=YOUR_GATEWAY_TOKEN  # Get from: openclaw devices list
 # Messaging is handled by OpenClaw. Ensure your desired channel plugin is configured in OpenClaw.
 ```
 
-**Optional (for calendar integration):**
+**Optional (calendar integration / merged schedule context):**
+
+Cerebro can optionally inject a merged calendar view into certain planning/report tasks.
+This uses the `gog` CLI under the hood (Google Calendar via your OpenClaw environment).
+
+1) Ensure `gog` is authenticated for the account you want to use.
+2) Set these env vars:
+
 ```bash
+# Which Google account gog should use (email address)
 GOG_ACCOUNT=you@example.com
+
+# Comma-separated calendar IDs to merge.
+# "primary" is your main calendar; additional calendars are long IDs from Google Calendar settings.
 CEREBRO_CALENDAR_IDS=primary,OTHER_CALENDAR_ID
+
+# Optional friendly names (same order as IDs). Only used for display.
 CEREBRO_CALENDAR_NAMES=Primary,Classes
+
+# Optional override (otherwise uses TZ)
+CEREBRO_TIMEZONE=America/Chicago
 ```
+
+Notes:
+- No calendar IDs are shipped in the repo; you provide them locally via `.env`.
+- If you don’t set these, Cerebro still works; you just won’t get schedule context injected.
 
 ### 3. Configure Brains & Channels
 
@@ -110,9 +130,10 @@ Navigate to: `http://localhost:3030`
 | `OPENCLAW_GATEWAY_URL` | **Yes** | — | OpenClaw Gateway WebSocket URL |
 | `OPENCLAW_TOKEN` | **Yes** | — | OpenClaw Gateway auth token |
 | (messaging) | — | — | Configure your messaging channels in OpenClaw |
-| `TZ` | No | `America/Chicago` | Timezone for scheduling |
+| `TZ` | No | `America/Chicago` | Timezone for scheduling (fallback for calendar merge) |
+| `CEREBRO_TIMEZONE` | No | — | Explicit timezone for merged calendar context |
 | `GOG_ACCOUNT` | No | — | Google account for calendar access (via `gog` CLI) |
-| `CEREBRO_CALENDAR_IDS` | No | `primary` | Comma-separated calendar IDs |
+| `CEREBRO_CALENDAR_IDS` | No | `primary` | Comma-separated calendar IDs to merge |
 | `CEREBRO_CALENDAR_NAMES` | No | — | Optional: calendar display names (matches IDs order) |
 | `CEREBRO_MANAGE_SYSTEM_RECURRING` | No | `false` | Enable backend auto-creation of report/planning tasks |
 
