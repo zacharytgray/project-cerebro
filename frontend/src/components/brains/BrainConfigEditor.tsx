@@ -45,18 +45,6 @@ const TOOL_DEFINITIONS = [
     configFields: [{ key: 'defaultAccount', label: 'Default Account', placeholder: 'office' }],
   },
   {
-    id: 'jobspy',
-    name: 'JobSpy MCP',
-    description: 'Job search across major boards',
-    configFields: [{ key: 'defaultQuery', label: 'Default Query', placeholder: 'AI Engineer' }],
-  },
-  {
-    id: 'agent_browser',
-    name: 'Agent Browser',
-    description: 'Browser automation for job applications',
-    configFields: [{ key: 'headless', label: 'Headless mode', type: 'boolean' }],
-  },
-  {
     id: 'research_storage',
     name: 'Research Storage',
     description: 'Store papers + project context',
