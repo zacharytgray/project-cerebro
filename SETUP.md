@@ -50,18 +50,29 @@ Copy template config files:
 
 ```bash
 cp config/brains.template.json config/brains.json
-cp config/discord_ids.template.json config/discord_ids.json
+cp config/brain_targets.template.json config/brain_targets.json
 ```
 
-Edit `config/discord_ids.json` and replace placeholders with your Discord guild/channel IDs:
+Edit `config/brain_targets.json` to choose where each brain sends notifications.
+Example (Discord):
 
 ```json
 {
-  "server": "YOUR_DISCORD_GUILD_ID",
-  "channels": {
-    "general": "1234567890",
-    "daily_digest": "1234567891",
-    ...
+  "brains": {
+    "nexus":   { "channel": "discord", "target": "YOUR_GENERAL_CHANNEL_ID" },
+    "digest":  { "channel": "discord", "target": "YOUR_DAILY_DIGEST_CHANNEL_ID" },
+    "personal":{ "channel": "discord", "target": "YOUR_PERSONAL_CHANNEL_ID" }
+  }
+}
+```
+
+Example (Telegram):
+
+```json
+{
+  "brains": {
+    "nexus":   { "channel": "telegram", "target": "@your_chat_or_channel" },
+    "digest":  { "channel": "telegram", "target": "@your_chat_or_channel" }
   }
 }
 ```
@@ -98,7 +109,7 @@ Navigate to: `http://localhost:3030`
 
 ## Security Notes
 
-- **Never commit** `.env`, `config/brains.json`, or `config/discord_ids.json` with real values.
+- **Never commit** `.env`, `config/brains.json`, or `config/brain_targets.json` with real values.
 - Keep `cerebro.db` local (gitignored by default).
 - Restrict Control UI access (bind to `127.0.0.1` or use auth).
 - For Discord: use per-guild/channel allowlists (see OpenClaw docs).

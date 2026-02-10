@@ -12,7 +12,7 @@ project-cerebro/
 │   ├── brains.template.json         # Brain definitions template
 │   └── discord_ids.template.json    # Discord guild/channel IDs template
 ├── config/brains.json               # (local) user-specific, gitignored
-├── config/discord_ids.json          # (local) user-specific, gitignored
+├── config/brain_targets.json        # (local) user-specific, gitignored
 ├── src/
 │   ├── api/                # REST API layer
 │   │   ├── routes/         # API route handlers (tasks, brains, recurring, config)
@@ -212,7 +212,7 @@ Model selection is managed by OpenClaw agent configuration (not per-task in Cere
 ### Brain Registration
 Brains are registered in `src/index.ts`:
 1. Load brain configs from local `config/brains.json` (copied from `config/brains.template.json`)
-2. Load discord channel mappings from local `config/discord_ids.json` (copied from `config/discord_ids.template.json`)
+2. Load per-brain notification destinations from local `config/brain_targets.json` (copied from `config/brain_targets.template.json`)
 3. Register specialized brains
 4. Register Nexus brain
 5. Register Digest brain

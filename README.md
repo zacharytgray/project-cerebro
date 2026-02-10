@@ -31,8 +31,8 @@ npm install
 cp .env.example .env
 # Edit .env with your OpenClaw token, Discord token, etc.
 cp config/brains.template.json config/brains.json
-cp config/discord_ids.template.json config/discord_ids.json
-# Edit config/*.json with your Discord guild/channel IDs
+cp config/brain_targets.template.json config/brain_targets.json
+# Edit config/brain_targets.json with your channel + target per brain
 npm run build
 npm start
 # Dashboard: http://localhost:3030
