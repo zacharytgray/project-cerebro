@@ -67,7 +67,7 @@ export function TaskDetailModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Task Details">
+    <Modal isOpen={isOpen} onClose={onClose} title="Task Details" className="max-w-4xl">
       <div className="space-y-4">
         {/* Brain Selection */}
         <div>
@@ -108,7 +108,7 @@ export function TaskDetailModal({
               setEditingTask({ ...editingTask, description: e.target.value })
             }
             placeholder="Task description"
-            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[80px]"
+            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[220px]"
           />
         </div>
 

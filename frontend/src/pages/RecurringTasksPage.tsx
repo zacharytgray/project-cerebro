@@ -244,6 +244,7 @@ export function RecurringTasksPage({
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         title="Add Recurring Task"
+        className="max-w-4xl"
       >
         <div className="space-y-4">
           <div>
@@ -277,7 +278,7 @@ export function RecurringTasksPage({
               value={newTask.description}
               onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
               placeholder="Task description"
-              className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[80px]"
+              className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[220px]"
             />
           </div>
 
@@ -389,6 +390,7 @@ export function RecurringTasksPage({
           isOpen={isEditOpen}
           onClose={() => setIsEditOpen(false)}
           title="Edit Recurring Task"
+          className="max-w-4xl"
         >
           <div className="space-y-4">
             <div>
@@ -427,7 +429,7 @@ export function RecurringTasksPage({
                   setEditingTask({ ...editingTask, description: e.target.value })
                 }
                 placeholder="Task description"
-                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[80px]"
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[220px]"
               />
             </div>
 

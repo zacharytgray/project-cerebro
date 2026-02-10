@@ -113,7 +113,7 @@ export function AddTaskModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add New Task" className="max-w-2xl">
+    <Modal isOpen={isOpen} onClose={onClose} title="Add New Task" className="max-w-4xl">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg">
           <span className="text-sm">One-time Task</span>
@@ -176,7 +176,7 @@ export function AddTaskModal({
         <div>
           <label className="text-sm font-medium block mb-2">Description (optional)</label>
           <textarea
-            className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm min-h-[100px]"
+            className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm min-h-[220px]"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Task description..."
