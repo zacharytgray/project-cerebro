@@ -1,13 +1,13 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import path from 'path';
 import { format, toZonedTime } from 'date-fns-tz';
 
 const execAsync = promisify(exec);
 const TIMEZONE = 'America/Chicago';
 
 async function getSchedule(): Promise<string> {
-  // Use absolute path to ensure script is found regardless of cwd
-  const scriptPath = '/home/zgray/.openclaw/workspace/project-cerebro/dist/scripts/get-schedule.js';
+  const scriptPath = path.join(process.cwd(), 'dist', 'scripts', 'get-schedule.js');
   const { stdout } = await execAsync(`node ${scriptPath}`);
   return stdout;
 }

@@ -4,6 +4,7 @@
 
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import path from 'path';
 import { logger } from '../lib/logger';
 import { OpenClawError } from '../lib/errors';
 
@@ -153,7 +154,7 @@ export class OpenClawAdapter {
    */
   private buildCommand(agentId: string, payload: OpenClawTaskPayload): string {
     // Use full path to openclaw CLI to ensure it's found regardless of PATH
-    const openclawPath = process.env.OPENCLAW_CLI_PATH || '/home/zgray/.npm-global/bin/openclaw';
+    const openclawPath = process.env.OPENCLAW_CLI_PATH || 'openclaw';
     const parts: string[] = [openclawPath, 'agent'];
     
     parts.push('--agent', agentId);
@@ -177,7 +178,7 @@ export class OpenClawAdapter {
    * Send a message via OpenClaw CLI
    */
   async sendMessage(to: string, message: string, channelType: string = 'discord'): Promise<void> {
-    const openclawPath = process.env.OPENCLAW_CLI_PATH || '/home/zgray/.npm-global/bin/openclaw';
+    const openclawPath = process.env.OPENCLAW_CLI_PATH || 'openclaw';
     const parts: string[] = [openclawPath, 'message', 'send'];
     
     // Target channel or user - strip 'channel:' prefix if present
@@ -215,8 +216,7 @@ export class OpenClawAdapter {
    */
   async getScheduleContext(): Promise<string> {
     try {
-      // Use absolute path to ensure script is found regardless of cwd
-      const scriptPath = '/home/zgray/.openclaw/workspace/project-cerebro/dist/scripts/get-schedule.js';
+      const scriptPath = path.join(process.cwd(), 'dist', 'scripts', 'get-schedule.js');
       const { stdout } = await execAsync(`node ${scriptPath}`);
       logger.debug('Schedule context retrieved', {
         outputLength: stdout.length,

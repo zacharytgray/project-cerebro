@@ -4,6 +4,7 @@ import { ExecutionGraph } from './ExecutionGraph';
 import { Task } from './Task';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import path from 'path';
 
 export interface BrainConfig {
     id: string;
@@ -88,8 +89,7 @@ export abstract class Brain {
             const needsSchedule = this.id === 'personal' || this.id === 'school';
             if (needsSchedule && task.description && (task.description.includes('PERSONAL_PLANNING_KIND') || task.description.includes('SCHOOL_PLANNING_KIND') || task.description.includes('REPORT_KIND'))) {
                 try {
-                    // Use absolute path to ensure script is found regardless of cwd
-                    const scriptPath = '/home/zgray/.openclaw/workspace/project-cerebro/dist/scripts/get-schedule.js';
+                    const scriptPath = path.join(process.cwd(), 'dist', 'scripts', 'get-schedule.js');
                     const { stdout } = await execAsync(`node ${scriptPath}`);
                     scheduleContext = `\n\nMerged Schedule (America/Chicago) — deterministic output from get-schedule.js:\n\n${stdout}`;
                 } catch (e) {
