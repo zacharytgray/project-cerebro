@@ -388,6 +388,7 @@ export function DashboardPage({
           setRecurringError(null);
         }}
         title="Add Recurring Task"
+        className="max-w-4xl"
       >
         <div className="space-y-4">
           {recurringError && (
@@ -438,7 +439,7 @@ export function DashboardPage({
               value={newRecurring.description}
               onChange={(e) => setNewRecurring({ ...newRecurring, description: e.target.value })}
               placeholder="Task description"
-              className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[80px]"
+              className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[220px]"
             />
           </div>
 
@@ -519,6 +520,7 @@ export function DashboardPage({
           setEditingRecurring(null);
         }}
         title="Edit Recurring Task"
+        className="max-w-4xl"
       >
         {editingRecurring && (
           <div className="space-y-4">
@@ -551,7 +553,7 @@ export function DashboardPage({
                 value={editingRecurring.description || ''}
                 onChange={(e) => setEditingRecurring({ ...editingRecurring, description: e.target.value })}
                 placeholder="Task description"
-                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[80px]"
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[220px]"
               />
             </div>
 
