@@ -8,9 +8,11 @@ Cerebro is an autonomous agent runtime that manages "Brains" - specialized AI ag
 
 ```
 project-cerebro/
-├── config/                  # Configuration files
-│   ├── brains.json         # Brain definitions (id, name, channel, openClawAgentId)
-│   └── discord_ids.json    # Discord server and channel IDs
+├── config/                         # Configuration templates (safe to commit)
+│   ├── brains.template.json         # Brain definitions template
+│   └── discord_ids.template.json    # Discord guild/channel IDs template
+├── config/brains.json               # (local) user-specific, gitignored
+├── config/discord_ids.json          # (local) user-specific, gitignored
 ├── src/
 │   ├── api/                # REST API layer
 │   │   ├── routes/         # API route handlers (tasks, brains, recurring, config)
@@ -97,10 +99,17 @@ Recurring tasks define schedules that generate one-time task instances:
 
 ### Heartbeat Loop
 
-Runs every 60 seconds (`src/runtime/heartbeat.ts`):
+There are two heartbeat mechanisms in the repo:
 
-1. **processRecurringTasks()** - Find due recurring tasks, create task instances
-2. **brainService.heartbeatAll()** - Each brain processes its READY tasks
+- **Current (production)**: `src/runtime/heartbeat.ts` (interval configurable; responsible for recurring scheduling + brain heartbeats)
+- **Legacy**: `src/core/Runtime.ts` (30s interval) — retained for older runtime paths
+
+The dashboard runtime uses the `src/runtime/*` system.
+
+High-level flow:
+1. Spawn due recurring tasks (create one-time task instances)
+2. Brains process READY tasks (auto-mode or manual triggers)
+3. Status updates persist to SQLite and are polled by the UI
 
 ### Brain Auto Mode
 
@@ -119,31 +128,17 @@ Each brain has an `openClawAgentId` mapping to an OpenClaw agent:
 5. Joins unique texts with double newlines
 6. Returns clean text (no JSON metadata)
 
-### Dashboard Layout
+### Dashboard Layout (current)
 
-```
-┌─────────────────────────────────────┬─────────────────────┐
-│ Nexus Brain (full width)            │ Recurring Tasks     │
-│                                     │ (scrollable panel)  │
-├─────────────────────────────────────┤                     │
-│ Specialized Brains (3x2 grid)       │                     │
-│ ┌────────────┐ ┌────────────┐       │                     │
-│ │ Personal   │ │ Schoolwork │       │                     │
-│ ├────────────┼─┼────────────┤       │                     │
-│ │ Research   │ │ Money      │       │                     │
-│ ├────────────┼─┼────────────┤       │                     │
-│ │ Job        │ │ Digest     │       │                     │
-│ └────────────┘ └────────────┘       │                     │
-└─────────────────────────────────────┴─────────────────────┘
-│ Execution Stream (with play/trash buttons)                  │
-└─────────────────────────────────────────────────────────────┘
-```
+- **Brains strip**: horizontal scroll row of brain tiles.
+  - Brains with status `EXECUTING` are promoted to the left and display **ACTIVE**.
+- **Main area**: two panels side-by-side on desktop:
+  - Execution Stream (left)
+  - Recurring Tasks (right)
+- **Resizable split**: draggable vertical handle between the two panels on `lg+`.
+- **Mobile/tablet**: panels stack vertically; no resize handle.
 
-**Nexus Brain:** Registered from `config.brains.nexus` with ID `nexus`. Has highest scope and privileges.
-
-**Recurring Tasks Panel:** Moved from separate page to side panel. Shows all recurring tasks with run/delete controls.
-
-**Specialized Brains:** 6 context/job brains displayed in 3 rows × 2 columns grid.
+**Nexus Brain:** is a normal brain (id `nexus`) with its own OpenClaw agent id.
 
 ## Database Schema
 
@@ -209,18 +204,18 @@ DB_PATH=./cerebro.db        # SQLite database path (optional)
 LOG_LEVEL=info              # debug, info, warn, error
 ```
 
-### OpenClaw Config (~/.openclaw/openclaw.json)
-Models are loaded dynamically from `agents.defaults.models`. The UI displays:
-- `alias` - Short name (e.g., "gemini-flash")
-- `id` - Full model ID (e.g., "openrouter/google/gemini-3-flash-preview")
-- `provider` - Extracted from ID (google, anthropic, openai-codex, etc.)
+### OpenClaw Config
+
+Cerebro talks to OpenClaw via the Gateway + CLI (`openclaw agent --agent <id> ...`).
+Model selection is managed by OpenClaw agent configuration (not per-task in Cerebro UI).
 
 ### Brain Registration
 Brains are registered in `src/index.ts`:
-1. Load brain configs from `config/brains.json`
-2. Register specialized brains (Personal, School, etc.)
-3. Register Nexus brain (from `config.brains.nexus`)
-4. Register Digest brain (from `config.brains.digest`)
+1. Load brain configs from local `config/brains.json` (copied from `config/brains.template.json`)
+2. Load discord channel mappings from local `config/discord_ids.json` (copied from `config/discord_ids.template.json`)
+3. Register specialized brains
+4. Register Nexus brain
+5. Register Digest brain
 
 ## Debugging
 
@@ -272,7 +267,7 @@ tail -f /tmp/openclaw/openclaw-$(date +%Y-%m-%d).log
 ## Common Issues
 
 ### "Brain config not found for nexus"
-- Check `config/brains.json` has `nexus` entry
+- Check local `config/brains.json` has a `nexus` entry (copied from template)
 - Verify brain is registered in `src/index.ts`
 - Restart Cerebro after config changes
 
