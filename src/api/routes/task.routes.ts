@@ -111,7 +111,17 @@ export function registerTaskRoutes(
       return { error: 'Task not found' };
     }
 
-    if (task.status !== 'READY') {
+    // Allow retrying FAILED tasks by resetting them to READY first.
+    if (task.status === TaskStatus.FAILED) {
+      taskRepo.update({
+        id,
+        status: TaskStatus.READY,
+        error: undefined,
+      });
+      task.status = TaskStatus.READY;
+    }
+
+    if (task.status !== TaskStatus.READY) {
       reply.code(400);
       return { error: `Task cannot be executed (status: ${task.status})` };
     }
