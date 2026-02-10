@@ -59,7 +59,10 @@ export function RecurringTaskRow({
             onClick={() => onToggle(task.id, !task.enabled)}
             className={cn(
               'p-2 rounded-full bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10',
-              task.enabled ? 'text-green-300' : 'text-red-300'
+              // Make icon readable in light mode (green/red need to be darker than -300)
+              task.enabled
+                ? 'text-green-700 dark:text-green-300'
+                : 'text-red-700 dark:text-red-300'
             )}
             title={task.enabled ? 'Disable' : 'Enable'}
           >
