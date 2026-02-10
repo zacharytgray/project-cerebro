@@ -26,7 +26,7 @@ export function BrainTile({ brain, onToggle, onRun, onClick, className }: BrainT
       animate={isExecuting}
       glowColor={isExecuting ? 'rgba(34, 197, 94, 0.35)' : 'rgba(59, 130, 246, 0.25)'}
       className={cn(
-        'relative group min-w-[340px] max-w-[420px]',
+        'relative group min-w-[260px] sm:min-w-[320px] max-w-[420px]',
         'bg-gradient-to-r from-blue-600/5 to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift',
         className
       )}

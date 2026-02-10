@@ -193,11 +193,11 @@ export function DashboardPage({
   };
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
       {/* Header */}
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-4xl font-bold mb-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
             <GradientText>Project Cerebro</GradientText>
           </h1>
           <p className="text-muted-foreground">Autonomous AI Brain Control Center</p>
@@ -220,7 +220,7 @@ export function DashboardPage({
       <div className="space-y-3">
         <div className="flex items-end justify-between">
           <h2 className="text-xl font-bold">Brains</h2>
-          <p className="text-xs text-muted-foreground">Scroll →</p>
+          <p className="hidden sm:block text-xs text-muted-foreground">Scroll →</p>
         </div>
         <div className="flex gap-4 overflow-x-auto overflow-y-visible pb-4 pt-2 px-3">
           {[nexusBrain, ...otherBrains].filter(Boolean).map((brain: any) => (
@@ -239,7 +239,7 @@ export function DashboardPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div className="lg:col-span-2">
           <TaskStream
-            className="h-[680px] bg-gradient-to-br from-blue-600/5 to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift"
+            className="h-[520px] sm:h-[600px] lg:h-[680px] bg-gradient-to-br from-blue-600/5 to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift"
             tasks={tasks}
             brains={brains}
             loading={loadingTasks}
@@ -251,7 +251,7 @@ export function DashboardPage({
         </div>
 
         {/* Recurring Tasks */}
-        <Card className="flex flex-col h-[680px] p-6 bg-gradient-to-br from-blue-600/5 to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift">
+        <Card className="flex flex-col h-[520px] sm:h-[600px] lg:h-[680px] p-4 sm:p-6 bg-gradient-to-br from-blue-600/5 to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Repeat className="w-5 h-5 text-purple-400" />
