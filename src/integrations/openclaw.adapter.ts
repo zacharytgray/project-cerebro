@@ -60,33 +60,56 @@ export class OpenClawAdapter {
         outputPreview: stdout.substring(0, 200),
       });
 
-      // If using --json, parse the response and extract text from payloads
+      // If using --json, parse the response and extract agent-visible text.
+      // NOTE: OpenClaw's --json output contains a lot of meta (run reports, usage, etc.).
+      // We only want actual agent replies (payload text). If there is no payload text,
+      // return a short diagnostic instead of dumping the full JSON into reports.
       try {
         const jsonResponse = JSON.parse(stdout);
-        // Extract text from result.payloads array (OpenClaw JSON format)
-        if (jsonResponse.result?.payloads && Array.isArray(jsonResponse.result.payloads)) {
-          const texts = jsonResponse.result.payloads
+
+        // 1) Prefer agent reply payloads
+        const payloads = jsonResponse.result?.payloads;
+        if (payloads && Array.isArray(payloads)) {
+          const texts = payloads
             .map((p: any) => p.text?.trim())
             .filter((t: string | null) => t && t.length > 0);
-          
+
           // Deduplicate texts (agent sometimes sends same content multiple times)
           const uniqueTexts: string[] = [];
           for (const text of texts) {
-            // Check if this text is a substring of any already-seen text (or vice versa)
-            const isDuplicate = uniqueTexts.some(
-              seen => seen.includes(text) || text.includes(seen)
-            );
-            if (!isDuplicate) {
-              uniqueTexts.push(text);
-            }
+            const isDuplicate = uniqueTexts.some((seen) => seen.includes(text) || text.includes(seen));
+            if (!isDuplicate) uniqueTexts.push(text);
           }
-          
+
           if (uniqueTexts.length > 0) {
             return uniqueTexts.join('\n\n');
           }
         }
-        // Fallback to other common fields
-        return jsonResponse.output || jsonResponse.message || jsonResponse.text || stdout;
+
+        // 2) If the gateway reported an error, surface it
+        const errorLike =
+          jsonResponse.error ||
+          jsonResponse.result?.error ||
+          jsonResponse.result?.message ||
+          jsonResponse.message;
+
+        const errorText = typeof errorLike === 'string' ? errorLike : undefined;
+        if (errorText && /no models match|model restrictions|404/i.test(errorText)) {
+          return `ERROR: ${errorText}`;
+        }
+
+        // 3) Otherwise, avoid dumping massive meta JSON into the report
+        const summary =
+          (typeof jsonResponse.result?.summary === 'string' && jsonResponse.result.summary) ||
+          (typeof jsonResponse.summary === 'string' && jsonResponse.summary) ||
+          (typeof jsonResponse.result?.status === 'string' && jsonResponse.result.status) ||
+          (typeof jsonResponse.status === 'string' && jsonResponse.status);
+
+        if (summary) {
+          return `(no agent output) ${summary}`;
+        }
+
+        return '(no agent output)';
       } catch {
         // Not JSON, return raw output
         return stdout;

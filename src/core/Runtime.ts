@@ -139,7 +139,8 @@ Generate the ${kind} report for ${brain.name}. Write markdown to data/${brain.id
 Always keep report concise, structured, and ready for Daily Digest.
 Location: Tulsa, Oklahoma (Timezone: America/Chicago).`;
                 const personalExtras = `\nPersonal Life requirements:
-- To get the schedule, RUN THIS SCRIPT: \`node dist/scripts/get-schedule.js\`. It handles merging, timezones, and sorting for you. Use its output as the single source of truth for the calendar.
+- The merged schedule from \`get-schedule.js\` will be pre-injected into your prompt as Context. Treat it as the single source of truth for the calendar.
+- Do NOT run \`node dist/scripts/get-schedule.js\` again unless the Context block is missing.
 - List events chronologically with no calendar headings.
 - Log events added today.
 - Compute latest bedtime = earliest event tomorrow (from the script output) minus 10 hours.
@@ -209,8 +210,9 @@ Location: Tulsa, Oklahoma (Timezone: America/Chicago).`;
 Update the personal calendar model and proactively schedule energizing/healthy activities inside free slots.
 Location: Tulsa, Oklahoma (Timezone: America/Chicago).
 
-**STEP 1: GET SCHEDULE**
-Run \`node dist/scripts/get-schedule.js\`. This script merges your Primary and Spring 2026 calendars and converts everything to local time. USE THIS OUTPUT. Do not query gog calendar manually.
+**SCHEDULE CONTEXT (pre-injected)**
+The merged schedule from \`get-schedule.js\` will already be included below in a Context block (America/Chicago). Use that output as the single source of truth.
+Do **NOT** re-run \`node dist/scripts/get-schedule.js\` unless the Context block is missing.
 
 **STEP 2: PLAN**
 Rules:
@@ -287,7 +289,7 @@ Rules:
                     const title = `Schoolwork Planning (${kind})`;
                     const description = `${marker}
 1) Scan Todoist Inbox for labels @exam, @quiz, @homework, @research, @personal.
-2) **GET CALENDAR**: Run \`node dist/scripts/get-schedule.js\` to see free slots. Do not query gog manually.
+2) **CALENDAR CONTEXT (pre-injected)**: The merged schedule from \`get-schedule.js\` will be included in the prompt Context. Use it to find free slots. Do not query gog manually unless the Context block is missing.
 3) Build a next-7-days timeline (today + 7d) grouped by date and label.
 4) Auto-schedule study blocks using free slots (09:00–23:00):
    - Default: **1 study block per task** (homework/quiz/other).
