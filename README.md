@@ -10,7 +10,13 @@ Cerebro manages multiple specialized AI **brains** (agents). Tasks are assigned 
 
 ### The core flow (this is the “power + simplicity”)
 - **Execution Stream = source of truth** for everything that will execute / has executed
+- **One-time tasks** sit in the Execution Stream until either:
+  - you manually hit **Run**, or
+  - the task’s brain is in **Auto Mode**
 - **Recurring tasks** spawn exactly **one** task instance into the Execution Stream when due
+  - recurring instances execute when due **regardless of Auto Mode**
+  - you can **disable** a recurring task with the power toggle
+  - you can also manually **spawn/run** an instance via the recurring task’s play button
 - **Each task is assigned to a brain**, and the brain’s scope/tools/context determine how it executes
 
 **Key Features:**

@@ -108,7 +108,9 @@ The dashboard runtime uses the `src/runtime/*` system.
 
 High-level flow:
 1. Spawn due recurring tasks (create one-time task instances)
-2. Brains process READY tasks (auto-mode or manual triggers)
+   - Recurring instances execute when due regardless of brain Auto Mode
+2. Brains process READY tasks
+   - One-time tasks execute when manually triggered (**Run**) or when the brain is in **Auto Mode**
 3. Status updates persist to SQLite and are polled by the UI
 
 ### Brain Auto Mode
