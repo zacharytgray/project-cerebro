@@ -50,11 +50,12 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     });
 
     // Send start message to Discord (if enabled)
-    if (task.sendDiscordNotification !== false) {
-      await this.discordAdapter.sendMessage(
-        discordChannelId,
-        `▶️ **Task started:** ${task.title}`
-      );
+    // For Digest tasks, the agent is instructed to send exactly one final message,
+    // so we suppress executor-level start/complete announcements to avoid double-posting.
+    const announceFromExecutor = task.sendDiscordNotification !== false && task.brainId !== 'digest';
+
+    if (announceFromExecutor) {
+      await this.discordAdapter.sendMessage(discordChannelId, `▶️ **Task started:** ${task.title}`);
     }
 
     // Execute with OpenClaw
@@ -82,10 +83,10 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     await this.writeReportIfNeeded(task, output);
 
     // Send completion message to Discord (if enabled)
-    if (task.sendDiscordNotification !== false) {
+    if (announceFromExecutor) {
       await this.discordAdapter.sendMessage(
         discordChannelId,
-        `✅ **Task completed:** ${task.title}\n\n${output.slice(0, 1000)}${output.length > 1000 ? '...' : ''}`
+        `✅ **Task completed:** ${task.title}`
       );
     }
 
