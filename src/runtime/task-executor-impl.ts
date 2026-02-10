@@ -58,14 +58,10 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     }
 
     // Execute with OpenClaw
-    const fallbackModel = process.env.CEREBRO_DEFAULT_MODEL || 'openai-codex/gpt-5.3-codex';
-
+    // NOTE: `openclaw agent` CLI does not currently accept an explicit model flag.
+    // Model selection is handled by the OpenClaw agent config (or session defaults).
     const output = await this.openClawAdapter.executeTask(openClawAgentId, {
       prompt,
-      model:
-        task.modelOverride && task.modelOverride !== 'default'
-          ? task.modelOverride
-          : fallbackModel,
       thinking: 'low',
     });
 
