@@ -73,9 +73,10 @@ Default examples:
 - **Nexus:** Main orchestrator / command routing
 - **Personal Life Brain**
 - **Schoolwork Brain**
-- **Job Application Brain (optional module)**
 - **Daily Digest**
 
+Optional module:
+- **Job Application Brain** (+ Job Applications tracker + Job Profile page)
 Routing:
 - Per-brain notification destination is defined in `config/brain_targets.json` as `{ channel, target }`.
 

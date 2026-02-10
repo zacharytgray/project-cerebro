@@ -22,6 +22,7 @@ export function Sidebar({
   isOpen,
   theme,
 }: SidebarProps) {
+  const jobsEnabled = brains.some((b) => b.id === 'job');
   const isDark = theme === 'dark';
   
   const activeClass = isDark
@@ -64,25 +65,29 @@ export function Sidebar({
           <Activity className="w-4 h-4" /> Dashboard
         </button>
 
-        <button
-          onClick={() => onNavigate('job-applications')}
-          className={cn(
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
-            currentView === 'job-applications' ? activeClass : inactiveClass
-          )}
-        >
-          <Briefcase className="w-4 h-4" /> Job Applications
-        </button>
+        {jobsEnabled && (
+          <>
+            <button
+              onClick={() => onNavigate('job-applications')}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
+                currentView === 'job-applications' ? activeClass : inactiveClass
+              )}
+            >
+              <Briefcase className="w-4 h-4" /> Job Applications
+            </button>
 
-        <button
-          onClick={() => onNavigate('job-profile')}
-          className={cn(
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
-            currentView === 'job-profile' ? activeClass : inactiveClass
-          )}
-        >
-          <User className="w-4 h-4" /> Job Profile
-        </button>
+            <button
+              onClick={() => onNavigate('job-profile')}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
+                currentView === 'job-profile' ? activeClass : inactiveClass
+              )}
+            >
+              <User className="w-4 h-4" /> Job Profile
+            </button>
+          </>
+        )}
 
         <div className="mt-4 text-[11px] uppercase tracking-widest text-muted-foreground">
           Brains

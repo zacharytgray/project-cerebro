@@ -15,14 +15,6 @@
       "type": "context",
       "description": "Coursework, deadlines, study plans, assignments",
       "openClawAgentId": "school"
-    },
-    {
-      "id": "job",
-      "name": "Job Application Brain (optional)",
-      "channelKey": "job_application_brain",
-      "type": "job",
-      "description": "Job search pipeline, applications, tracking, follow-ups (optional module)",
-      "openClawAgentId": "job"
     }
   ],
   "nexus": {

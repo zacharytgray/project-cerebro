@@ -53,6 +53,10 @@ cp config/brains.template.json config/brains.json
 cp config/brain_targets.template.json config/brain_targets.json
 
 # Optional (Job module only)
+# If you want the Job Applications tracker + Job Profile page, opt in by:
+# 1) Adding the Job brain to config/brains.json (see config/brains.jobs.addon.template.json)
+# 2) Adding a job destination to config/brain_targets.json
+# 3) Creating a local job profile file:
 cp data/job_profile.template.json data/job_profile.json
 ```
 

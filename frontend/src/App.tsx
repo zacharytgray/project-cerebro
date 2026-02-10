@@ -33,14 +33,16 @@ export default function App() {
   
   // Model fetching removed (models configured in OpenClaw, not Cerebro).
 
+  const jobsEnabled = brains.some((b) => b.id === 'job');
+
   const handleNavigate = (view: View | 'recurring-tasks', brainId?: string) => {
     if (view === 'recurring-tasks') {
       // Recurring tasks is now on dashboard, just switch to dashboard
       setCurrentView('dashboard');
     } else if (view === 'job-applications') {
-      setCurrentView('job-applications');
+      setCurrentView(jobsEnabled ? 'job-applications' : 'dashboard');
     } else if (view === 'job-profile') {
-      setCurrentView('job-profile');
+      setCurrentView(jobsEnabled ? 'job-profile' : 'dashboard');
     } else {
       setCurrentView(view);
     }
@@ -100,9 +102,9 @@ export default function App() {
         />
       )}
 
-      {currentView === 'job-applications' && <JobApplicationsPage />}
+      {jobsEnabled && currentView === 'job-applications' && <JobApplicationsPage />}
 
-      {currentView === 'job-profile' && <JobProfilePage />}
+      {jobsEnabled && currentView === 'job-profile' && <JobProfilePage />}
     </Shell>
   );
 }
