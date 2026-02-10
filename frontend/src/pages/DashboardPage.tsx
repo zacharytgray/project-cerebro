@@ -12,6 +12,7 @@ import { BrainCard } from '../components/brains/BrainCard';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
+import { formatHm12, formatMinuteOnly } from '../utils/time';
 
 interface DashboardPageProps {
   brains: BrainStatus[];
@@ -175,13 +176,13 @@ export function DashboardPage({
 
     switch (task.scheduleType) {
       case 'HOURLY':
-        return `Hourly at :${config.minute?.toString().padStart(2, '0') || '00'}`;
+        return `Hourly at ${formatMinuteOnly(config.minute ?? 0)}`;
       case 'DAILY':
-        return `Daily at ${config.hour?.toString().padStart(2, '0') || '00'}:${config.minute?.toString().padStart(2, '0') || '00'}`;
+        return `Daily at ${formatHm12(config.hour ?? 0, config.minute ?? 0)}`;
       case 'WEEKLY': {
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const dayName = config.day !== undefined ? days[config.day] : 'Mon';
-        return `Weekly on ${dayName} at ${config.hour?.toString().padStart(2, '0') || '00'}:${config.minute?.toString().padStart(2, '0') || '00'}`;
+        return `Weekly on ${dayName} at ${formatHm12(config.hour ?? 0, config.minute ?? 0)}`;
       }
       case 'INTERVAL':
         return `Every ${task.intervalMs ? Math.round(task.intervalMs / 60000) : '?'} min`;

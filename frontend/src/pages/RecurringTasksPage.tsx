@@ -7,6 +7,7 @@ import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { Toggle } from '../components/ui/Toggle';
+import { formatHm12, formatMinuteOnly } from '../utils/time';
 
 interface RecurringTasksPageProps {
   brains: BrainStatus[];
@@ -102,15 +103,20 @@ export function RecurringTasksPage({
   };
 
   const formatSchedule = (task: RecurringTask) => {
+    const cfg = task.scheduleConfig || {};
+
     switch (task.scheduleType) {
       case 'INTERVAL':
         return `Every ${task.intervalMs ? Math.round(task.intervalMs / 60000) : '?'} minutes`;
       case 'HOURLY':
-        return 'Hourly';
+        return `Hourly at ${formatMinuteOnly(cfg.minute ?? 0)}`;
       case 'DAILY':
-        return 'Daily';
-      case 'WEEKLY':
-        return 'Weekly';
+        return `Daily at ${formatHm12(cfg.hour ?? 0, cfg.minute ?? 0)}`;
+      case 'WEEKLY': {
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dayName = cfg.day !== undefined ? days[cfg.day] : 'Mon';
+        return `Weekly on ${dayName} at ${formatHm12(cfg.hour ?? 0, cfg.minute ?? 0)}`;
+      }
       default:
         return task.scheduleType;
     }
