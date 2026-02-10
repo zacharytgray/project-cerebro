@@ -87,6 +87,7 @@ Configure in `config/brains.json` (copy from template).
 ## Security & Privacy
 
 - **No secrets in repo:** All tokens, personal IDs, and config are `.gitignore`d.
+- **No personal tasks shipped:** Your SQLite DB + local tasks/recurring tasks are never committed. See `config/seeds/*.template.json` for starter examples.
 - **Templates provided:** `.env.example`, `config/*.template.json`.
 - **Local-only by default:** Dashboard binds to `127.0.0.1`.
 - **OpenClaw hardening:** Run `openclaw security audit --deep` on the host.

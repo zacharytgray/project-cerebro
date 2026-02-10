@@ -9,9 +9,11 @@ config/discord_ids.json
 config/brain_targets.json
 data/job_profile.json
 
-# App data
+# App data (never commit)
 cerebro.db
 cerebro.db-*
+cerebro.db-shm
+cerebro.db-wal
 /data/*
 !/data/job_profile.template.json
 memory/
