@@ -1,17 +1,21 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { api } from '../api/client';
 import type { Task } from '../api/types';
 import { usePolling } from './usePolling';
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const pendingDeleteRef = useRef<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetch = useCallback(async () => {
     try {
       const data = await api.getTasks();
-      setTasks(data.tasks || []);
+      const incoming = data.tasks || [];
+      // Don’t let polling re-introduce items we’re deleting optimistically.
+      const filtered = incoming.filter((t: Task) => !pendingDeleteRef.current.has(t.id));
+      setTasks(filtered);
       setError(null);
     } catch (e) {
       setError(e as Error);
@@ -45,14 +49,17 @@ export function useTasks() {
     async (id: string) => {
       // Optimistic UI: remove immediately, then confirm with API.
       const prev = tasks;
+      pendingDeleteRef.current.add(id);
       setTasks((cur) => cur.filter((t) => t.id !== id));
 
       try {
         await api.deleteTask(id);
+        pendingDeleteRef.current.delete(id);
         // Best-effort refresh (keeps other status changes in sync)
         await fetch();
       } catch (e) {
         console.error('Failed to delete task:', e);
+        pendingDeleteRef.current.delete(id);
         // Revert on failure
         setTasks(prev);
       }

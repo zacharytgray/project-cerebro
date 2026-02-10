@@ -1,17 +1,20 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { api } from '../api/client';
 import type { RecurringTask } from '../api/types';
 import { usePolling } from './usePolling';
 
 export function useRecurring() {
   const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
+  const pendingDeleteRef = useRef<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetch = useCallback(async () => {
     try {
       const data = await api.getRecurringTasks();
-      setRecurringTasks(data.recurringTasks || []);
+      const incoming = data.recurringTasks || [];
+      const filtered = incoming.filter((t: RecurringTask) => !pendingDeleteRef.current.has(t.id));
+      setRecurringTasks(filtered);
       setError(null);
     } catch (e) {
       setError(e as Error);
@@ -104,13 +107,16 @@ export function useRecurring() {
     async (id: string) => {
       // Optimistic UI: remove immediately, then confirm with API.
       const prev = recurringTasks;
+      pendingDeleteRef.current.add(id);
       setRecurringTasks((cur) => cur.filter((t) => t.id !== id));
 
       try {
         await api.deleteRecurringTask(id);
+        pendingDeleteRef.current.delete(id);
         await fetch();
       } catch (e) {
         console.error('Failed to delete recurring task:', e);
+        pendingDeleteRef.current.delete(id);
         setRecurringTasks(prev);
       }
     },
