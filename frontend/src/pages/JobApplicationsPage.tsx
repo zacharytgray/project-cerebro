@@ -55,6 +55,8 @@ export function JobApplicationsPage() {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingApp, setEditingApp] = useState<JobApplication | null>(null);
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
@@ -132,6 +134,40 @@ export function JobApplicationsPage() {
     } catch (e) {
       console.error('Failed to update status:', e);
     }
+  };
+
+  // Kanban drag + drop
+  const onDragStartApp = (e: React.DragEvent, app: JobApplication) => {
+    setDraggingId(app.id);
+    e.dataTransfer.setData('text/plain', app.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const onDragEndApp = () => {
+    setDraggingId(null);
+    setDragOverCol(null);
+  };
+
+  const onDragOverColumn = (e: React.DragEvent, colKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverCol !== colKey) setDragOverCol(colKey);
+  };
+
+  const onDropColumn = async (e: React.DragEvent, colKey: string) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text/plain') || draggingId;
+    if (!id) return;
+
+    const app = applications.find((a) => a.id === id);
+    if (!app) return;
+
+    if (app.status !== colKey) {
+      await handleUpdateStatus(id, colKey);
+    }
+
+    setDragOverCol(null);
+    setDraggingId(null);
   };
 
   const handleMarkApplied = async (id: string) => {
@@ -274,12 +310,29 @@ export function JobApplicationsPage() {
                   <h3 className="font-medium">{col.label}</h3>
                   <Badge variant="default">{apps.length}</Badge>
                 </div>
-                <div className="space-y-2">
+                <div
+                  className={`space-y-2 rounded-xl p-1 transition-colors ${
+                    dragOverCol === col.key ? 'bg-primary/10' : ''
+                  }`}
+                  onDragOver={(e) => onDragOverColumn(e, col.key)}
+                  onDragEnter={() => setDragOverCol(col.key)}
+                  onDragLeave={() => setDragOverCol((cur) => (cur === col.key ? null : cur))}
+                  onDrop={(e) => onDropColumn(e, col.key)}
+                >
                   {apps.map((app) => (
                     <Card
                       key={app.id}
-                      className="p-3 cursor-pointer hover:border-primary/50 transition-colors"
-                      onClick={() => setEditingApp(app)}
+                      draggable
+                      onDragStart={(e: React.DragEvent) => onDragStartApp(e, app)}
+                      onDragEnd={onDragEndApp}
+                      className={`p-3 cursor-pointer hover:border-primary/50 transition-colors ${
+                        draggingId === app.id ? 'opacity-60 border-primary/50' : ''
+                      }`}
+                      onClick={() => {
+                        // Avoid opening modal if the user was dragging.
+                        if (draggingId) return;
+                        setEditingApp(app);
+                      }}
                     >
                       <div className="font-medium truncate">{app.position}</div>
                       <div className="text-sm text-muted-foreground truncate">{app.company}</div>

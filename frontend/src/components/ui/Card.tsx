@@ -4,9 +4,27 @@ interface CardProps {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnter?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragLeave?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDrop?: (e: React.DragEvent<HTMLDivElement>) => void;
 }
 
-export function Card({ children, className, onClick }: CardProps) {
+export function Card({
+  children,
+  className,
+  onClick,
+  draggable,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragEnter,
+  onDragLeave,
+  onDrop,
+}: CardProps) {
   return (
     <div
       className={cn(
@@ -19,7 +37,14 @@ export function Card({ children, className, onClick }: CardProps) {
         onClick && 'cursor-pointer hover:shadow-lg hover:-translate-y-0.5',
         className
       )}
+      draggable={draggable}
       onClick={onClick}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOver}
+      onDragEnter={onDragEnter}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
     >
       {children}
     </div>
