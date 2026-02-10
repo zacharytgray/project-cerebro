@@ -102,14 +102,19 @@ export function useRecurring() {
 
   const deleteRecurringTask = useCallback(
     async (id: string) => {
+      // Optimistic UI: remove immediately, then confirm with API.
+      const prev = recurringTasks;
+      setRecurringTasks((cur) => cur.filter((t) => t.id !== id));
+
       try {
         await api.deleteRecurringTask(id);
         await fetch();
       } catch (e) {
         console.error('Failed to delete recurring task:', e);
+        setRecurringTasks(prev);
       }
     },
-    [fetch]
+    [fetch, recurringTasks]
   );
 
   return {

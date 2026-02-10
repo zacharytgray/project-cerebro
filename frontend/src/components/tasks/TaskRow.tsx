@@ -32,8 +32,11 @@ export function TaskRow({ task, brainName, onClick, onExecute, onDelete }: TaskR
 
   return (
     <motion.div
+      layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6, height: 0, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }}
+      transition={{ duration: 0.14, ease: 'easeOut' }}
       className={cn(
         'p-5 rounded-xl border border-border',
         'bg-secondary/20 hover:bg-secondary/35',

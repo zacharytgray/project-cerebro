@@ -3,6 +3,7 @@ import type { RecurringTask } from '../../api/types';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { cn } from '../../utils/cn';
+import { motion } from 'framer-motion';
 
 interface RecurringTaskRowProps {
   task: RecurringTask;
@@ -24,7 +25,12 @@ export function RecurringTaskRow({
   onDelete,
 }: RecurringTaskRowProps) {
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6, height: 0, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }}
+      transition={{ duration: 0.14, ease: 'easeOut' }}
       className={cn(
         'p-5 rounded-xl border border-border',
         'bg-secondary/20 hover:bg-secondary/35',
@@ -80,6 +86,6 @@ export function RecurringTaskRow({
           </Button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

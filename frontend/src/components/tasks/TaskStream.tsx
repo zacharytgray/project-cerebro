@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { Terminal, Trash2 } from 'lucide-react';
 import type { Task, BrainStatus, TaskStatus } from '../../api/types';
 import { Card } from '../ui/Card';
@@ -86,16 +87,18 @@ export function TaskStream({
             No tasks found
           </p>
         ) : (
-          filteredTasks.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              brainName={getBrainName(task.brainId)}
-              onClick={onTaskClick}
-              onExecute={onExecuteTask}
-              onDelete={onDeleteTask}
-            />
-          ))
+          <AnimatePresence initial={false} mode="popLayout">
+            {filteredTasks.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                brainName={getBrainName(task.brainId)}
+                onClick={onTaskClick}
+                onExecute={onExecuteTask}
+                onDelete={onDeleteTask}
+              />
+            ))}
+          </AnimatePresence>
         )}
       </div>
     </Card>

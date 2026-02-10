@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { Plus, Repeat } from 'lucide-react';
 import type { BrainStatus, Task, RecurringTask, ModelAlias } from '../api/types';
 import { SummaryCards } from '../components/dashboard/SummaryCards';
@@ -273,21 +274,23 @@ export function DashboardPage({
             ) : recurringTasks.length === 0 ? (
               <div className="text-center text-muted-foreground py-6">No recurring tasks</div>
             ) : (
-              recurringTasks.map((task) => (
-                <RecurringTaskRow
-                  key={task.id}
-                  task={task}
-                  brainName={getBrainName(task.brainId)}
-                  scheduleText={formatSchedule(task)}
-                  onClick={() => {
-                    setEditingRecurring(task);
-                    setIsEditRecurringOpen(true);
-                  }}
-                  onToggle={onToggleRecurring}
-                  onRun={onRunRecurring}
-                  onDelete={onDeleteRecurring}
-                />
-              ))
+              <AnimatePresence initial={false} mode="popLayout">
+                {recurringTasks.map((task) => (
+                  <RecurringTaskRow
+                    key={task.id}
+                    task={task}
+                    brainName={getBrainName(task.brainId)}
+                    scheduleText={formatSchedule(task)}
+                    onClick={() => {
+                      setEditingRecurring(task);
+                      setIsEditRecurringOpen(true);
+                    }}
+                    onToggle={onToggleRecurring}
+                    onRun={onRunRecurring}
+                    onDelete={onDeleteRecurring}
+                  />
+                ))}
+              </AnimatePresence>
             )}
           </div>
             <div className="p-3 border-t border-border text-xs text-muted-foreground">

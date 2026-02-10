@@ -43,14 +43,21 @@ export function useTasks() {
 
   const deleteTask = useCallback(
     async (id: string) => {
+      // Optimistic UI: remove immediately, then confirm with API.
+      const prev = tasks;
+      setTasks((cur) => cur.filter((t) => t.id !== id));
+
       try {
         await api.deleteTask(id);
+        // Best-effort refresh (keeps other status changes in sync)
         await fetch();
       } catch (e) {
         console.error('Failed to delete task:', e);
+        // Revert on failure
+        setTasks(prev);
       }
     },
-    [fetch]
+    [fetch, tasks]
   );
 
   const executeTask = useCallback(
