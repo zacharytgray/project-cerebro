@@ -4,6 +4,7 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { motion } from 'framer-motion';
 import { Play, Trash2 } from 'lucide-react';
+import { cn } from '../../utils/cn';
 
 interface TaskRowProps {
   task: Task;
@@ -33,65 +34,57 @@ export function TaskRow({ task, brainName, onClick, onExecute, onDelete }: TaskR
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-4 rounded-lg border border-border bg-secondary/20 hover:bg-secondary/40 transition-all duration-200 hover:shadow-md group"
+      className={cn(
+        'p-5 rounded-xl border border-border',
+        'bg-secondary/20 hover:bg-secondary/35',
+        'transition-all duration-200 hover:shadow-md',
+        'group'
+      )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div 
-          className="flex-1 min-w-0 cursor-pointer"
-          onClick={() => onClick(task)}
-        >
-          <h4 className="font-medium truncate">{task.title}</h4>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onClick(task)}>
+          <h4 className="text-base font-semibold truncate">{task.title}</h4>
           <p className="text-xs text-muted-foreground mt-1">
             {brainName} · {formatRelativeTime(task.createdAt)}
           </p>
         </div>
-        
-        {/* Actions */}
+
         <div className="flex items-center gap-2">
-          <Badge variant={getStatusVariant(task.status)}>{task.status}</Badge>
-          
-          {/* Execute button - only for READY tasks */}
+          <Badge variant={getStatusVariant(task.status)} className="shrink-0">
+            {task.status}
+          </Badge>
+
           {canExecute && onExecute && (
             <Button
-              variant="primary"
+              variant="ghost"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 onExecute(task.id);
               }}
-              className="p-1.5"
+              className="p-2 rounded-full bg-white/5 hover:bg-white/10"
               title="Execute task now"
             >
-              <Play className="w-3.5 h-3.5" />
+              <Play className="w-4 h-4" />
             </Button>
           )}
-          
-          {/* Delete button */}
+
           {onDelete && (
             <Button
-              variant="danger"
+              variant="ghost"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(task.id);
               }}
-              className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="p-2 rounded-full bg-white/5 hover:bg-red-500/10 text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
               title="Delete task"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" />
             </Button>
           )}
         </div>
       </div>
-      
-      {task.description && (
-        <p 
-          className="text-sm text-muted-foreground mt-2 line-clamp-2 cursor-pointer"
-          onClick={() => onClick(task)}
-        >
-          {task.description}
-        </p>
-      )}
     </motion.div>
   );
 }

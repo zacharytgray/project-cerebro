@@ -14,9 +14,10 @@ interface UploadFile {
 interface FileIngestionProps {
   brains: BrainStatus[];
   defaultBrainId?: string;
+  variant?: 'default' | 'sidebar';
 }
 
-export function FileIngestion({ brains, defaultBrainId }: FileIngestionProps) {
+export function FileIngestion({ brains, defaultBrainId, variant = 'default' }: FileIngestionProps) {
   const [selectedBrainId, setSelectedBrainId] = useState(defaultBrainId || 'nexus');
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState<UploadFile[]>([]);
@@ -110,12 +111,16 @@ export function FileIngestion({ brains, defaultBrainId }: FileIngestionProps) {
 
   const selectedBrainName = brains.find(b => b.id === selectedBrainId)?.name || selectedBrainId;
 
+  const isSidebar = variant === 'sidebar';
+
   return (
-    <Card>
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Upload className="w-5 h-5 text-blue-400" />
-        File Ingestion
-      </h2>
+    <Card className={isSidebar ? 'p-4' : ''}>
+      <div className={isSidebar ? 'flex items-center justify-between mb-3' : ''}>
+        <h2 className={isSidebar ? 'text-sm font-semibold flex items-center gap-2' : 'text-lg font-semibold mb-4 flex items-center gap-2'}>
+          <Upload className={isSidebar ? 'w-4 h-4 text-blue-400' : 'w-5 h-5 text-blue-400'} />
+          File Ingestion
+        </h2>
+      </div>
 
       {/* Brain Selector */}
       <div className="mb-4">
@@ -160,8 +165,9 @@ export function FileIngestion({ brains, defaultBrainId }: FileIngestionProps) {
           htmlFor="file-upload"
           className={`
             flex flex-col items-center justify-center
-            border-2 border-dashed rounded-lg p-6
+            border border-dashed rounded-xl
             cursor-pointer transition-all duration-200
+            ${variant === 'sidebar' ? 'p-4' : 'p-6'}
             ${dragActive
               ? 'border-blue-500 bg-blue-500/10'
               : 'border-border hover:border-blue-500/50 hover:bg-blue-500/5'
@@ -169,12 +175,12 @@ export function FileIngestion({ brains, defaultBrainId }: FileIngestionProps) {
             ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}
           `}
         >
-          <Upload className="w-10 h-10 text-muted-foreground mb-2" />
-          <p className="text-sm font-medium mb-1">
-            Drop files here or click to upload
+          <Upload className={variant === 'sidebar' ? 'w-7 h-7 text-muted-foreground mb-2' : 'w-10 h-10 text-muted-foreground mb-2'} />
+          <p className={variant === 'sidebar' ? 'text-xs font-medium mb-1 text-center' : 'text-sm font-medium mb-1'}>
+            Drop or click to upload
           </p>
-          <p className="text-xs text-muted-foreground">
-            PDF, TXT, MD, JSON, or ZIP files
+          <p className={variant === 'sidebar' ? 'text-[11px] text-muted-foreground text-center' : 'text-xs text-muted-foreground'}>
+            PDF, TXT, MD, JSON, ZIP
           </p>
         </label>
       </form>

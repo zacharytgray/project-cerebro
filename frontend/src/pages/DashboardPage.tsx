@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { Plus, Repeat, Play, Trash2, Power, PowerOff } from 'lucide-react';
 import type { BrainStatus, Task, RecurringTask, ModelAlias } from '../api/types';
 import { SummaryCards } from '../components/dashboard/SummaryCards';
-import { FileIngestion } from '../components/dashboard/FileIngestion';
 import { TaskStream } from '../components/tasks/TaskStream';
 import { TaskDetailModal } from '../components/tasks/TaskDetailModal';
 import { AddTaskModal } from '../components/tasks/AddTaskModal';
 import { Button } from '../components/ui/Button';
 import { GradientText } from '../components/ui/GradientText';
-import { BrainCard } from '../components/brains/BrainCard';
+import { BrainTile } from '../components/brains/BrainTile';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
@@ -215,57 +214,58 @@ export function DashboardPage({
       {/* Summary Cards */}
       <SummaryCards brains={brains} tasks={tasks} />
 
-      {/* Main Grid: Left (Nexus + Brains) | Right (Recurring Tasks) */}
+      {/* Brains Strip */}
+      <div className="space-y-3">
+        <div className="flex items-end justify-between">
+          <h2 className="text-xl font-bold">Brains</h2>
+          <p className="text-xs text-muted-foreground">Scroll →</p>
+        </div>
+        <div className="flex gap-4 overflow-x-auto pb-2 pr-2">
+          {[nexusBrain, ...otherBrains].filter(Boolean).map((brain: any) => (
+            <BrainTile
+              key={brain.id}
+              brain={brain}
+              onToggle={onToggleBrain}
+              onRun={onRunBrain}
+              onClick={onBrainClick}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Main Grid: Execution Stream (wide) | Recurring Tasks (narrow) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Column - Nexus + Specialized Brains */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Nexus Brain */}
-          <div>
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-              Nexus
-            </h2>
-            {nexusBrain && (
-              <BrainCard
-                brain={nexusBrain}
-                onToggle={onToggleBrain}
-                onRun={onRunBrain}
-                onClick={onBrainClick}
-              />
-            )}
-          </div>
-
-          {/* Specialized Brains - 3x2 Grid */}
-          <div>
-            <h2 className="text-xl font-bold mb-4">Specialized Brains</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {otherBrains.map((brain) => (
-                <BrainCard
-                  key={brain.id}
-                  brain={brain}
-                  onToggle={onToggleBrain}
-                  onRun={onRunBrain}
-                  onClick={onBrainClick}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* File Ingestion */}
-          <div>
-            <h2 className="text-xl font-bold mb-4">File Ingestion</h2>
-            <FileIngestion brains={brains} defaultBrainId="nexus" />
-          </div>
+        <div className="lg:col-span-2">
+          <TaskStream
+            tasks={tasks}
+            brains={brains}
+            loading={loadingTasks}
+            onTaskClick={handleTaskClick}
+            onExecuteTask={onExecuteTask}
+            onDeleteTask={onDeleteTask}
+            onClearAll={onClearAllTasks}
+          />
         </div>
 
-        {/* Right Column - Recurring Tasks (stretches full height) */}
-        <div className="flex flex-col h-full">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Repeat className="w-5 h-5 text-purple-400" />
-            Recurring Tasks
-          </h2>
-          <Card className="flex-1 flex flex-col">
-            <div className="flex-1 overflow-y-auto space-y-2 p-4 max-h-[600px]">
+        {/* Recurring Tasks */}
+        <Card className="flex flex-col">
+          <div className="flex items-center justify-between p-5 pb-3 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Repeat className="w-5 h-5 text-purple-400" />
+              <h2 className="text-lg font-semibold">Recurring Tasks</h2>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsAddRecurringOpen(true)}
+              className="rounded-full bg-white/5 hover:bg-white/10 px-4"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-2 p-4 max-h-[600px]">
               {loadingRecurring ? (
                 <div className="text-center text-muted-foreground py-4">Loading...</div>
               ) : recurringTasks.length === 0 ? (
@@ -332,34 +332,13 @@ export function DashboardPage({
                 ))
               )}
             </div>
-            <div className="p-3 border-t border-border">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setIsAddRecurringOpen(true)}
-                className="w-full flex items-center justify-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Recurring
-              </Button>
+            <div className="p-3 border-t border-border text-xs text-muted-foreground">
+              Click a task to edit. Use <span className="text-foreground">Add</span> to create a new recurring task.
             </div>
           </Card>
-        </div>
       </div>
 
-      {/* Execution Stream */}
-      <div>
-        <h2 className="text-xl font-bold mb-4">Execution Stream</h2>
-        <TaskStream
-          tasks={tasks}
-          brains={brains}
-          loading={loadingTasks}
-          onTaskClick={handleTaskClick}
-          onExecuteTask={onExecuteTask}
-          onDeleteTask={onDeleteTask}
-          onClearAll={onClearAllTasks}
-        />
-      </div>
+      {/* Execution Stream is rendered in the main grid above */}
 
       {/* Modals */}
       <TaskDetailModal

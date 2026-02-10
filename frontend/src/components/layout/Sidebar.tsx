@@ -3,6 +3,7 @@ import type { BrainStatus } from '../../api/types';
 import { getBrainIcon } from '../../utils/brainIcons';
 import { cn } from '../../utils/cn';
 import { GradientText } from '../ui/GradientText';
+import { FileIngestion } from '../dashboard/FileIngestion';
 
 interface SidebarProps {
   brains: BrainStatus[];
@@ -52,7 +53,7 @@ export function Sidebar({
         </div>
       </div>
 
-      <nav className="flex flex-col gap-1 text-sm">
+      <nav className="flex flex-col gap-1 text-sm flex-1">
         <button
           onClick={() => onNavigate('dashboard')}
           className={cn(
@@ -102,6 +103,14 @@ export function Sidebar({
             {brain.name}
           </button>
         ))}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* File ingestion lives in the sidebar now */}
+        <div className="pt-2">
+          <FileIngestion brains={brains} defaultBrainId="nexus" variant="sidebar" />
+        </div>
       </nav>
     </aside>
   );
