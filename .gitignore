@@ -3,8 +3,13 @@ node_modules/
 dist/
 .env
 
+# Config (user-specific)
+config/brains.json
+config/discord_ids.json
+
 # App data
 cerebro.db
+cerebro.db-*
 /data/
 memory/
 frontend/dist/
@@ -16,3 +21,6 @@ npm-debug.log*
 
 # OS
 .DS_Store
+
+# Backup/temp
+*.backup-*

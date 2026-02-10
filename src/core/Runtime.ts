@@ -144,7 +144,7 @@ export class CerebroRuntime {
                 const baseDesc = `${marker}
 Generate the ${kind} report for ${brain.name}. Write markdown to data/${brain.id}/reports/YYYY-MM-DD-${kind}.md.
 Always keep report concise, structured, and ready for Daily Digest.
-Location: Tulsa, Oklahoma (Timezone: America/Chicago).`;
+Location: (use local timezone). Timezone: America/Chicago.`;
                 const personalExtras = `\nPersonal Life requirements:
 - The merged schedule from \`get-schedule.js\` will be pre-injected into your prompt as Context. Treat it as the single source of truth for the calendar.
 - Do NOT run \`node dist/scripts/get-schedule.js\` again unless the Context block is missing.
@@ -215,7 +215,7 @@ Location: Tulsa, Oklahoma (Timezone: America/Chicago).`;
                     const title = `Personal Life Planning (${kind})`;
                     const description = `${marker}
 Update the personal calendar model and proactively schedule energizing/healthy activities inside free slots.
-Location: Tulsa, Oklahoma (Timezone: America/Chicago).
+Location: (use local timezone). Timezone: America/Chicago.
 
 **SCHEDULE CONTEXT (pre-injected)**
 The merged schedule from \`get-schedule.js\` will already be included below in a Context block (America/Chicago). Use that output as the single source of truth.

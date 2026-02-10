@@ -4,12 +4,25 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-const CALENDARS = [
-    { id: 'primary', name: 'Primary' },
-    { id: '11f616ac4709e82271d6902bec2d12cb2f927a7777dbad0a7e9c7ae611bf00a7@group.calendar.google.com', name: 'Spring 2026 Classes' }
-];
+const TIMEZONE = process.env.CEREBRO_TIMEZONE || process.env.TZ || 'America/Chicago';
 
-const TIMEZONE = 'America/Chicago';
+// Calendars are provided via env to avoid embedding personal calendar IDs in the repo.
+// - CEREBRO_CALENDAR_IDS: comma-separated list (recommended)
+// - CEREBRO_CALENDAR_NAMES: optional comma-separated list matching ids
+// Fallback: primary only.
+const CALENDAR_IDS = (process.env.CEREBRO_CALENDAR_IDS || 'primary')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const CALENDAR_NAMES = (process.env.CEREBRO_CALENDAR_NAMES || '')
+  .split(',')
+  .map((s) => s.trim());
+
+const CALENDARS = CALENDAR_IDS.map((id, i) => ({
+  id,
+  name: CALENDAR_NAMES[i] || (id === 'primary' ? 'Primary' : `Calendar ${i + 1}`),
+}));
 
 interface CalendarEvent {
     summary: string;
@@ -27,7 +40,11 @@ interface NormalizedEvent {
 
 async function fetchEvents(calendarId: string, from: string, to: string): Promise<CalendarEvent[]> {
     try {
-        const cmd = `GOG_ACCOUNT=zacharytgray@gmail.com gog calendar events ${calendarId} --from ${from} --to ${to} --json`;
+        const account = process.env.GOG_ACCOUNT || process.env.CEREBRO_GOG_ACCOUNT;
+        if (!account) {
+            throw new Error('Missing env var GOG_ACCOUNT (or CEREBRO_GOG_ACCOUNT) for gog calendar access');
+        }
+        const cmd = `GOG_ACCOUNT=${account} gog calendar events ${calendarId} --from ${from} --to ${to} --json`;
         const { stdout } = await execAsync(cmd);
         const data = JSON.parse(stdout);
         return data.events || [];

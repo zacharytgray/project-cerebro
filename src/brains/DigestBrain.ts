@@ -184,7 +184,7 @@ export class DigestBrain extends Brain {
 Constraints:
 - Output ONE message only.
 - Use 12-hour AM/PM time.
-- Location context: Tulsa, Oklahoma (America/Chicago). Never mention Chicago.
+- Location context: use local timezone (America/Chicago). Never mention Chicago.
 - If kind=morning, outline the day ahead (today). Only mention tomorrow if there's something actionable/important that affects today (e.g., earliest event forcing an early bedtime, a critical deadline, or a morning commitment that requires prep today). If kind=night, outline the following day (tomorrow).
 - Explicitly call out calendar additions from Personal and Schoolwork brains.
 - Do NOT repeat items from money/job/research that were already reported previously (the bundle already filters these).
