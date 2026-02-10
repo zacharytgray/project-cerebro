@@ -3,7 +3,7 @@ import type { Task } from '../../api/types';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { motion } from 'framer-motion';
-import { Play, Trash2 } from 'lucide-react';
+import { Play, Trash2, RotateCcw } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 interface TaskRowProps {
@@ -29,6 +29,7 @@ export function TaskRow({ task, brainName, onClick, onExecute, onDelete }: TaskR
   };
 
   const canExecute = task.status === 'READY';
+  const canRetry = task.status === 'FAILED';
 
   return (
     <motion.div
@@ -62,7 +63,7 @@ export function TaskRow({ task, brainName, onClick, onExecute, onDelete }: TaskR
             {task.status}
           </Badge>
 
-          {/* Run now (only for READY tasks) */}
+          {/* Run now (READY) */}
           {canExecute && onExecute && (
             <Button
               variant="ghost"
@@ -72,6 +73,19 @@ export function TaskRow({ task, brainName, onClick, onExecute, onDelete }: TaskR
               title="Run now"
             >
               <Play className="w-4 h-4" />
+            </Button>
+          )}
+
+          {/* Retry (FAILED) */}
+          {canRetry && onExecute && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onExecute(task.id)}
+              className="p-2 rounded-full bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10"
+              title="Retry"
+            >
+              <RotateCcw className="w-4 h-4" />
             </Button>
           )}
 
