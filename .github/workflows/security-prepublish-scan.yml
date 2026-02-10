@@ -1,12 +1,8 @@
 name: Security: Secret/PII Scan
 
-on:
+"on":
   push:
-    branches:
-      - master
   pull_request:
-    branches:
-      - master
 
 permissions:
   contents: read
