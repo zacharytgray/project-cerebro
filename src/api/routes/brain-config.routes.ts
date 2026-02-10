@@ -21,7 +21,8 @@ function getDefaultBrainConfig(brainId: string): Record<string, any> {
         ...base,
         tools: {
           enabled: { calendar: true, todoist: true },
-          config: { calendar: { mergedCalendars: 'primary, spring-2026' } },
+          // Configure merged calendar ids in the UI or via env-driven schedule script.
+          config: { calendar: { mergedCalendars: 'primary' } },
         },
       };
     case 'personal':
@@ -29,7 +30,7 @@ function getDefaultBrainConfig(brainId: string): Record<string, any> {
         ...base,
         tools: {
           enabled: { calendar: true, weather: true },
-          config: { calendar: { mergedCalendars: 'primary, spring-2026' } },
+          config: { calendar: { mergedCalendars: 'primary' } },
         },
       };
     case 'research':

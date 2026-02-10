@@ -14,9 +14,9 @@ const TOOL_DEFINITIONS = [
   {
     id: 'calendar',
     name: 'Calendar',
-    description: 'Merged Primary + Spring 2026 calendars',
+    description: 'Merged calendar view (configure which calendars to merge)',
     configFields: [
-      { key: 'mergedCalendars', label: 'Calendar IDs (merged)', placeholder: 'primary, spring-2026' },
+      { key: 'mergedCalendars', label: 'Calendar IDs (merged)', placeholder: 'primary, <calendarId2>' },
       { key: 'writeWithoutConfirmation', label: 'Write without confirmation', type: 'boolean' },
     ],
   },
