@@ -128,7 +128,12 @@ export function fromApiUpdate(data: Partial<ApiRecurringTask>): Partial<{
     result.description = data.description;
   }
   if (data.modelOverride !== undefined) {
-    result.modelOverride = data.modelOverride;
+    // Treat explicit "default" (or empty) as no override.
+    if (data.modelOverride === '' || data.modelOverride === 'default') {
+      result.modelOverride = undefined;
+    } else {
+      result.modelOverride = data.modelOverride;
+    }
   }
   
   if (data.enabled !== undefined) {

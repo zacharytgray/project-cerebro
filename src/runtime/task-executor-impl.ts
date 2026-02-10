@@ -60,7 +60,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     // Execute with OpenClaw
     const output = await this.openClawAdapter.executeTask(openClawAgentId, {
       prompt,
-      model: task.modelOverride,
+      model: task.modelOverride && task.modelOverride !== 'default' ? task.modelOverride : undefined,
       thinking: 'low',
     });
 
