@@ -49,36 +49,32 @@ export function TaskRow({ task, brainName, onClick, onExecute, onDelete }: TaskR
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Badge variant={getStatusVariant(task.status)} className="shrink-0">
             {task.status}
           </Badge>
 
+          {/* Run now (only for READY tasks) */}
           {canExecute && onExecute && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onExecute(task.id);
-              }}
+              onClick={() => onExecute(task.id)}
               className="p-2 rounded-full bg-white/5 hover:bg-white/10"
-              title="Execute task now"
+              title="Run now"
             >
               <Play className="w-4 h-4" />
             </Button>
           )}
 
+          {/* Delete */}
           {onDelete && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(task.id);
-              }}
-              className="p-2 rounded-full bg-white/5 hover:bg-red-500/10 text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
-              title="Delete task"
+              onClick={() => onDelete(task.id)}
+              className="p-2 rounded-full bg-white/5 hover:bg-red-500/10 text-red-300"
+              title="Delete"
             >
               <Trash2 className="w-4 h-4" />
             </Button>
