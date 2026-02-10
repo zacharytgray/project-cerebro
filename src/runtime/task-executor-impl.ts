@@ -77,6 +77,9 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       });
     }
 
+    // Persist as a markdown report for planning/digest/report tasks
+    await this.writeReportIfNeeded(task, output);
+
     // Send completion message to Discord (if enabled)
     if (task.sendDiscordNotification !== false) {
       await this.discordAdapter.sendMessage(
@@ -87,6 +90,41 @@ export class OpenClawTaskExecutor implements TaskExecutor {
 
     // Trigger report task if this task was from a recurring task with triggersReport enabled
     await this.triggerReportTaskIfNeeded(task);
+  }
+
+  /**
+   * Write markdown reports for key recurring tasks.
+   *
+   * We keep storage in markdown for flexibility/human readability.
+   */
+  private async writeReportIfNeeded(task: Task, output: string): Promise<void> {
+    try {
+      const desc = task.description || '';
+
+      const isReportLike =
+        desc.includes('PERSONAL_PLANNING_KIND') ||
+        desc.includes('SCHOOL_PLANNING_KIND') ||
+        desc.includes('DAILY_DIGEST_KIND') ||
+        desc.includes('REPORT_KIND');
+
+      if (!isReportLike) return;
+
+      // Determine kind. Default morning unless explicitly night.
+      const kind =
+        /REPORT_KIND\s*:\s*night/i.test(desc) ||
+        /\bnight\b/i.test(task.title) ||
+        /\bnight\b/i.test(desc)
+          ? 'night'
+          : 'morning';
+
+      await this.reportService.writeReport(task.brainId, kind as any, output);
+    } catch (e) {
+      logger.warn('Failed to write report for task output', {
+        taskId: task.id,
+        brainId: task.brainId,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
   }
 
   /**
@@ -184,8 +222,15 @@ export class OpenClawTaskExecutor implements TaskExecutor {
 
     // Report template (if this is a report task)
     if (task.description?.includes('REPORT_KIND') && brainConfig.reportTemplate) {
-      parts.push(`\n\nReport Template (JSON expected):\n${brainConfig.reportTemplate}`);
-      parts.push(`\n\nIMPORTANT: Output MUST be valid JSON matching the template.`);
+      const reportFormat = brainConfig.reportFormat || 'markdown';
+
+      if (reportFormat === 'json') {
+        parts.push(`\n\nReport Template (JSON expected):\n${brainConfig.reportTemplate}`);
+        parts.push(`\n\nIMPORTANT: Output MUST be valid JSON matching the template.`);
+      } else {
+        parts.push(`\n\nReport Template (markdown suggested):\n${brainConfig.reportTemplate}`);
+        parts.push(`\n\nIMPORTANT: Output should be well-structured markdown (headings + bullets).`);
+      }
     }
 
     parts.push(

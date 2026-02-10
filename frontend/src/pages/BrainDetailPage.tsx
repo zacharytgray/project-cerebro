@@ -102,31 +102,6 @@ export function BrainDetailPage({ brain, onBack, onToggle }: BrainDetailPageProp
 
         {/* Right Column - Reports & Metadata */}
         <div className="space-y-6">
-          {/* Report Timing */}
-          <Card>
-            <h2 className="text-lg font-semibold mb-4">Report Timing</h2>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-muted-foreground">Morning Report</label>
-                <input
-                  type="time"
-                  className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
-                  value={getCfg('reportTiming.morning', '08:00')}
-                  onChange={(e) => setCfg('reportTiming.morning', e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Night Report</label>
-                <input
-                  type="time"
-                  className="mt-2 w-full bg-secondary/50 border border-border rounded px-3 py-2 text-sm"
-                  value={getCfg('reportTiming.night', '21:00')}
-                  onChange={(e) => setCfg('reportTiming.night', e.target.value)}
-                />
-              </div>
-            </div>
-          </Card>
-
           {/* Reports */}
           <ReportViewer
             reports={reports}
