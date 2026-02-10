@@ -47,11 +47,10 @@ async function main() {
 
     // Register brains from configuration
     config.brains.brains.forEach((brainConfig) => {
-      const channelId = config.discord.channels[brainConfig.channelKey];
-      if (!channelId) {
-        logger.warn('Channel not found for brain', {
+      const target = config.brainTargets.brains[brainConfig.id];
+      if (!target) {
+        logger.warn('Target not found for brain', {
           brainId: brainConfig.id,
-          channelKey: brainConfig.channelKey,
         });
         return;
       }
@@ -61,7 +60,7 @@ async function main() {
         name: brainConfig.name,
         type: brainConfig.type === 'job' ? BrainType.JOB : BrainType.CONTEXT,
         description: brainConfig.description,
-        discordChannelId: channelId,
+        discordChannelId: target.target,
         openClawAgentId: brainConfig.openClawAgentId,
       };
 
@@ -94,15 +93,15 @@ async function main() {
     });
 
     // Register nexus brain (general purpose brain)
-    const nexusChannelId = config.discord.channels[config.brains.nexus.channelKey];
-    if (nexusChannelId) {
+    const nexusTarget = config.brainTargets.brains[config.brains.nexus.id];
+    if (nexusTarget) {
       const nexusBrain = new ContextBrain(
         {
           id: 'nexus',
           name: 'Nexus',
           type: BrainType.CONTEXT,
           description: 'Main system interface and command routing',
-          discordChannelId: nexusChannelId,
+          discordChannelId: nexusTarget.target,
           openClawAgentId: config.brains.nexus.openClawAgentId || 'nexus',
         },
         taskRepo,
@@ -114,8 +113,8 @@ async function main() {
     }
 
     // Register digest brain
-    const digestChannelId = config.discord.channels[config.brains.digest.channelKey];
-    if (digestChannelId) {
+    const digestTarget = config.brainTargets.brains[config.brains.digest.id];
+    if (digestTarget) {
       const digestService = runtime.getServices().digestService;
       const digestBrain = new DigestBrain(
         {
@@ -123,7 +122,7 @@ async function main() {
           name: config.brains.digest.name,
           type: BrainType.DIGEST,
           description: config.brains.digest.description,
-          discordChannelId: digestChannelId,
+          discordChannelId: digestTarget.target,
           openClawAgentId: config.brains.digest.openClawAgentId,
         },
         taskRepo,

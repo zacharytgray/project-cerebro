@@ -81,38 +81,50 @@ export class CerebroRuntime {
       config.openClawGatewayUrl,
       config.openClawToken
     );
-    this.discordAdapter = new DiscordAdapter(config.discordToken, this.openClawAdapter);
+    // NOTE: DiscordAdapter is now just a thin wrapper that routes via OpenClaw.
+    // We keep it for backwards compatibility, but routing destinations are now
+    // channel-agnostic via config.brainTargets.
+    this.discordAdapter = new DiscordAdapter('DISABLED', this.openClawAdapter);
+
+    const getTarget = (brainId: string) => config.brainTargets.brains[brainId];
 
     // Store brain configs for task executor
     config.brains.brains.forEach((brain) => {
-      const channelId = config.discord.channels[brain.channelKey];
-      if (channelId) {
+      const t = getTarget(brain.id);
+      if (t) {
         this.brainConfigs.set(brain.id, {
           openClawAgentId: brain.openClawAgentId,
-          discordChannelId: channelId,
+          notifyChannel: t.channel,
+          notifyTarget: t.target,
           description: brain.description,
         });
       }
     });
 
     // Add nexus brain config (stored outside the brains[] list)
-    const nexusChannelId = config.discord.channels[config.brains.nexus.channelKey];
-    if (nexusChannelId) {
-      this.brainConfigs.set(config.brains.nexus.id, {
-        openClawAgentId: config.brains.nexus.openClawAgentId,
-        discordChannelId: nexusChannelId,
-        description: config.brains.nexus.description,
-      });
+    {
+      const t = getTarget(config.brains.nexus.id);
+      if (t) {
+        this.brainConfigs.set(config.brains.nexus.id, {
+          openClawAgentId: config.brains.nexus.openClawAgentId,
+          notifyChannel: t.channel,
+          notifyTarget: t.target,
+          description: config.brains.nexus.description,
+        });
+      }
     }
 
     // Add digest brain config
-    const digestChannelId = config.discord.channels[config.brains.digest.channelKey];
-    if (digestChannelId) {
-      this.brainConfigs.set(config.brains.digest.id, {
-        openClawAgentId: config.brains.digest.openClawAgentId,
-        discordChannelId: digestChannelId,
-        description: config.brains.digest.description,
-      });
+    {
+      const t = getTarget(config.brains.digest.id);
+      if (t) {
+        this.brainConfigs.set(config.brains.digest.id, {
+          openClawAgentId: config.brains.digest.openClawAgentId,
+          notifyChannel: t.channel,
+          notifyTarget: t.target,
+          description: config.brains.digest.description,
+        });
+      }
     }
 
     // Initialize task executor with OpenClaw implementation

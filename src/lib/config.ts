@@ -33,21 +33,24 @@ export interface BrainsConfigFile {
   digest: SpecialBrainConfig;
 }
 
-export interface DiscordConfig {
-  server: string;
-  channels: Record<string, string>;
+export interface BrainTarget {
+  channel: string; // e.g. discord|telegram|signal|whatsapp|last
+  target: string;  // channel id, chat id, @handle, phone number, etc.
+}
+
+export interface BrainTargetsConfig {
+  brains: Record<string, BrainTarget>;
 }
 
 export interface AppConfig {
   port: number;
   dbPath: string;
-  discordToken: string;
   openClawGatewayUrl: string;
   openClawToken: string;
   logLevel: string;
   timezone: string;
   brains: BrainsConfigFile;
-  discord: DiscordConfig;
+  brainTargets: BrainTargetsConfig;
 }
 
 class ConfigLoader {
@@ -62,7 +65,6 @@ class ConfigLoader {
       // Load environment variables
       const port = parseInt(process.env.PORT || '3000', 10);
       const dbPath = process.env.DB_PATH || path.join(__dirname, '../../cerebro.db');
-      const discordToken = this.requireEnv('DISCORD_BOT_TOKEN');
       const openClawGatewayUrl = this.requireEnv('OPENCLAW_GATEWAY_URL');
       const openClawToken = this.requireEnv('OPENCLAW_TOKEN');
       const logLevel = process.env.LOG_LEVEL || 'info';
@@ -70,33 +72,32 @@ class ConfigLoader {
 
       // Load config files
       const brainsPath = path.join(__dirname, '../../config/brains.json');
-      const discordPath = path.join(__dirname, '../../config/discord_ids.json');
+      const targetsPath = path.join(__dirname, '../../config/brain_targets.json');
 
       if (!fs.existsSync(brainsPath)) {
         throw new ValidationError(`Brains config file not found at ${brainsPath}`);
       }
 
-      if (!fs.existsSync(discordPath)) {
-        throw new ValidationError(`Discord config file not found at ${discordPath}`);
+      if (!fs.existsSync(targetsPath)) {
+        throw new ValidationError(`Brain targets config file not found at ${targetsPath}`);
       }
 
       const brains: BrainsConfigFile = JSON.parse(
         fs.readFileSync(brainsPath, 'utf-8')
       );
-      const discord: DiscordConfig = JSON.parse(
-        fs.readFileSync(discordPath, 'utf-8')
+      const brainTargets: BrainTargetsConfig = JSON.parse(
+        fs.readFileSync(targetsPath, 'utf-8')
       );
 
       this.config = {
         port,
         dbPath,
-        discordToken,
         openClawGatewayUrl,
         openClawToken,
         logLevel,
         timezone,
         brains,
-        discord,
+        brainTargets,
       };
 
       logger.info('Configuration loaded successfully', {

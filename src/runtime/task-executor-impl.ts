@@ -14,7 +14,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     private openClawAdapter: OpenClawAdapter,
     private discordAdapter: DiscordAdapter,
     private brainConfigRepo: BrainConfigRepository,
-    private brainConfigs: Map<string, { openClawAgentId?: string; discordChannelId: string; description: string }>,
+    private brainConfigs: Map<string, { openClawAgentId?: string; notifyChannel: string; notifyTarget: string; description: string }>, 
     private reportService: ReportService,
     private taskRepo?: TaskRepository,
     private recurringRepo?: RecurringTaskRepository
@@ -29,7 +29,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       throw new Error(`Brain config not found for ${task.brainId}`);
     }
 
-    const { openClawAgentId, discordChannelId, description } = brainConfig;
+    const { openClawAgentId, notifyChannel, notifyTarget, description } = brainConfig;
 
     if (!openClawAgentId) {
       throw new Error(`Brain ${task.brainId} has no OpenClaw agent configured`);
@@ -40,7 +40,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
 
     // Build the prompt
     const scheduleContext = await this.getScheduleContext(task);
-    const prompt = this.buildPrompt(task, description, discordChannelId, scheduleContext, brainConfigData);
+    const prompt = this.buildPrompt(task, description, notifyChannel, notifyTarget, scheduleContext, brainConfigData);
 
     logger.info('Executing task with OpenClaw', {
       taskId: task.id,
@@ -55,7 +55,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     const announceFromExecutor = task.sendDiscordNotification !== false && task.brainId !== 'digest';
 
     if (announceFromExecutor) {
-      await this.discordAdapter.sendMessage(discordChannelId, `▶️ **Task started:** ${task.title}`);
+      await this.openClawAdapter.sendMessage(notifyTarget, `▶️ **Task started:** ${task.title}`, notifyChannel);
     }
 
     // Execute with OpenClaw
@@ -84,9 +84,10 @@ export class OpenClawTaskExecutor implements TaskExecutor {
 
     // Send completion message to Discord (if enabled)
     if (announceFromExecutor) {
-      await this.discordAdapter.sendMessage(
-        discordChannelId,
-        `✅ **Task completed:** ${task.title}`
+      await this.openClawAdapter.sendMessage(
+        notifyTarget,
+        `✅ **Task completed:** ${task.title}`,
+        notifyChannel
       );
     }
 
@@ -184,7 +185,8 @@ export class OpenClawTaskExecutor implements TaskExecutor {
   private buildPrompt(
     task: Task,
     brainDescription: string,
-    channelId: string,
+    notifyChannel: string,
+    notifyTarget: string,
     scheduleContext: string,
     brainConfig: Record<string, any>
   ): string {
@@ -238,7 +240,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     // Only ask the agent to message Discord when notifications are enabled for this task.
     if (task.sendDiscordNotification !== false) {
       parts.push(
-        `\n\nIMPORTANT: When finished, send a Discord message to channel ID ${channelId} with a short summary using the message tool.`
+        `\n\nIMPORTANT: When finished, send a message using the message tool to ${notifyChannel} target ${notifyTarget} with a short summary.`
       );
     } else {
       parts.push(

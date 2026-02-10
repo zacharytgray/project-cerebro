@@ -34,7 +34,7 @@ Edit `.env` and set:
 ```bash
 OPENCLAW_GATEWAY_URL=ws://127.0.0.1:18789
 OPENCLAW_TOKEN=YOUR_GATEWAY_TOKEN  # Get from: openclaw devices list
-DISCORD_BOT_TOKEN=YOUR_DISCORD_BOT_TOKEN
+# Messaging is handled by OpenClaw. Ensure your desired channel plugin is configured in OpenClaw.
 ```
 
 **Optional (for calendar integration):**
@@ -89,7 +89,7 @@ Navigate to: `http://localhost:3030`
 | `DB_PATH` | No | `./cerebro.db` | SQLite database path |
 | `OPENCLAW_GATEWAY_URL` | **Yes** | — | OpenClaw Gateway WebSocket URL |
 | `OPENCLAW_TOKEN` | **Yes** | — | OpenClaw Gateway auth token |
-| `DISCORD_BOT_TOKEN` | **Yes** | — | Discord bot token |
+| (messaging) | — | — | Configure your messaging channels in OpenClaw |
 | `TZ` | No | `America/Chicago` | Timezone for scheduling |
 | `GOG_ACCOUNT` | No | — | Google account for calendar access (via `gog` CLI) |
 | `CEREBRO_CALENDAR_IDS` | No | `primary` | Comma-separated calendar IDs |

@@ -6,6 +6,7 @@ dist/
 # Config (user-specific)
 config/brains.json
 config/discord_ids.json
+config/brain_targets.json
 
 # App data
 cerebro.db
