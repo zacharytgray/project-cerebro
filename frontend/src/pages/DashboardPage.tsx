@@ -385,9 +385,7 @@ export function DashboardPage({
               </AnimatePresence>
             )}
           </div>
-            <div className="pt-2 text-xs text-muted-foreground">
-              Click a task to edit. Use <span className="text-foreground">+</span> to create a new recurring task.
-            </div>
+            {/* helper text removed */}
           </Card>
         </div>
       </div>
