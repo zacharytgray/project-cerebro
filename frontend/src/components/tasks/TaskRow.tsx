@@ -60,7 +60,7 @@ export function TaskRow({ task, brainName, onClick, onExecute, onDelete }: TaskR
               variant="ghost"
               size="sm"
               onClick={() => onExecute(task.id)}
-              className="p-2 rounded-full bg-white/5 hover:bg-white/10"
+              className="p-2 rounded-full bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10"
               title="Run now"
             >
               <Play className="w-4 h-4" />
@@ -73,7 +73,7 @@ export function TaskRow({ task, brainName, onClick, onExecute, onDelete }: TaskR
               variant="ghost"
               size="sm"
               onClick={() => onDelete(task.id)}
-              className="p-2 rounded-full bg-white/5 hover:bg-red-500/10 text-red-300"
+              className="p-2 rounded-full bg-black/5 hover:bg-red-500/10 text-red-500 dark:bg-white/5 dark:text-red-300"
               title="Delete"
             >
               <Trash2 className="w-4 h-4" />
