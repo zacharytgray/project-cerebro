@@ -2,8 +2,14 @@ name: Security: Secret/PII Scan
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - master
   pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
 
 jobs:
   prepublish_scan:
