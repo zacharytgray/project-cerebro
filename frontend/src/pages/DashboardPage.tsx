@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Plus, Repeat } from 'lucide-react';
 import type { BrainStatus, Task, RecurringTask } from '../api/types';
@@ -98,6 +98,54 @@ export function DashboardPage({
     dayOfWeek: '1', // Monday
     // model selection removed
   });
+
+  // Resizable split (Execution Stream vs Recurring Tasks) on large screens
+  const SPLIT_STORAGE_KEY = 'cerebro.dashboard.split';
+  const [splitPct, setSplitPct] = useState<number>(67); // percent width for left pane
+  const draggingRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(SPLIT_STORAGE_KEY);
+      const n = saved ? Number(saved) : NaN;
+      if (!Number.isNaN(n) && n >= 45 && n <= 80) setSplitPct(n);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!draggingRef.current) return;
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const pct = (x / rect.width) * 100;
+      const clamped = Math.max(45, Math.min(80, pct));
+      setSplitPct(clamped);
+    };
+
+    const onUp = () => {
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      document.body.classList.remove('select-none');
+      document.body.style.cursor = '';
+      try {
+        localStorage.setItem(SPLIT_STORAGE_KEY, String(Math.round(splitPct)));
+      } catch {
+        // ignore
+      }
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [splitPct]);
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
@@ -234,9 +282,15 @@ export function DashboardPage({
         </div>
       </div>
 
-      {/* Main Grid: Execution Stream (wide) | Recurring Tasks (narrow) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div className="lg:col-span-2">
+      {/* Main Split: Execution Stream | Recurring Tasks */}
+      <div
+        ref={containerRef}
+        className="flex flex-col lg:flex-row gap-6 items-start"
+      >
+        <div
+          className="w-full"
+          style={{ flexBasis: `${splitPct}%` }}
+        >
           <TaskStream
             className="h-[520px] sm:h-[600px] lg:h-[680px] bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift"
             tasks={tasks}
@@ -249,8 +303,27 @@ export function DashboardPage({
           />
         </div>
 
+        {/* Drag handle (desktop only) */}
+        <div className="hidden lg:flex items-stretch">
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            title="Drag to resize"
+            onMouseDown={() => {
+              draggingRef.current = true;
+              document.body.classList.add('select-none');
+              document.body.style.cursor = 'col-resize';
+            }}
+            className="w-1 rounded-full bg-border/60 hover:bg-border cursor-col-resize transition-colors"
+          />
+        </div>
+
         {/* Recurring Tasks */}
-        <Card className="flex flex-col h-[520px] sm:h-[600px] lg:h-[680px] p-4 sm:p-6 bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift">
+        <div
+          className="w-full"
+          style={{ flexBasis: `${100 - splitPct}%` }}
+        >
+          <Card className="flex flex-col h-[520px] sm:h-[600px] lg:h-[680px] p-4 sm:p-6 bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Repeat className="w-5 h-5 text-purple-400" />
@@ -296,6 +369,7 @@ export function DashboardPage({
               Click a task to edit. Use <span className="text-foreground">+</span> to create a new recurring task.
             </div>
           </Card>
+        </div>
       </div>
 
       {/* Execution Stream is rendered in the main grid above */}
