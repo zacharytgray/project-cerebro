@@ -104,6 +104,13 @@ export class CerebroRuntime {
     }
 
     private async syncReportSchedules(): Promise<void> {
+        // IMPORTANT: The frontend/DB is the source of truth for which recurring tasks exist.
+        // We do not auto-create or overwrite recurring tasks from backend templates by default.
+        // If you want the legacy "system task bootstrap" behavior, set:
+        //   CEREBRO_MANAGE_SYSTEM_RECURRING=true
+        const manageSystemRecurring = process.env.CEREBRO_MANAGE_SYSTEM_RECURRING === 'true';
+        if (!manageSystemRecurring) return;
+
         const now = Date.now();
         if (now - this.lastReportSyncAt < 5 * 60 * 1000) return; // every 5 minutes
         this.lastReportSyncAt = now;
