@@ -95,6 +95,16 @@ export class CerebroRuntime {
       }
     });
 
+    // Add nexus brain config (stored outside the brains[] list)
+    const nexusChannelId = config.discord.channels[config.brains.nexus.channelKey];
+    if (nexusChannelId) {
+      this.brainConfigs.set(config.brains.nexus.id, {
+        openClawAgentId: config.brains.nexus.openClawAgentId,
+        discordChannelId: nexusChannelId,
+        description: config.brains.nexus.description,
+      });
+    }
+
     // Add digest brain config
     const digestChannelId = config.discord.channels[config.brains.digest.channelKey];
     if (digestChannelId) {
