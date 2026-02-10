@@ -146,7 +146,7 @@ export class OpenClawAdapter {
    *   openclaw agent --agent <id> --message <text> [--thinking <level>] [--json]
    * 
    * Note: --gateway and --token are not CLI flags; they're configured via
-   * ~/.openclaw/openclaw.json or environment variables.
+   * OpenClaw config or environment variables.
    * 
    * We use the full path to openclaw because the PATH may not be set correctly
    * when running from a systemd service or backgrounded node process.
