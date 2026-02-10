@@ -66,7 +66,6 @@ const TOOL_DEFINITIONS = [
 
 export function BrainConfigEditor({
   brainId,
-  config,
   getCfg,
   setCfg,
 }: BrainConfigEditorProps) {
@@ -157,58 +156,27 @@ export function BrainConfigEditor({
           </div>
         </div>
 
-        {/* Skills */}
-        <div>
-          <label className="text-sm font-medium">Skills (JSON array)</label>
-          <textarea
-            value={JSON.stringify(getCfg('skills', []), null, 2)}
-            onChange={(e) => {
-              try {
-                const parsed = JSON.parse(e.target.value);
-                setCfg('skills', parsed);
-              } catch {
-                // ignore invalid JSON while typing
-              }
-            }}
-            placeholder='["research-skill", "job-application-skill"]'
-            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[80px] font-mono text-xs"
-          />
-        </div>
-
         {/* Report Settings */}
         <div>
-          <label className="text-sm font-medium">Report Template (JSON)</label>
+          <label className="text-sm font-medium">Report Template</label>
           <textarea
             value={getCfg('reportTemplate', '')}
             onChange={(e) => setCfg('reportTemplate', e.target.value)}
-            placeholder='{"summary":"", "todos":[], "notes":[]}'
-            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[120px] font-mono text-xs"
+            placeholder={`# Daily Report\n\n## Summary\n- \n\n## Key Items\n- \n\n## Next Actions\n- `}
+            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[140px] font-mono text-xs"
           />
           <div className="flex items-center gap-4 mt-2">
             <label className="text-xs text-muted-foreground">Format:</label>
             <select
-              value={getCfg('reportFormat', 'json')}
+              value={getCfg('reportFormat', 'markdown')}
               onChange={(e) => setCfg('reportFormat', e.target.value)}
               className="px-3 py-2 rounded-lg border border-border bg-secondary text-sm"
             >
-              <option value="json">JSON</option>
               <option value="markdown">Markdown</option>
+              <option value="json">JSON</option>
             </select>
           </div>
         </div>
-
-        {/* Debug View (read-only) */}
-        <details className="mt-4">
-          <summary className="cursor-pointer text-xs text-muted-foreground/50 hover:text-muted-foreground">
-            🔍 Debug: View raw config (read-only)
-          </summary>
-          <pre className="mt-3 p-4 bg-black/20 rounded-lg text-xs overflow-auto max-h-96 select-all opacity-60">
-            {JSON.stringify(config, null, 2)}
-          </pre>
-          <p className="text-xs text-muted-foreground/50 mt-1">
-            This is a read-only view. Edit fields above to modify config.
-          </p>
-        </details>
       </div>
     </Card>
   );
