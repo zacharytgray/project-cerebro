@@ -90,6 +90,10 @@ You can customize brain definitions in `config/brains.json` (name, description, 
 
 ```bash
 npm run build
+
+# Optional: seed example tasks/recurring tasks (safe: skips if DB already has data)
+npm run seed
+
 npm start
 ```
 
