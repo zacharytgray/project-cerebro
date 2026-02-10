@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Toggle } from '../ui/Toggle';
-import { api } from '../../api/client';
 import type { BrainStatus } from '../../api/types';
 
 interface AddTaskModalProps {
@@ -20,8 +19,7 @@ export function AddTaskModal({
   onCreateTask,
   onCreateRecurring,
 }: AddTaskModalProps) {
-  const [models, setModels] = useState<Array<{ alias: string; id: string; provider: string }>>([]);
-  const [loadingModels, setLoadingModels] = useState(true);
+  // Model selection removed: OpenClaw agent models are configured in OpenClaw, not per-task.
 
   // Use first brain as default instead of hardcoded 'nexus'
   const defaultBrainId = brains.length > 0 ? brains[0].id : '';
@@ -30,7 +28,7 @@ export function AddTaskModal({
     brainId: defaultBrainId,
     title: '',
     description: '',
-    modelOverride: 'auto',
+    // modelOverride removed
     isRecurring: false,
     scheduleType: 'DAILY' as 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY',
     intervalMinutes: 60,
@@ -38,20 +36,7 @@ export function AddTaskModal({
     weeklyDay: '1',
   });
 
-  // Fetch models from API when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      api.getModels()
-        .then((data) => {
-          setModels(data.models);
-          setLoadingModels(false);
-        })
-        .catch((err) => {
-          console.error('Failed to load models:', err);
-          setLoadingModels(false);
-        });
-    }
-  }, [isOpen]);
+  // Model selection removed (no per-task model override).
 
   // Update brainId if brains change and current selection is invalid
   useEffect(() => {
@@ -87,7 +72,6 @@ export function AddTaskModal({
           brainId: formData.brainId,
           title: formData.title,
           description: formData.description,
-          modelOverride: formData.modelOverride,
           scheduleType: formData.scheduleType,
           intervalMinutes: formData.intervalMinutes,
           scheduleConfig,
@@ -97,7 +81,6 @@ export function AddTaskModal({
           brainId: formData.brainId,
           title: formData.title,
           description: formData.description,
-          modelOverride: formData.modelOverride,
         });
       }
 
@@ -124,7 +107,7 @@ export function AddTaskModal({
           <span className="text-sm">Recurring Task</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="text-sm font-medium block mb-2">Brain</label>
             <select
@@ -137,26 +120,6 @@ export function AddTaskModal({
                   {b.name}
                 </option>
               ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium block mb-2">Model</label>
-            <select
-              className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm"
-              value={formData.modelOverride}
-              onChange={(e) => setFormData({ ...formData, modelOverride: e.target.value })}
-              disabled={loadingModels}
-            >
-              {loadingModels ? (
-                <option>Loading models...</option>
-              ) : (
-                models.map((m) => (
-                  <option key={m.id} value={m.alias}>
-                    {m.alias} ({m.provider})
-                  </option>
-                ))
-              )}
             </select>
           </div>
         </div>

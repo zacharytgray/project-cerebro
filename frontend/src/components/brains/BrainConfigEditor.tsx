@@ -80,14 +80,7 @@ export function BrainConfigEditor({
               className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[120px]"
             />
           </div>
-          <div>
-            <label className="text-sm font-medium">Default Model</label>
-            <Input
-              value={getCfg('defaultModel', '')}
-              onChange={(e) => setCfg('defaultModel', e.target.value)}
-              placeholder="openrouter/anthropic/claude-opus-4.5"
-            />
-          </div>
+          {/* Default Model removed (models are configured in OpenClaw, not Cerebro). */}
         </div>
 
         {/* Tools */}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Plus, Repeat } from 'lucide-react';
-import type { BrainStatus, Task, RecurringTask, ModelAlias } from '../api/types';
+import type { BrainStatus, Task, RecurringTask } from '../api/types';
 import { SummaryCards } from '../components/dashboard/SummaryCards';
 import { TaskStream } from '../components/tasks/TaskStream';
 import { RecurringTaskRow } from '../components/tasks/RecurringTaskRow';
@@ -58,7 +58,7 @@ interface DashboardPageProps {
     }
   ) => Promise<void>;
   onClearAllTasks: () => void;
-  models: ModelAlias[];
+  // models removed
 }
 
 export function DashboardPage({
@@ -80,7 +80,6 @@ export function DashboardPage({
   onExecuteTask,
   onUpdateTask,
   onClearAllTasks,
-  models,
 }: DashboardPageProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
@@ -97,7 +96,7 @@ export function DashboardPage({
     intervalMinutes: 60,
     time: '09:00',
     dayOfWeek: '1', // Monday
-    modelId: '', // Full model ID (not alias)
+    // model selection removed
   });
 
   const handleTaskClick = (task: Task) => {
@@ -144,7 +143,7 @@ export function DashboardPage({
         description: newRecurring.description,
         scheduleType: newRecurring.scheduleType,
         scheduleConfig,
-        modelOverride: newRecurring.modelId || undefined, // Send full model ID
+        // modelOverride removed
       };
 
       // Only include intervalMinutes for INTERVAL type
@@ -163,7 +162,7 @@ export function DashboardPage({
         intervalMinutes: 60,
         time: '09:00',
         dayOfWeek: '1',
-        modelId: '',
+        // modelId removed
       });
     } catch (err: any) {
       const message = err instanceof Error ? err.message : String(err);
@@ -310,7 +309,6 @@ export function DashboardPage({
         onUpdate={onUpdateTask}
         onExecute={onExecuteTask}
         brains={brains}
-        models={models}
       />
 
       <AddTaskModal
@@ -351,19 +349,7 @@ export function DashboardPage({
             </select>
           </div>
 
-          <div>
-            <label className="text-sm font-medium">Model</label>
-            <select
-              value={newRecurring.modelId}
-              onChange={(e) => setNewRecurring({ ...newRecurring, modelId: e.target.value })}
-              className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
-            >
-              <option value="">Default (brain default)</option>
-              {models.map((m) => (
-                <option key={m.id} value={m.id}>{m.alias}</option>
-              ))}
-            </select>
-          </div>
+          {/* Model selection removed */}
 
           <div>
             <label className="text-sm font-medium">Title</label>
@@ -498,23 +484,7 @@ export function DashboardPage({
               />
             </div>
 
-            <div>
-              <label className="text-sm font-medium">Model (optional)</label>
-              <select
-                value={editingRecurring.modelOverride || ''}
-                onChange={(e) =>
-                  setEditingRecurring({ ...editingRecurring, modelOverride: e.target.value || undefined })
-                }
-                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
-              >
-                <option value="">Default</option>
-                {models.map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.alias} ({model.id})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Model selection removed */}
 
             <div>
               <label className="text-sm font-medium">Schedule</label>
@@ -705,7 +675,7 @@ export function DashboardPage({
                       brainId: editingRecurring.brainId,
                       title: editingRecurring.title,
                       description: editingRecurring.description,
-                      modelOverride: editingRecurring.modelOverride,
+                      // modelOverride removed
                       scheduleType: editingRecurring.scheduleType,
                       scheduleConfig: editingRecurring.scheduleConfig,
                       sendDiscordNotification: editingRecurring.sendDiscordNotification,

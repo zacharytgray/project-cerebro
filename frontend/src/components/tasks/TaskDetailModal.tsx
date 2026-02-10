@@ -4,7 +4,7 @@ import { Modal } from '../ui/Modal';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import type { Task, BrainStatus, ModelAlias } from '../../api/types';
+import type { Task, BrainStatus } from '../../api/types';
 import { formatDateTime } from '../../utils/format';
 
 interface TaskDetailModalProps {
@@ -24,7 +24,7 @@ interface TaskDetailModalProps {
   ) => Promise<void>;
   onExecute?: (id: string) => void;
   brains: BrainStatus[];
-  models: ModelAlias[];
+  // models removed
 }
 
 export function TaskDetailModal({
@@ -35,7 +35,6 @@ export function TaskDetailModal({
   onUpdate,
   onExecute,
   brains,
-  models,
 }: TaskDetailModalProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -59,7 +58,7 @@ export function TaskDetailModal({
         brainId: editingTask.brainId,
         title: editingTask.title,
         description: editingTask.description,
-        modelOverride: editingTask.modelOverride,
+        // modelOverride removed
         sendDiscordNotification: editingTask.sendDiscordNotification,
       });
       onClose();
@@ -112,27 +111,7 @@ export function TaskDetailModal({
           />
         </div>
 
-        {/* Model Override */}
-        <div>
-          <label className="text-sm font-medium">Model (optional)</label>
-          <select
-            value={editingTask.modelOverride || ''}
-            onChange={(e) =>
-              setEditingTask({
-                ...editingTask,
-                modelOverride: e.target.value || undefined,
-              })
-            }
-            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
-          >
-            <option value="">Default</option>
-            {models.map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.alias} ({model.id})
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Model selection removed */}
 
         {/* Discord Notification Toggle */}
         <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">

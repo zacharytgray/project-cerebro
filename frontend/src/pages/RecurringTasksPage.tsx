@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Repeat, Plus, Clock, Trash2, Play, Power, PowerOff } from 'lucide-react';
-import type { BrainStatus, RecurringTask, ModelAlias } from '../api/types';
+import type { BrainStatus, RecurringTask } from '../api/types';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -12,7 +12,7 @@ import { formatHm12, formatMinuteOnly } from '../utils/time';
 interface RecurringTasksPageProps {
   brains: BrainStatus[];
   recurringTasks: RecurringTask[];
-  models: ModelAlias[];
+  // models removed
   loading: boolean;
   onCreateRecurring: (data: {
     brainId: string;
@@ -48,7 +48,6 @@ interface RecurringTasksPageProps {
 export function RecurringTasksPage({
   brains,
   recurringTasks,
-  models,
   loading,
   onCreateRecurring,
   onDeleteRecurring,
@@ -63,7 +62,7 @@ export function RecurringTasksPage({
     brainId: string;
     title: string;
     description: string;
-    modelOverride: string;
+    // modelOverride removed
     scheduleType: 'INTERVAL' | 'HOURLY' | 'DAILY' | 'WEEKLY';
     intervalMinutes: number;
     sendDiscordNotification: boolean;
@@ -73,7 +72,7 @@ export function RecurringTasksPage({
     brainId: '',
     title: '',
     description: '',
-    modelOverride: '',
+    // modelOverride removed
     scheduleType: 'DAILY',
     intervalMinutes: 60,
     sendDiscordNotification: true,
@@ -89,7 +88,7 @@ export function RecurringTasksPage({
       brainId: '',
       title: '',
       description: '',
-      modelOverride: '',
+      // modelOverride removed
       scheduleType: 'DAILY',
       intervalMinutes: 60,
       sendDiscordNotification: true,
@@ -176,11 +175,7 @@ export function RecurringTasksPage({
                       {task.enabled ? 'Enabled' : 'Disabled'}
                     </Badge>
                   </div>
-                  {task.modelOverride && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Model: {models.find((m) => m.id === task.modelOverride)?.alias || task.modelOverride}
-                    </p>
-                  )}
+                  {/* Model selection removed */}
                   <p className="text-xs text-muted-foreground mt-1">
                     {getBrainName(task.brainId)} · {formatSchedule(task)}
                   </p>
@@ -288,21 +283,7 @@ export function RecurringTasksPage({
             />
           </div>
 
-          <div>
-            <label className="text-sm font-medium">Model (optional)</label>
-            <select
-              value={newTask.modelOverride}
-              onChange={(e) => setNewTask({ ...newTask, modelOverride: e.target.value })}
-              className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
-            >
-              <option value="">Default</option>
-              {models.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.alias} ({model.id})
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Model selection removed */}
 
           <div>
             <label className="text-sm font-medium">Schedule</label>
@@ -439,23 +420,7 @@ export function RecurringTasksPage({
               />
             </div>
 
-            <div>
-              <label className="text-sm font-medium">Model (optional)</label>
-              <select
-                value={editingTask.modelOverride || ''}
-                onChange={(e) =>
-                  setEditingTask({ ...editingTask, modelOverride: e.target.value || undefined })
-                }
-                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
-              >
-                <option value="">Default</option>
-                {models.map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.alias} ({model.id})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Model selection removed */}
 
             <div>
               <label className="text-sm font-medium">Schedule</label>
@@ -548,7 +513,7 @@ export function RecurringTasksPage({
                       brainId: editingTask.brainId,
                       title: editingTask.title,
                       description: editingTask.description,
-                      modelOverride: editingTask.modelOverride,
+                      // modelOverride removed
                       scheduleType: editingTask.scheduleType,
                       intervalMinutes: editingTask.intervalMs ? Math.round(editingTask.intervalMs / 60000) : undefined,
                       sendDiscordNotification: editingTask.sendDiscordNotification,

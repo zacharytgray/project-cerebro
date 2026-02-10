@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Shell } from './components/layout/Shell';
 import { DashboardPage } from './pages/DashboardPage';
 import { BrainDetailPage } from './pages/BrainDetailPage';
@@ -8,15 +8,15 @@ import { useBrains } from './hooks/useBrains';
 import { useTasks } from './hooks/useTasks';
 import { useRecurring } from './hooks/useRecurring';
 import { useTheme } from './hooks/useTheme';
-import { api } from './api/client';
-import type { ModelAlias } from './api/types';
+// api removed
+// ModelAlias removed
 
 type View = 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedBrainId, setSelectedBrainId] = useState<string | null>(null);
-  const [models, setModels] = useState<ModelAlias[]>([]);
+  // models removed
 
   const { brains, loading: loadingBrains, toggleBrain, runBrain } = useBrains();
   const { tasks, loading: loadingTasks, createTask, deleteTask, executeTask, updateTask, clearAllTasks } = useTasks();
@@ -31,12 +31,7 @@ export default function App() {
   } = useRecurring();
   const { theme, mode, toggleTheme } = useTheme();
   
-  // Fetch models on mount
-  useEffect(() => {
-    api.getModels().then(data => {
-      setModels(data.models.map(m => ({ alias: m.alias, id: m.id })));
-    }).catch(() => setModels([]));
-  }, []);
+  // Model fetching removed (models configured in OpenClaw, not Cerebro).
 
   const handleNavigate = (view: View | 'recurring-tasks', brainId?: string) => {
     if (view === 'recurring-tasks') {
@@ -94,7 +89,6 @@ export default function App() {
           onExecuteTask={executeTask}
           onUpdateTask={updateTask}
           onClearAllTasks={clearAllTasks}
-          models={models}
         />
       )}
 
