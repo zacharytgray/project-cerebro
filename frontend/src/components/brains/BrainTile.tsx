@@ -25,7 +25,11 @@ export function BrainTile({ brain, onToggle, onRun, onClick, className }: BrainT
       onClick={() => onClick(brain.id)}
       animate={isExecuting}
       glowColor={isExecuting ? 'rgba(34, 197, 94, 0.35)' : 'rgba(59, 130, 246, 0.25)'}
-      className={cn('relative group min-w-[340px] max-w-[420px]', className)}
+      className={cn(
+        'relative group min-w-[340px] max-w-[420px]',
+        'bg-gradient-to-r from-blue-600/5 to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift',
+        className
+      )}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
@@ -62,7 +66,7 @@ export function BrainTile({ brain, onToggle, onRun, onClick, className }: BrainT
             e.stopPropagation();
             onRun(brain.id);
           }}
-          className="flex items-center gap-2 rounded-full bg-white/5 hover:bg-white/10"
+          className="flex items-center gap-2 rounded-full bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10"
         >
           <Play className="w-3.5 h-3.5" />
           Force Run
