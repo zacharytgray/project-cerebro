@@ -251,12 +251,12 @@ export function DashboardPage({
         </div>
 
         {/* Recurring Tasks */}
-        <Card className="flex flex-col h-[680px]">
-          <div className="flex items-center justify-between p-5 pb-3 border-b border-border">
-            <div className="flex items-center gap-2">
+        <Card className="flex flex-col h-[680px] p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
               <Repeat className="w-5 h-5 text-purple-400" />
-              <h2 className="text-lg font-semibold">Recurring Tasks</h2>
-            </div>
+              Recurring Tasks
+            </h2>
             <Button
               variant="secondary"
               size="sm"
@@ -268,7 +268,7 @@ export function DashboardPage({
             </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-3 p-4">
+          <div className="flex-1 overflow-y-auto space-y-3">
             {loadingRecurring ? (
               <div className="text-center text-muted-foreground py-6">Loading...</div>
             ) : recurringTasks.length === 0 ? (
@@ -293,8 +293,8 @@ export function DashboardPage({
               </AnimatePresence>
             )}
           </div>
-            <div className="p-3 border-t border-border text-xs text-muted-foreground">
-              Click a task to edit. Use <span className="text-foreground">Add</span> to create a new recurring task.
+            <div className="pt-2 text-xs text-muted-foreground">
+              Click a task to edit. Use <span className="text-foreground">+</span> to create a new recurring task.
             </div>
           </Card>
       </div>
