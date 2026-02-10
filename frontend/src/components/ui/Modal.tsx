@@ -23,6 +23,8 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
               'bg-white/95 dark:bg-slate-900/95',
               'text-foreground border border-border',
               'rounded-xl w-full max-w-md',
+              // Keep the modal within the viewport and allow internal scrolling
+              'max-h-[calc(100vh-2rem)] flex flex-col',
               'shadow-2xl overflow-hidden',
               'backdrop-blur-xl',
               className
@@ -37,7 +39,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
                 ✕
               </button>
             </div>
-            <div className="p-6">{children}</div>
+            <div className="p-6 overflow-y-auto">{children}</div>
           </motion.div>
         </div>
       )}
