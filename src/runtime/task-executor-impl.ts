@@ -233,9 +233,16 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       }
     }
 
-    parts.push(
-      `\n\nIMPORTANT: When finished, send a Discord message to channel ID ${channelId} with a short summary using the message tool.`
-    );
+    // Only ask the agent to message Discord when notifications are enabled for this task.
+    if (task.sendDiscordNotification !== false) {
+      parts.push(
+        `\n\nIMPORTANT: When finished, send a Discord message to channel ID ${channelId} with a short summary using the message tool.`
+      );
+    } else {
+      parts.push(
+        `\n\nIMPORTANT: Do NOT send any Discord messages for this task. Your output will be captured into a markdown report file.`
+      );
+    }
 
     return parts.join('');
   }
