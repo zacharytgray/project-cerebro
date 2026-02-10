@@ -16,8 +16,6 @@ function getDefaultBrainConfig(brainId: string): Record<string, any> {
   } as any;
 
   switch (brainId) {
-    case 'digest':
-      return base; // no tools
     case 'school':
       return {
         ...base,

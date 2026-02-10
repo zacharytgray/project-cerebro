@@ -6,7 +6,7 @@ import { logger, LogLevel } from './lib/logger';
 import { getConfig } from './lib/config';
 import { CerebroRuntime } from './runtime/cerebro';
 import { HeartbeatLoop } from './runtime/heartbeat';
-import { ContextBrain, JobBrain, DigestBrain } from './runtime/brains';
+import { ContextBrain, JobBrain } from './runtime/brains';
 import { BrainType } from './domain/types';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -112,27 +112,7 @@ async function main() {
       brainService.register(nexusBrain);
     }
 
-    // Register digest brain
-    const digestTarget = config.brainTargets.brains[config.brains.digest.id];
-    if (digestTarget) {
-      const digestService = runtime.getServices().digestService;
-      const digestBrain = new DigestBrain(
-        {
-          id: config.brains.digest.id,
-          name: config.brains.digest.name,
-          type: BrainType.DIGEST,
-          description: config.brains.digest.description,
-          discordChannelId: digestTarget.target,
-          openClawAgentId: config.brains.digest.openClawAgentId,
-        },
-        taskRepo,
-        discordAdapter,
-        openClawAdapter,
-        taskExecutorService,
-        digestService
-      );
-      brainService.register(digestBrain);
-    }
+    // Digest brain removed; use Nexus for digest tasks.
 
     // Start runtime
     await runtime.start();

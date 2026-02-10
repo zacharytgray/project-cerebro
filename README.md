@@ -25,7 +25,7 @@ Cerebro manages multiple specialized AI **brains** (agents). Tasks are assigned 
 - Channel-agnostic notifications via OpenClaw (`config/brain_targets.json`)
 - Optional Job Applications module (Kanban + Job Brain)
 - Responsive web UI with dark mode
-- Reports & daily digest
+- Reports (markdown artifacts)
 - Safe: personal config lives in local env/config files (not committed)
 
 ---
@@ -70,10 +70,9 @@ Each brain is a specialized OpenClaw agent with its own scope, tools, and contex
 **Important:** the open-source templates intentionally include only a minimal default set of brains. Zach’s custom brains (e.g. research/money) are not included.
 
 Default examples:
-- **Nexus:** Main orchestrator / command routing
+- **Nexus (default brain):** the general-purpose brain for orchestration and “everything else”
 - **Personal Life Brain**
 - **Schoolwork Brain**
-- **Daily Digest**
 
 Optional module:
 - **Job Application Brain** (+ Job Applications tracker + Job Profile page)

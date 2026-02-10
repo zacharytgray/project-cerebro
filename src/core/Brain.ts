@@ -85,7 +85,7 @@ export abstract class Brain {
 
             const execAsync = promisify(exec);
             let scheduleContext = '';
-            const needsSchedule = this.id === 'personal' || this.id === 'school' || this.id === 'digest';
+            const needsSchedule = this.id === 'personal' || this.id === 'school';
             if (needsSchedule && task.description && (task.description.includes('PERSONAL_PLANNING_KIND') || task.description.includes('SCHOOL_PLANNING_KIND') || task.description.includes('REPORT_KIND'))) {
                 try {
                     // Use absolute path to ensure script is found regardless of cwd

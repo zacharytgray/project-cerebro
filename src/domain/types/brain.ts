@@ -10,7 +10,6 @@ export enum BrainStatus {
 export enum BrainType {
   CONTEXT = 'context',
   JOB = 'job',
-  DIGEST = 'digest',
   NEXUS = 'nexus',
 }
 

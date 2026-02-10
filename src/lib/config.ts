@@ -30,7 +30,6 @@ export interface SpecialBrainConfig {
 export interface BrainsConfigFile {
   brains: BrainConfig[];
   nexus: SpecialBrainConfig;
-  digest: SpecialBrainConfig;
 }
 
 export interface BrainTarget {

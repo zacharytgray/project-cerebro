@@ -10,7 +10,7 @@ export interface BrainRecord {
   id: string;
   name: string;
   channelKey: string;
-  type: 'context' | 'job' | 'digest' | 'nexus';
+  type: 'context' | 'job' | 'nexus';
   description: string;
   openClawAgentId?: string;
   discordChannelId?: string;
@@ -23,7 +23,7 @@ export interface CreateBrainInput {
   id: string;
   name: string;
   channelKey: string;
-  type?: 'context' | 'job' | 'digest' | 'nexus';
+  type?: 'context' | 'job' | 'nexus';
   description?: string;
   openClawAgentId?: string;
   discordChannelId?: string;
@@ -181,17 +181,7 @@ export class BrainsRepository {
         });
       }
 
-      // Seed digest
-      if (brainsJson.digest) {
-        this.create({
-          id: brainsJson.digest.id,
-          name: brainsJson.digest.name,
-          channelKey: brainsJson.digest.channelKey,
-          type: 'digest',
-          description: brainsJson.digest.description,
-          openClawAgentId: brainsJson.digest.openClawAgentId || brainsJson.digest.id,
-        });
-      }
+      // Digest brain removed; use Nexus for digest tasks.
 
       logger.info('Brains seeded from JSON', { count: this.getAll().length });
     } catch (error) {

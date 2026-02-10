@@ -47,14 +47,12 @@ project-cerebro/
 │   │   ├── task-executor-impl.ts  # OpenClaw task executor
 │   │   └── brains/         # Brain implementations
 │   │       ├── context-brain.ts
-│   │       ├── job-brain.ts
-│   │       └── digest-brain.ts
+│   │       └── job-brain.ts
 │   ├── services/           # Business logic services
 │   │   ├── brain.service.ts      # Brain registry and lifecycle
 │   │   ├── scheduler.service.ts  # Recurring task scheduling
 │   │   ├── task-executor.service.ts  # Task execution pipeline
-│   │   ├── report.service.ts     # Report generation
-│   │   └── digest.service.ts     # Daily digest aggregation
+│   │   └── report.service.ts     # Report generation
 │   └── index.ts            # Application entry point
 ├── frontend/               # Web UI (Vite + React + TypeScript)
 │   ├── src/

@@ -67,7 +67,6 @@ Example (Discord):
 {
   "brains": {
     "nexus":   { "channel": "discord", "target": "YOUR_GENERAL_CHANNEL_ID" },
-    "digest":  { "channel": "discord", "target": "YOUR_DAILY_DIGEST_CHANNEL_ID" },
     "personal":{ "channel": "discord", "target": "YOUR_PERSONAL_CHANNEL_ID" }
   }
 }
@@ -78,8 +77,7 @@ Example (Telegram):
 ```json
 {
   "brains": {
-    "nexus":   { "channel": "telegram", "target": "@your_chat_or_channel" },
-    "digest":  { "channel": "telegram", "target": "@your_chat_or_channel" }
+    "nexus":   { "channel": "telegram", "target": "@your_chat_or_channel" }
   }
 }
 ```

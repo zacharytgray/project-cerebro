@@ -52,7 +52,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     // Send start message to Discord (if enabled)
     // For Digest tasks, the agent is instructed to send exactly one final message,
     // so we suppress executor-level start/complete announcements to avoid double-posting.
-    const announceFromExecutor = task.sendDiscordNotification !== false && task.brainId !== 'digest';
+    const announceFromExecutor = task.sendDiscordNotification !== false;
 
     if (announceFromExecutor) {
       await this.openClawAdapter.sendMessage(notifyTarget, `▶️ **Task started:** ${task.title}`, notifyChannel);
@@ -257,8 +257,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
   private async getScheduleContext(task: Task): Promise<string> {
     const needsAnyContext =
       task.brainId === 'personal' ||
-      task.brainId === 'school' ||
-      task.brainId === 'digest';
+      task.brainId === 'school';
 
     if (!needsAnyContext) {
       return '';
@@ -280,9 +279,10 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     }
 
     // 2) Digest context: today's reports across brains (only when explicitly requested)
-    if (task.brainId === 'digest' && task.description?.includes('DAILY_DIGEST_KIND')) {
+    // Digest brain removed; Nexus can run digest tasks when the task includes DAILY_DIGEST_KIND.
+    if (task.description?.includes('DAILY_DIGEST_KIND')) {
       const today = new Date().toISOString().split('T')[0];
-      const brainIds = Array.from(this.brainConfigs.keys()).filter((id) => id !== 'digest');
+      const brainIds = Array.from(this.brainConfigs.keys());
       const reports = await this.reportService.getAllReportsForDate(brainIds, today);
 
       if (reports.length === 0) {
@@ -291,7 +291,6 @@ export class OpenClawTaskExecutor implements TaskExecutor {
         const reportText = reports
           .map((r) => {
             const header = `## ${r.brainId.toUpperCase()} — ${r.kind.toUpperCase()}`;
-            // Keep prompt bounded
             const content = (r.content || '').trim().slice(-6000);
             return `${header}\n\n${content}`;
           })

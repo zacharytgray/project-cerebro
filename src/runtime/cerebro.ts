@@ -18,7 +18,6 @@ import {
   SchedulerService,
   TaskExecutorService,
   ReportService,
-  DigestService,
 } from '../services';
 import { DiscordAdapter, OpenClawAdapter } from '../integrations';
 import { ApiServer } from '../api/server';
@@ -30,7 +29,7 @@ export class CerebroRuntime {
   private taskExecutorService: TaskExecutorService;
   private schedulerService: SchedulerService;
   private reportService: ReportService;
-  private digestService: DigestService;
+  // digestService removed; digest tasks handled by Nexus
 
   // Repositories
   private taskRepo: TaskRepository;
@@ -74,7 +73,6 @@ export class CerebroRuntime {
     this.brainService = new BrainService();
     this.schedulerService = new SchedulerService(this.recurringRepo);
     this.reportService = new ReportService();
-    this.digestService = new DigestService(this.reportService);
 
     // Initialize integrations
     this.openClawAdapter = new OpenClawAdapter(
@@ -114,18 +112,7 @@ export class CerebroRuntime {
       }
     }
 
-    // Add digest brain config
-    {
-      const t = getTarget(config.brains.digest.id);
-      if (t) {
-        this.brainConfigs.set(config.brains.digest.id, {
-          openClawAgentId: config.brains.digest.openClawAgentId,
-          notifyChannel: t.channel,
-          notifyTarget: t.target,
-          description: config.brains.digest.description,
-        });
-      }
-    }
+    // Digest brain removed; use Nexus for digest tasks.
 
     // Initialize task executor with OpenClaw implementation
     const taskExecutor = new OpenClawTaskExecutor(
@@ -212,7 +199,6 @@ export class CerebroRuntime {
       taskExecutorService: this.taskExecutorService,
       schedulerService: this.schedulerService,
       reportService: this.reportService,
-      digestService: this.digestService,
     };
   }
 

@@ -19,16 +19,9 @@
   ],
   "nexus": {
     "id": "nexus",
-    "name": "Nexus (Orchestrator)",
+    "name": "Nexus (default)",
     "channelKey": "general",
-    "description": "Main system interface and command routing",
+    "description": "Default brain for general tasks and orchestration",
     "openClawAgentId": "nexus"
-  },
-  "digest": {
-    "id": "digest",
-    "name": "Daily Digest Brain",
-    "channelKey": "daily_digest",
-    "description": "Aggregates reports from other brains",
-    "openClawAgentId": "digest"
   }
 }
