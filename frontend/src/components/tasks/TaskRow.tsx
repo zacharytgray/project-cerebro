@@ -38,9 +38,10 @@ export function TaskRow({ task, brainName, onClick, onExecute, onDelete }: TaskR
       exit={{ opacity: 0, y: -6, height: 0, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }}
       transition={{ duration: 0.14, ease: 'easeOut' }}
       className={cn(
-        'p-5 rounded-xl border border-border',
-        'bg-secondary/20 hover:bg-secondary/35',
-        'transition-all duration-200 hover:shadow-md',
+        'p-5 rounded-2xl',
+        'bg-secondary/30 hover:bg-secondary/45',
+        'shadow-[0_10px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.35)]',
+        'transition-all duration-200 hover:-translate-y-0.5',
         'group'
       )}
     >
