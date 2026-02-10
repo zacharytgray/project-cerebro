@@ -96,6 +96,7 @@ export class HeartbeatLoop {
             recurringTaskId: recurringTask.id,
           },
           modelOverride: recurringTask.modelOverride,
+          sendDiscordNotification: recurringTask.sendDiscordNotification,
         });
 
         // Mark the recurring task as executed and compute next run

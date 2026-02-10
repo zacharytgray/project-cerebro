@@ -227,6 +227,7 @@ export function registerRecurringRoutes(
           recurringTaskId: recurringTask.id,
         },
         modelOverride: recurringTask.modelOverride,
+        sendDiscordNotification: recurringTask.sendDiscordNotification,
       });
 
       // Execute immediately (async)

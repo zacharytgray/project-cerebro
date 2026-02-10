@@ -5,8 +5,17 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { logger } from '../lib/logger';
+import { format, toZonedTime } from 'date-fns-tz';
 
 export type ReportKind = 'morning' | 'night';
+
+const REPORT_TZ = 'America/Chicago';
+function localIsoDate(d: Date): string {
+  return format(toZonedTime(d, REPORT_TZ), 'yyyy-MM-dd', { timeZone: REPORT_TZ });
+}
+function localTime(d: Date): string {
+  return format(toZonedTime(d, REPORT_TZ), 'h:mm:ss a', { timeZone: REPORT_TZ });
+}
 
 export interface Report {
   brainId: string;
@@ -27,14 +36,14 @@ export class ReportService {
    * Write a report for a brain
    */
   async writeReport(brainId: string, kind: ReportKind, content: string, date?: string): Promise<void> {
-    const reportDate = date || new Date().toISOString().split('T')[0];
+    const reportDate = date || localIsoDate(new Date());
     const reportsPath = path.join(this.basePath, brainId, 'reports');
     
     // Ensure directory exists
     await fs.promises.mkdir(reportsPath, { recursive: true });
 
     const reportFile = path.join(reportsPath, `${reportDate}-${kind}.md`);
-    const timestamp = new Date().toLocaleTimeString();
+    const timestamp = localTime(new Date());
     const entry = `\n\n---\n[${timestamp}] ${kind.toUpperCase()} RUN\n\n${content}\n`;
 
     try {
@@ -55,7 +64,7 @@ export class ReportService {
    * Read a report for a brain
    */
   async readReport(brainId: string, kind: ReportKind, date?: string): Promise<string> {
-    const reportDate = date || new Date().toISOString().split('T')[0];
+    const reportDate = date || localIsoDate(new Date());
     const reportFile = path.join(this.basePath, brainId, 'reports', `${reportDate}-${kind}.md`);
 
     try {
@@ -69,7 +78,7 @@ export class ReportService {
    * Read all reports for a brain on a specific date
    */
   async readReportsForDate(brainId: string, date?: string): Promise<Report[]> {
-    const reportDate = date || new Date().toISOString().split('T')[0];
+    const reportDate = date || localIsoDate(new Date());
     const reports: Report[] = [];
 
     for (const kind of ['morning', 'night'] as const) {
@@ -92,7 +101,7 @@ export class ReportService {
    * Get all reports for a date across all brains
    */
   async getAllReportsForDate(brainIds: string[], date?: string): Promise<Report[]> {
-    const reportDate = date || new Date().toISOString().split('T')[0];
+    const reportDate = date || localIsoDate(new Date());
     const allReports: Report[] = [];
 
     for (const brainId of brainIds) {
