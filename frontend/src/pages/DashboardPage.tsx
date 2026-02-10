@@ -14,6 +14,7 @@ import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { formatHm12, formatMinuteOnly } from '../utils/time';
+import { cn } from '../utils/cn';
 
 interface DashboardPageProps {
   brains: BrainStatus[];
@@ -299,10 +300,10 @@ export function DashboardPage({
       {/* Main Split: Execution Stream | Recurring Tasks */}
       <div
         ref={containerRef}
-        className="flex flex-col lg:flex-row gap-6 items-start"
+        className="flex flex-col gap-6 items-start lg:flex-row lg:gap-0"
       >
         <div
-          className="w-full"
+          className="w-full lg:pr-3"
           style={{ flexBasis: `${splitPct}%` }}
         >
           <TaskStream
@@ -318,7 +319,7 @@ export function DashboardPage({
         </div>
 
         {/* Drag handle (desktop only) */}
-        <div className="hidden lg:flex items-stretch">
+        <div className="hidden lg:flex w-6 items-stretch justify-center">
           <div
             role="separator"
             aria-orientation="vertical"
@@ -328,13 +329,18 @@ export function DashboardPage({
               document.body.classList.add('select-none');
               document.body.style.cursor = 'col-resize';
             }}
-            className="w-1 rounded-full bg-border/60 hover:bg-border cursor-col-resize transition-colors"
+            className={cn(
+              'w-1.5 rounded-full cursor-col-resize transition-colors',
+              'bg-gradient-to-b from-blue-400/50 via-purple-400/40 to-blue-400/50',
+              'hover:from-blue-500/70 hover:via-purple-500/60 hover:to-blue-500/70',
+              'shadow-[0_0_0_1px_rgba(0,0,0,0.08)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08)]'
+            )}
           />
         </div>
 
         {/* Recurring Tasks */}
         <div
-          className="w-full"
+          className="w-full lg:pl-3"
           style={{ flexBasis: `${100 - splitPct}%` }}
         >
           <Card className="flex flex-col h-[520px] sm:h-[600px] lg:h-[680px] p-4 sm:p-6 bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift">
