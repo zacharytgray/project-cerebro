@@ -251,7 +251,7 @@ export function DashboardPage({
         </div>
 
         {/* Recurring Tasks */}
-        <Card className="flex flex-col h-[680px] p-6">
+        <Card className="flex flex-col h-[680px] p-6 bg-purple-500/5 dark:bg-purple-500/5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Repeat className="w-5 h-5 text-purple-400" />

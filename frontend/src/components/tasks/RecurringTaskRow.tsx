@@ -33,7 +33,7 @@ export function RecurringTaskRow({
       transition={{ duration: 0.14, ease: 'easeOut' }}
       className={cn(
         'p-5 rounded-2xl',
-        'bg-secondary/30 hover:bg-secondary/45',
+        'bg-purple-500/5 hover:bg-purple-500/10 dark:bg-purple-500/10 dark:hover:bg-purple-500/15',
         'shadow-[0_10px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.35)]',
         'transition-all duration-200 hover:-translate-y-0.5',
         'cursor-pointer'
