@@ -156,9 +156,23 @@ export function DashboardPage({
     return brains.find((b) => b.id === brainId)?.name || brainId;
   };
 
-  // Separate Nexus from other brains
-  const nexusBrain = brains.find(b => b.id === 'nexus');
-  const otherBrains = brains.filter(b => b.id !== 'nexus');
+  // Keep a stable baseline order so we can temporarily promote EXECUTING brains.
+  const baselineOrderRef = useRef<Map<string, number>>(new Map());
+  useEffect(() => {
+    // Capture once (first time we see a brain id). This preserves "original position".
+    brains.forEach((b, i) => {
+      if (!baselineOrderRef.current.has(b.id)) baselineOrderRef.current.set(b.id, i);
+    });
+  }, [brains]);
+
+  const orderedBrains = [...brains].sort((a, b) => {
+    const aExec = a.status === 'EXECUTING';
+    const bExec = b.status === 'EXECUTING';
+    if (aExec !== bExec) return aExec ? -1 : 1;
+    const ai = baselineOrderRef.current.get(a.id) ?? 9999;
+    const bi = baselineOrderRef.current.get(b.id) ?? 9999;
+    return ai - bi;
+  });
 
   const handleCreateRecurring = async () => {
     if (!newRecurring.brainId || !newRecurring.title) {
@@ -270,7 +284,7 @@ export function DashboardPage({
           <p className="hidden sm:block text-xs text-muted-foreground">Scroll →</p>
         </div>
         <div className="flex gap-4 overflow-x-auto overflow-y-visible pb-4 pt-2 px-3">
-          {[nexusBrain, ...otherBrains].filter(Boolean).map((brain: any) => (
+          {orderedBrains.map((brain: any) => (
             <BrainTile
               key={brain.id}
               brain={brain}

@@ -20,11 +20,13 @@ export function BrainTile({ brain, onToggle, onRun, onClick, className }: BrainT
   const isExecuting = brain.status === 'EXECUTING';
   const iconColor = brainColors[brain.id] || 'text-gray-400';
 
+  const displayStatus = isExecuting ? 'ACTIVE' : brain.status;
+
   return (
     <GlowCard
       onClick={() => onClick(brain.id)}
       animate={isExecuting}
-      glowColor={isExecuting ? 'rgba(34, 197, 94, 0.35)' : 'rgba(59, 130, 246, 0.25)'}
+      glowColor={isExecuting ? 'rgba(34, 197, 94, 0.45)' : 'rgba(59, 130, 246, 0.25)'}
       className={cn(
         'relative group min-w-[260px] sm:min-w-[320px] max-w-[420px]',
         'bg-gradient-to-r from-blue-600/5 to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift',
@@ -45,8 +47,8 @@ export function BrainTile({ brain, onToggle, onRun, onClick, className }: BrainT
           </div>
         </div>
 
-        <Badge variant={isExecuting ? 'success' : 'default'} className="shrink-0">
-          {brain.status}
+        <Badge variant={isExecuting ? 'success' : 'default'} className={cn('shrink-0', isExecuting && 'text-green-100')}>
+          {displayStatus}
         </Badge>
       </div>
 
