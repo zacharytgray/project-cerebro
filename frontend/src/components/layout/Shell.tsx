@@ -36,7 +36,7 @@ export function Shell({
           : 'h-screen overflow-hidden bg-gradient-to-br from-gray-100 via-gray-50 to-white text-foreground'
       }
     >
-      <div className="flex h-screen overflow-hidden">
+      <div className="relative h-screen overflow-hidden">
         <Sidebar
           brains={brains}
           currentView={currentView}
@@ -46,13 +46,21 @@ export function Shell({
           theme={theme}
         />
 
+        {sidebarOpen && (
+          <button
+            aria-label="Close sidebar backdrop"
+            className="fixed inset-0 z-30 bg-black/30"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         <div className="flex-1 min-w-0 flex flex-col h-screen">
           <Header
             mode={mode}
             onToggleTheme={onToggleTheme}
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           />
-          
+
           <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
             {children}
           </main>

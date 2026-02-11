@@ -34,12 +34,12 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        'hidden lg:flex flex-col gap-6',
+        'fixed inset-y-0 left-0 z-40 flex w-64 flex-col gap-6',
         'border-r backdrop-blur-xl p-6',
         'shadow-[inset_0_0_40px_rgba(59,130,246,0.05)]',
-        'transition-all duration-300',
-        isDark ? 'border-white/10 bg-white/5' : 'border-black/10 bg-white/80',
-        isOpen ? 'w-64 opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-full pointer-events-none'
+        'transition-transform duration-300',
+        isDark ? 'border-white/10 bg-[#0f1524]/95' : 'border-black/10 bg-white/95',
+        isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
       )}
     >
       <div className="flex items-center gap-3">
