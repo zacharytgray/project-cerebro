@@ -43,13 +43,13 @@ export function TaskStream({
 
   return (
     <Card className={className ? `flex flex-col ${className}` : 'flex flex-col'}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Terminal className="w-5 h-5 text-purple-400" />
           Execution Stream
         </h2>
-        <div className="flex items-center gap-2">
-          <div className="flex gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-wrap justify-end">
+          <div className="flex gap-2 flex-wrap">
             {filters.map((f) => (
               <div key={f} onClick={() => setFilter(f)}>
                 <Badge

@@ -44,15 +44,15 @@ export function RecurringTaskRow({
       )}
       onClick={() => onClick(task)}
     >
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
-          <h4 className="text-base font-semibold truncate">{task.title}</h4>
-          <p className="text-xs text-muted-foreground mt-1 truncate">
+          <h4 className="text-base font-semibold break-words">{task.title}</h4>
+          <p className="text-xs text-muted-foreground mt-1 break-words">
             {brainName} · {scheduleText}
           </p>
         </div>
 
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2 flex-wrap justify-end w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
           <Badge variant={task.enabled ? 'success' : 'default'} className="shrink-0">
             {task.enabled ? 'ON' : 'OFF'}
           </Badge>

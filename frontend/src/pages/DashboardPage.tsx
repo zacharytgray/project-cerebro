@@ -106,9 +106,14 @@ export function DashboardPage({
   const draggingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [splitContainerWidth, setSplitContainerWidth] = useState<number>(0);
+  const [isTouchPrimary, setIsTouchPrimary] = useState<boolean>(false);
 
-  // Use actual rendered width (not device/breakpoint) to decide if side-by-side is safe.
-  const useTwoPaneLayout = useMemo(() => splitContainerWidth >= 1280, [splitContainerWidth]);
+  // Use actual rendered width + input modality (touch devices like iPad) to decide layout.
+  // On touch-primary devices we prefer stacked layout for reliability.
+  const useTwoPaneLayout = useMemo(
+    () => splitContainerWidth >= 1280 && !isTouchPrimary,
+    [splitContainerWidth, isTouchPrimary]
+  );
 
   useEffect(() => {
     try {
@@ -121,6 +126,8 @@ export function DashboardPage({
   }, []);
 
   useEffect(() => {
+    setIsTouchPrimary(typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 0);
+
     const el = containerRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
 
@@ -325,7 +332,7 @@ export function DashboardPage({
         )}
       >
         <div
-          className={cn('w-full', useTwoPaneLayout && 'pr-3')}
+          className={cn('w-full min-w-0', useTwoPaneLayout && 'pr-3')}
           style={useTwoPaneLayout ? { flexBasis: `${splitPct}%` } : undefined}
         >
           <TaskStream
@@ -366,7 +373,7 @@ export function DashboardPage({
 
         {/* Recurring Tasks */}
         <div
-          className={cn('w-full', useTwoPaneLayout && 'pl-3')}
+          className={cn('w-full min-w-0', useTwoPaneLayout && 'pl-3')}
           style={useTwoPaneLayout ? { flexBasis: `${100 - splitPct}%` } : undefined}
         >
           <Card className={cn(
