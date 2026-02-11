@@ -132,6 +132,28 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     );
   }
 
+  private extractLatestReportRun(content: string): string {
+    const text = (content || '').trim();
+    if (!text) return '';
+
+    // Reports are appended with blocks like:
+    // ---
+    // [time] KIND RUN
+    // <content>
+    const marker = /\n---\n\[[^\]]+\]\s+[A-Z]+\s+RUN\n/g;
+    let lastMatch: RegExpExecArray | null = null;
+    let m: RegExpExecArray | null;
+
+    while ((m = marker.exec(text)) !== null) {
+      lastMatch = m;
+    }
+
+    if (!lastMatch) return text;
+
+    const start = lastMatch.index + 5; // skip leading "\n---\n"
+    return text.slice(start).trim();
+  }
+
   /**
    * Write markdown reports for key recurring tasks.
    *
@@ -271,6 +293,17 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       parts.push(scheduleContext);
     }
 
+    if (task.description?.includes('DAILY_DIGEST_KIND') || task.description?.includes('DAILY_DIGEST_NIGHT_KIND')) {
+      parts.push(
+        `\n\nCRITICAL DIGEST RULES:\n` +
+        `- The "Reports for <date>" context above is the source of truth.\n` +
+        `- Do NOT claim files are missing if report content is present in context.\n` +
+        `- Do NOT run filesystem checks.\n` +
+        `- If reports are present, aggregate them directly and cite the brain+kind headers provided.\n` +
+        `- Only say "none found" when the context explicitly says: Reports for <date>: (none found).`
+      );
+    }
+
     // Report template (if this is a report task)
     if (task.description?.includes('REPORT_KIND') && brainConfig.reportTemplate) {
       const reportFormat = brainConfig.reportFormat || 'markdown';
@@ -304,7 +337,9 @@ export class OpenClawTaskExecutor implements TaskExecutor {
   private async getScheduleContext(task: Task): Promise<string> {
     const needsAnyContext =
       task.brainId === 'personal' ||
-      task.brainId === 'school';
+      task.brainId === 'school' ||
+      task.description?.includes('DAILY_DIGEST_KIND') ||
+      task.description?.includes('DAILY_DIGEST_NIGHT_KIND');
 
     if (!needsAnyContext) {
       return '';
@@ -346,15 +381,25 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       if (reports.length === 0) {
         blocks.push(`Reports for ${today}: (none found)`);
       } else {
+        const availability = ['personal', 'school', 'nexus']
+          .flatMap((brainId) => ['morning', 'night'].map((kind) => ({ brainId, kind })))
+          .map(({ brainId, kind }) => {
+            const found = reports.some((r) => r.brainId === brainId && r.kind === kind);
+            return `- ${brainId}/${kind}: ${found ? 'FOUND' : 'MISSING'}`;
+          })
+          .join('\n');
+
         const reportText = reports
           .map((r) => {
             const header = `## ${r.brainId.toUpperCase()} — ${r.kind.toUpperCase()}`;
-            const content = (r.content || '').trim().slice(-6000);
-            return `${header}\n\n${content}`;
+            const latest = this.extractLatestReportRun(r.content || '');
+            const compact = latest.slice(0, 2200);
+            return `${header}\n\n${compact}`;
           })
           .join('\n\n');
 
-        blocks.push(`Reports for ${today} (by brain):\n\n${reportText}`);
+        blocks.push(`Report availability for ${today}:\n${availability}`);
+        blocks.push(`Reports for ${today} (latest run per file):\n\n${reportText}`);
       }
     }
 
