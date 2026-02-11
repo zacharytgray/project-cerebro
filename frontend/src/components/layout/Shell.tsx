@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Menu, X } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import type { BrainStatus } from '../../api/types';
@@ -37,6 +38,15 @@ export function Shell({
       }
     >
       <div className="relative h-screen overflow-hidden">
+        {/* Global nav toggle: always visible/clickable on every device */}
+        <button
+          aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+          onClick={() => setSidebarOpen((v) => !v)}
+          className="fixed left-3 top-3 z-50 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-black/40 text-white backdrop-blur hover:bg-black/55"
+        >
+          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+
         <Sidebar
           brains={brains}
           currentView={currentView}
