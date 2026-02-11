@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Plus, Repeat } from 'lucide-react';
 import type { BrainStatus, Task, RecurringTask } from '../api/types';
@@ -105,6 +105,10 @@ export function DashboardPage({
   const [splitPct, setSplitPct] = useState<number>(67); // percent width for left pane
   const draggingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [splitContainerWidth, setSplitContainerWidth] = useState<number>(0);
+
+  // Use actual rendered width (not device/breakpoint) to decide if side-by-side is safe.
+  const useTwoPaneLayout = useMemo(() => splitContainerWidth >= 1280, [splitContainerWidth]);
 
   useEffect(() => {
     try {
@@ -114,6 +118,21 @@ export function DashboardPage({
     } catch {
       // ignore
     }
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+
+    const ro = new ResizeObserver((entries) => {
+      const next = entries[0]?.contentRect?.width ?? 0;
+      setSplitContainerWidth(next);
+    });
+
+    ro.observe(el);
+    setSplitContainerWidth(el.getBoundingClientRect().width || 0);
+
+    return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
@@ -300,14 +319,20 @@ export function DashboardPage({
       {/* Main Split: Execution Stream | Recurring Tasks */}
       <div
         ref={containerRef}
-        className="flex flex-col gap-6 items-start min-[1700px]:flex-row min-[1700px]:gap-0"
+        className={cn(
+          'flex gap-6 items-start',
+          useTwoPaneLayout ? 'flex-row gap-0' : 'flex-col'
+        )}
       >
         <div
-          className="w-full min-[1700px]:pr-3"
-          style={{ flexBasis: `${splitPct}%` }}
+          className={cn('w-full', useTwoPaneLayout && 'pr-3')}
+          style={useTwoPaneLayout ? { flexBasis: `${splitPct}%` } : undefined}
         >
           <TaskStream
-            className="h-[520px] sm:h-[600px] min-[1700px]:h-[680px] bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift"
+            className={cn(
+              'bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift',
+              useTwoPaneLayout ? 'h-[680px]' : 'h-[520px] sm:h-[600px]'
+            )}
             tasks={tasks}
             brains={brains}
             loading={loadingTasks}
@@ -319,7 +344,7 @@ export function DashboardPage({
         </div>
 
         {/* Drag handle (desktop only) */}
-        <div className="hidden min-[1700px]:flex w-6 self-stretch items-center justify-center">
+        <div className={cn('w-6 self-stretch items-center justify-center', useTwoPaneLayout ? 'flex' : 'hidden')}>
           <div
             role="separator"
             aria-orientation="vertical"
@@ -330,7 +355,8 @@ export function DashboardPage({
               document.body.style.cursor = 'col-resize';
             }}
             className={cn(
-              'w-1 h-[85%] rounded-full cursor-col-resize transition-colors',
+              'w-1 h-[85%] rounded-full transition-colors',
+              useTwoPaneLayout && 'cursor-col-resize',
               'bg-gradient-to-b from-blue-400/25 via-purple-400/20 to-blue-400/25',
               'hover:from-blue-500/45 hover:via-purple-500/40 hover:to-blue-500/45',
               'shadow-[0_0_0_1px_rgba(0,0,0,0.08)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08)]'
@@ -340,10 +366,13 @@ export function DashboardPage({
 
         {/* Recurring Tasks */}
         <div
-          className="w-full min-[1700px]:pl-3"
-          style={{ flexBasis: `${100 - splitPct}%` }}
+          className={cn('w-full', useTwoPaneLayout && 'pl-3')}
+          style={useTwoPaneLayout ? { flexBasis: `${100 - splitPct}%` } : undefined}
         >
-          <Card className="flex flex-col h-[520px] sm:h-[600px] min-[1700px]:h-[680px] p-4 sm:p-6 bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift">
+          <Card className={cn(
+            'flex flex-col p-4 sm:p-6 bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift',
+            useTwoPaneLayout ? 'h-[680px]' : 'h-[520px] sm:h-[600px]'
+          )}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Repeat className="w-5 h-5 text-purple-400" />

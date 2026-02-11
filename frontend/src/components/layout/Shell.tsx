@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import type { BrainStatus } from '../../api/types';
@@ -24,20 +24,7 @@ export function Shell({
   onToggleTheme,
   children,
 }: ShellProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(
-    typeof window !== 'undefined' ? window.innerWidth >= 1536 : true
-  );
-
-  useEffect(() => {
-    const onResize = () => {
-      // Keep sidebar closed by default on iPad/tablet-ish widths, even in desktop-request mode.
-      if (window.innerWidth < 1536) setSidebarOpen(false);
-    };
-
-    onResize();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const isDark = theme === 'dark';
 
@@ -66,7 +53,7 @@ export function Shell({
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           />
           
-          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
+          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
             {children}
           </main>
         </div>

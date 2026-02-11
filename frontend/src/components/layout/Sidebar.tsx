@@ -34,7 +34,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        'hidden min-[1700px]:flex flex-col gap-6',
+        'hidden lg:flex flex-col gap-6',
         'border-r backdrop-blur-xl p-6',
         'shadow-[inset_0_0_40px_rgba(59,130,246,0.05)]',
         'transition-all duration-300',
