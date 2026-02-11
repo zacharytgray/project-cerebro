@@ -80,6 +80,9 @@ export class ApiServer {
         // Explicit allowlist always wins
         if (configuredOrigins.includes(origin)) return cb(null, true);
 
+        // Wildcard escape hatch (use carefully): CORS_ORIGINS=* 
+        if (configuredOrigins.includes('*')) return cb(null, true);
+
         // Developer convenience only outside production
         if (!isProd && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
           return cb(null, true);
