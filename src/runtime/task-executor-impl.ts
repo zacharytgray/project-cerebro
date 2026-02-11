@@ -62,10 +62,35 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     // Execute with OpenClaw
     // NOTE: `openclaw agent` CLI does not currently accept an explicit model flag.
     // Model selection is handled by the OpenClaw agent config (or session defaults).
-    const output = await this.openClawAdapter.executeTask(openClawAgentId, {
+    let output = await this.openClawAdapter.executeTask(openClawAgentId, {
       prompt,
       thinking: 'low',
     });
+
+    // Some agent workspaces can fail with provider-side schema errors before doing any real work
+    // (example seen: Invalid 'input[73].name' string too long). If that happens on non-nexus brains,
+    // retry once via nexus agent as a safe fallback so report pipelines keep working.
+    if (this.isFatalAgentOutput(output) && task.brainId !== 'nexus') {
+      const nexusConfig = this.brainConfigs.get('nexus');
+      if (nexusConfig?.openClawAgentId) {
+        logger.warn('Primary agent returned fatal output; retrying with nexus fallback', {
+          taskId: task.id,
+          brainId: task.brainId,
+          primaryAgent: openClawAgentId,
+          fallbackAgent: nexusConfig.openClawAgentId,
+          outputPreview: output.slice(0, 200),
+        });
+
+        output = await this.openClawAdapter.executeTask(nexusConfig.openClawAgentId, {
+          prompt,
+          thinking: 'low',
+        });
+      }
+    }
+
+    if (this.isFatalAgentOutput(output)) {
+      throw new Error(`Agent returned fatal output: ${output.slice(0, 220)}`);
+    }
 
     logger.info('Task execution completed', {
       taskId: task.id,
@@ -94,6 +119,17 @@ export class OpenClawTaskExecutor implements TaskExecutor {
 
     // Trigger report task if this task was from a recurring task with triggersReport enabled
     await this.triggerReportTaskIfNeeded(task);
+  }
+
+  private isFatalAgentOutput(output: string): boolean {
+    const text = (output || '').trim();
+    if (!text) return true;
+
+    return (
+      /^ERROR:/i.test(text) ||
+      /Invalid 'input\[\d+\]\.name'/i.test(text) ||
+      /OpenClaw task execution failed/i.test(text)
+    );
   }
 
   /**
@@ -295,8 +331,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       const tz = 'America/Chicago';
       const now = new Date();
       const today = format(toZonedTime(now, tz), 'yyyy-MM-dd', { timeZone: tz });
-      const preferredBrainIds = ['personal', 'school', 'nexus'];
-      const brainIds = preferredBrainIds.filter((id) => this.brainConfigs.has(id));
+      const brainIds = ['personal', 'school', 'nexus'];
       const reports = await this.reportService.getAllReportsForDate(brainIds, today);
 
       const reportPaths = brainIds
