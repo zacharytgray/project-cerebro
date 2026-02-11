@@ -24,7 +24,7 @@ export function Shell({
   onToggleTheme,
   children,
 }: ShellProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isDark = theme === 'dark';
 

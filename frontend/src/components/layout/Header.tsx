@@ -12,7 +12,7 @@ export function Header({ mode, onToggleTheme, onToggleSidebar }: HeaderProps) {
     <header className="flex items-center justify-between p-4 border-b border-border backdrop-blur-xl bg-background/50">
       <div className="flex items-center gap-3">
         {onToggleSidebar && (
-          <Button variant="ghost" size="sm" onClick={onToggleSidebar} className="lg:hidden">
+          <Button variant="ghost" size="sm" onClick={onToggleSidebar} title="Toggle sidebar">
             <Menu className="w-5 h-5" />
           </Button>
         )}
