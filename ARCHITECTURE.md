@@ -10,7 +10,6 @@ Cerebro is an autonomous agent runtime that manages "Brains" — specialized AI 
 project-cerebro/
 ├── config/                         # Configuration templates (safe to commit)
 │   ├── brains.template.json         # Brain definitions template
-│   └── discord_ids.template.json    # Discord guild/channel IDs template
 ├── config/brains.json               # (local) user-specific, gitignored
 ├── config/brain_targets.json        # (local) user-specific, gitignored
 ├── src/
