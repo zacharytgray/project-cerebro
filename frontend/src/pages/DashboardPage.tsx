@@ -300,14 +300,14 @@ export function DashboardPage({
       {/* Main Split: Execution Stream | Recurring Tasks */}
       <div
         ref={containerRef}
-        className="flex flex-col gap-6 items-start xl:flex-row xl:gap-0"
+        className="flex flex-col gap-6 items-start 2xl:flex-row 2xl:gap-0"
       >
         <div
-          className="w-full xl:pr-3"
+          className="w-full 2xl:pr-3"
           style={{ flexBasis: `${splitPct}%` }}
         >
           <TaskStream
-            className="h-[520px] sm:h-[600px] xl:h-[680px] bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift"
+            className="h-[520px] sm:h-[600px] 2xl:h-[680px] bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift"
             tasks={tasks}
             brains={brains}
             loading={loadingTasks}
@@ -319,7 +319,7 @@ export function DashboardPage({
         </div>
 
         {/* Drag handle (desktop only) */}
-        <div className="hidden xl:flex w-6 self-stretch items-center justify-center">
+        <div className="hidden 2xl:flex w-6 self-stretch items-center justify-center">
           <div
             role="separator"
             aria-orientation="vertical"
@@ -340,10 +340,10 @@ export function DashboardPage({
 
         {/* Recurring Tasks */}
         <div
-          className="w-full xl:pl-3"
+          className="w-full 2xl:pl-3"
           style={{ flexBasis: `${100 - splitPct}%` }}
         >
-          <Card className="flex flex-col h-[520px] sm:h-[600px] xl:h-[680px] p-4 sm:p-6 bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift">
+          <Card className="flex flex-col h-[520px] sm:h-[600px] 2xl:h-[680px] p-4 sm:p-6 bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Repeat className="w-5 h-5 text-purple-400" />
