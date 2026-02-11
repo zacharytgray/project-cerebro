@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "build": "tsc",
-    "seed": "npm run -s build && node dist/scripts/seed.js",
+    "build": "npm run -s build:backend && npm run -s build:frontend",
+    "build:backend": "tsc",
+    "build:frontend": "npm --prefix frontend run build",
+    "seed": "npm run -s build:backend && node dist/scripts/seed.js",
     "prepublishOnly": "./scripts/prepublish-scan.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
