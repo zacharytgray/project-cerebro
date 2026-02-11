@@ -5,6 +5,8 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
+import fs from 'fs';
+import os from 'os';
 import { logger } from '../lib/logger';
 import { OpenClawError } from '../lib/errors';
 
@@ -140,6 +142,31 @@ export class OpenClawAdapter {
     }
   }
 
+  private resolveOpenclawPath(): string {
+    if (process.env.OPENCLAW_CLI_PATH && process.env.OPENCLAW_CLI_PATH.trim()) {
+      return process.env.OPENCLAW_CLI_PATH.trim();
+    }
+
+    const home = os.homedir();
+    const candidates = [
+      path.join(home, '.npm-global', 'bin', 'openclaw'),
+      '/usr/local/bin/openclaw',
+      '/usr/bin/openclaw',
+      'openclaw',
+    ];
+
+    for (const p of candidates) {
+      if (p === 'openclaw') return p;
+      try {
+        if (fs.existsSync(p)) return p;
+      } catch {
+        // ignore
+      }
+    }
+
+    return 'openclaw';
+  }
+
   /**
    * Build the openclaw CLI command
    * 
@@ -153,8 +180,7 @@ export class OpenClawAdapter {
    * when running from a systemd service or backgrounded node process.
    */
   private buildCommand(agentId: string, payload: OpenClawTaskPayload): string {
-    // Use full path to openclaw CLI to ensure it's found regardless of PATH
-    const openclawPath = process.env.OPENCLAW_CLI_PATH || 'openclaw';
+    const openclawPath = this.resolveOpenclawPath();
     const parts: string[] = [openclawPath, 'agent'];
     
     parts.push('--agent', agentId);
@@ -178,7 +204,7 @@ export class OpenClawAdapter {
    * Send a message via OpenClaw CLI
    */
   async sendMessage(to: string, message: string, channelType: string = 'discord'): Promise<void> {
-    const openclawPath = process.env.OPENCLAW_CLI_PATH || 'openclaw';
+    const openclawPath = this.resolveOpenclawPath();
     const parts: string[] = [openclawPath, 'message', 'send'];
     
     // Target channel or user - strip 'channel:' prefix if present

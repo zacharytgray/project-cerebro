@@ -8,6 +8,7 @@ import { TaskExecutor } from '../services/task-executor.service';
 import { OpenClawAdapter, DiscordAdapter } from '../integrations';
 import { BrainConfigRepository, TaskRepository, RecurringTaskRepository } from '../data/repositories';
 import { ReportService } from '../services';
+import { format, toZonedTime } from 'date-fns-tz';
 
 export class OpenClawTaskExecutor implements TaskExecutor {
   constructor(
@@ -108,6 +109,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
         desc.includes('PERSONAL_PLANNING_KIND') ||
         desc.includes('SCHOOL_PLANNING_KIND') ||
         desc.includes('DAILY_DIGEST_KIND') ||
+        desc.includes('DAILY_DIGEST_NIGHT_KIND') ||
         desc.includes('REPORT_KIND');
 
       if (!isReportLike) return;
@@ -220,6 +222,15 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       parts.push(`\nTask Details: ${task.description}`);
     }
 
+    // Enforce deterministic sectioning for planning reports so digest can parse reliably.
+    if (task.description?.includes('PERSONAL_PLANNING_KIND')) {
+      parts.push(`\n\nOutput format is REQUIRED:\n## Part A — Today\nDate: <YYYY-MM-DD in America/Chicago>\n- Include today's schedule summary first\n- Then recommendations for navigating the day (health, breaks, pacing, priorities)\n\n## Part B — Tomorrow\nDate: <YYYY-MM-DD in America/Chicago>\n- Overview of tomorrow\n- Mental prep checklist for tomorrow\n\nUse clear date separation. No ambiguity about which day each section targets.`);
+    }
+
+    if (task.description?.includes('SCHOOL_PLANNING_KIND')) {
+      parts.push(`\n\nOutput format is REQUIRED:\n## Part A — Today\nDate: <YYYY-MM-DD in America/Chicago>\n- Today's classes, deadlines, and study plan\n\n## Part B — Tomorrow\nDate: <YYYY-MM-DD in America/Chicago>\n- Tomorrow's classes and prep plan\n\n## Part C — Upcoming (Next 7 Days)\nDate Range: <YYYY-MM-DD to YYYY-MM-DD in America/Chicago>\n- Exams/assignments due soon\n- Recommended prep blocks\n\nUse explicit dates in each section.`);
+    }
+
     if (scheduleContext) {
       parts.push(scheduleContext);
     }
@@ -280,10 +291,22 @@ export class OpenClawTaskExecutor implements TaskExecutor {
 
     // 2) Digest context: today's reports across brains (only when explicitly requested)
     // Digest brain removed; Nexus can run digest tasks when the task includes DAILY_DIGEST_KIND.
-    if (task.description?.includes('DAILY_DIGEST_KIND')) {
-      const today = new Date().toISOString().split('T')[0];
-      const brainIds = Array.from(this.brainConfigs.keys());
+    if (task.description?.includes('DAILY_DIGEST_KIND') || task.description?.includes('DAILY_DIGEST_NIGHT_KIND')) {
+      const tz = 'America/Chicago';
+      const now = new Date();
+      const today = format(toZonedTime(now, tz), 'yyyy-MM-dd', { timeZone: tz });
+      const preferredBrainIds = ['personal', 'school', 'nexus'];
+      const brainIds = preferredBrainIds.filter((id) => this.brainConfigs.has(id));
       const reports = await this.reportService.getAllReportsForDate(brainIds, today);
+
+      const reportPaths = brainIds
+        .map((id) => [
+          `data/${id}/reports/${today}-morning.md`,
+          `data/${id}/reports/${today}-night.md`,
+        ])
+        .flat();
+
+      blocks.push(`Report files checked for ${today} (America/Chicago):\n${reportPaths.map((p) => `- ${p}`).join('\n')}`);
 
       if (reports.length === 0) {
         blocks.push(`Reports for ${today}: (none found)`);
