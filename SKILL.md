@@ -1,6 +1,6 @@
 ---
 name: project-cerebro
-version: 1.0.1
+version: 1.0.2
 description: "Project Cerebro - Control Surface: modular multi-brain execution dashboard built on OpenClaw"
 homepage: https://github.com/zacharytgray/project-cerebro
 metadata: {"clawhub":{"category":"productivity","emoji":"🧠","requiresEnv":["OPENCLAW_GATEWAY_URL","OPENCLAW_TOKEN"],"exposesHttp":true,"fileUploads":true}}
@@ -14,7 +14,7 @@ A highly modular, agent-friendly **execution control surface** for running multi
 - per-brain **Auto Mode** + manual Run
 - channel-agnostic notifications via OpenClaw messaging
 
-![Dashboard screenshot](./assets/dashboard.png)
+![Dashboard screenshot](https://raw.githubusercontent.com/zacharytgray/project-cerebro/master/assets/dashboard.png)
 
 ## What this is
 
