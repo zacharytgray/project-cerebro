@@ -64,9 +64,30 @@ export class ApiServer {
    * Setup middleware
    */
   private setupMiddleware(): void {
-    // CORS
+    // CORS (secure-by-default)
+    // Configure with CORS_ORIGINS="https://app.example.com,https://admin.example.com"
+    const configuredOrigins = (process.env.CORS_ORIGINS || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const isProd = process.env.NODE_ENV === 'production';
+
     this.server.register(cors, {
-      origin: true, // Allow all origins for dev
+      origin: (origin, cb) => {
+        // Non-browser / same-origin requests (no Origin header)
+        if (!origin) return cb(null, true);
+
+        // Explicit allowlist always wins
+        if (configuredOrigins.includes(origin)) return cb(null, true);
+
+        // Developer convenience only outside production
+        if (!isProd && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+          return cb(null, true);
+        }
+
+        return cb(new Error('CORS origin not allowed'), false);
+      },
+      credentials: true,
     });
 
     // Multipart for file uploads

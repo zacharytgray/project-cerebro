@@ -1,8 +1,8 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { format, toZonedTime } from 'date-fns-tz';
 import { promisify } from 'util';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 const TIMEZONE = process.env.CEREBRO_TIMEZONE || process.env.TZ || 'America/Chicago';
 
@@ -38,14 +38,42 @@ interface NormalizedEvent {
     source: string;
 }
 
+function isSafeCalendarId(input: string): boolean {
+    // Allow common Google calendar id formats: primary, email-like, uuid-like, group calendar ids.
+    return /^[A-Za-z0-9@._-]+$/.test(input);
+}
+
+function isSafeAccount(input: string): boolean {
+    // Conservative account format validation.
+    return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(input);
+}
+
 async function fetchEvents(calendarId: string, from: string, to: string): Promise<CalendarEvent[]> {
     try {
         const account = process.env.GOG_ACCOUNT || process.env.CEREBRO_GOG_ACCOUNT;
         if (!account) {
             throw new Error('Missing env var GOG_ACCOUNT (or CEREBRO_GOG_ACCOUNT) for gog calendar access');
         }
-        const cmd = `GOG_ACCOUNT=${account} gog calendar events ${calendarId} --from ${from} --to ${to} --json`;
-        const { stdout } = await execAsync(cmd);
+        if (!isSafeAccount(account)) {
+            throw new Error('Invalid GOG account format');
+        }
+        if (!isSafeCalendarId(calendarId)) {
+            throw new Error('Invalid calendar id format');
+        }
+
+        const { stdout } = await execFileAsync(
+            'gog',
+            ['calendar', 'events', calendarId, '--from', from, '--to', to, '--json'],
+            {
+                env: {
+                    ...process.env,
+                    GOG_ACCOUNT: account,
+                },
+                timeout: 30_000,
+                maxBuffer: 2 * 1024 * 1024,
+            }
+        );
+
         const data = JSON.parse(stdout);
         return data.events || [];
     } catch (e) {

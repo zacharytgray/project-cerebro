@@ -1,64 +1,49 @@
 /**
- * Config routes - expose configuration to frontend
+ * Config routes - expose safe, non-sensitive frontend configuration.
  */
 
 import { FastifyInstance } from 'fastify';
-import { getConfig } from '../../lib/config';
+
+interface ModelInfo {
+  alias: string;
+  id: string;
+  provider: string;
+}
+
+function parseModelsFromEnv(): ModelInfo[] {
+  // Optional explicit model list for UI display only.
+  // Format (JSON):
+  // CEREBRO_MODELS_JSON='[{"alias":"codex","id":"openai-codex/gpt-5.3-codex","provider":"openai-codex"}]'
+  const raw = process.env.CEREBRO_MODELS_JSON;
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter((m) => m && typeof m.alias === 'string' && typeof m.id === 'string')
+      .map((m) => ({
+        alias: String(m.alias),
+        id: String(m.id),
+        provider: typeof m.provider === 'string' ? m.provider : (String(m.id).split('/')[0] || 'unknown'),
+      }));
+  } catch {
+    return [];
+  }
+}
 
 export function registerConfigRoutes(server: FastifyInstance): void {
   /**
    * GET /api/config/models
-   * Get available models from OpenClaw config
+   * Return a safe, explicit model list for UI display.
+   *
+   * Security note:
+   * - Do not read local OpenClaw config files from this API route.
+   * - Local runtime config may contain sensitive values unrelated to UI model labels.
    */
   server.get('/api/config/models', async () => {
-    const config = getConfig();
-    
-    // Read models from OpenClaw config file
-    const fs = require('fs');
-    const path = require('path');
-    const os = require('os');
-    
-    const openclawConfigPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
-    let models: Array<{ alias: string; id: string; provider: string }> = [];
-    
-    try {
-      const openclawConfig = JSON.parse(fs.readFileSync(openclawConfigPath, 'utf-8'));
-      const modelEntries = openclawConfig?.agents?.defaults?.models || {};
-      
-      models = Object.entries(modelEntries)
-        .filter(([id]) => id !== 'openrouter/auto') // Skip the auto entry
-        .map(([id, info]: [string, any]) => {
-          // Extract provider from id (e.g., "openrouter/google/gemini-3-flash-preview")
-          const parts = id.split('/');
-          const provider = parts.length >= 2 ? parts[0] : 'unknown';
-          
-          return {
-            id,
-            alias: info?.alias || id.replace(/\//g, '-'),
-            provider: provider === 'openrouter' && parts.length >= 2 ? parts[1] : provider,
-          };
-        });
-      
-      // Add the auto model at the top if it exists
-      if (modelEntries['openrouter/auto']) {
-        models.unshift({
-          id: 'openrouter/auto',
-          alias: 'auto',
-          provider: 'openrouter',
-        });
-      }
-    } catch (error) {
-      console.error('Failed to read OpenClaw config:', error);
-      // Fallback models
-      models = [
-        { alias: 'auto', id: 'openrouter/openrouter/auto', provider: 'openrouter' },
-        { alias: 'gemini-flash', id: 'openrouter/google/gemini-3-flash-preview', provider: 'google' },
-        { alias: 'gemini-pro', id: 'openrouter/google/gemini-3-pro-preview', provider: 'google' },
-        { alias: 'claude-sonnet', id: 'openrouter/anthropic/claude-sonnet-4.5', provider: 'anthropic' },
-        { alias: 'claude-opus', id: 'openrouter/anthropic/claude-opus-4.5', provider: 'anthropic' },
-      ];
-    }
-    
+    const models = parseModelsFromEnv();
     return { models };
   });
 }

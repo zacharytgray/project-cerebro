@@ -136,6 +136,8 @@ Navigate to: `http://localhost:3030`
 | `CEREBRO_CALENDAR_IDS` | No | `primary` | Comma-separated calendar IDs to merge |
 | `CEREBRO_CALENDAR_NAMES` | No | — | Optional: calendar display names (matches IDs order) |
 | `CEREBRO_MANAGE_SYSTEM_RECURRING` | No | `false` | Enable backend auto-creation of report/planning tasks |
+| `CORS_ORIGINS` | No | — | Comma-separated allowed browser origins for API CORS |
+| `CEREBRO_MODELS_JSON` | No | — | Optional JSON array of model aliases for `/api/config/models` |
 
 ## Security Notes
 
@@ -148,7 +150,8 @@ Navigate to: `http://localhost:3030`
 
 - **"Required environment variable X is not set"**: Check `.env`.
 - **"Brains config file not found"**: Run `cp config/brains.template.json config/brains.json`.
-- **Calendar scripts fail**: Ensure `GOG_ACCOUNT` is set and `gog` CLI is configured.
+- **Calendar scripts fail**: Ensure `GOG_ACCOUNT` is set and `gog` CLI is configured. Calendar/account values are validated and executed without shell interpolation.
+- **CORS blocked in browser**: set `CORS_ORIGINS` to your frontend origin(s), comma-separated.
 
 ## License
 
