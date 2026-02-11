@@ -19,7 +19,7 @@ export default function App() {
   // models removed
 
   const { brains, loading: loadingBrains, toggleBrain, runBrain } = useBrains();
-  const { tasks, loading: loadingTasks, createTask, deleteTask, executeTask, updateTask, clearAllTasks } = useTasks();
+  const { tasks, loading: loadingTasks, createTask, deleteTask, executeTask, updateTask, clearAllTasks, refetch: refetchTasks } = useTasks();
   const {
     recurringTasks,
     loading: loadingRecurring,
@@ -30,6 +30,12 @@ export default function App() {
     runRecurringTask,
   } = useRecurring();
   const { theme, mode, toggleTheme } = useTheme();
+
+  const handleRunRecurring = async (id: string) => {
+    await runRecurringTask(id);
+    // Ensure Execution Stream reflects newly spawned instance immediately.
+    await refetchTasks();
+  };
   
   // Model fetching removed (models configured in OpenClaw, not Cerebro).
 
@@ -84,7 +90,7 @@ export default function App() {
           onCreateTask={createTask}
           onCreateRecurring={createRecurringTask}
           onDeleteRecurring={deleteRecurringTask}
-          onRunRecurring={runRecurringTask}
+          onRunRecurring={handleRunRecurring}
           onUpdateRecurring={updateRecurringTask} // New prop
           onToggleRecurring={toggleRecurringTask} // New prop
           onDeleteTask={deleteTask}
