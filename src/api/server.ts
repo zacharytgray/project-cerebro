@@ -118,7 +118,7 @@ export class ApiServer {
    * Register all routes
    */
   private registerRoutes(): void {
-    registerStatusRoutes(this.server, this.deps.brainService);
+    registerStatusRoutes(this.server, this.deps.brainService, this.deps.taskRepo);
     registerBrainRoutes(this.server, this.deps.brainService);
     registerTaskRoutes(this.server, this.deps.taskRepo, this.deps.taskExecutor);
     registerRecurringRoutes(this.server, this.deps.recurringRepo, this.deps.taskRepo, this.deps.taskExecutor);
