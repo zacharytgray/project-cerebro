@@ -28,6 +28,7 @@ So if a file exists, it wins.
 npm run brain-configs:export   # DB -> files
 npm run brain-configs:import   # files -> DB
 npm run brain-configs:sync     # bootstrap missing + apply files
+npm run brain-configs:lint     # validate files only (no DB writes)
 ```
 
 ## Recommended schema
