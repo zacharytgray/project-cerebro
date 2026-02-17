@@ -4,6 +4,7 @@
 
 import { FastifyInstance } from 'fastify';
 import { BrainConfigRepository } from '../../data/repositories/brain-config.repository';
+import { validateBrainConfig } from '../../lib/brain-config-validator';
 
 function getDefaultBrainConfig(brainId: string): Record<string, any> {
   const base = {
@@ -89,6 +90,12 @@ export function registerBrainConfigRoutes(
       } catch {
         reply.code(400);
         return { error: 'Invalid JSON config' };
+      }
+
+      const validation = validateBrainConfig(parsed);
+      if (!validation.valid) {
+        reply.code(400);
+        return { error: 'Invalid brain config schema', details: validation.errors };
       }
 
       brainConfigRepo.set(brainId, parsed);

@@ -75,6 +75,14 @@ Not all fields are required; keep it minimal and explicit.
 - `reportTemplate` (string)
   - Template inserted into report tasks.
 
+## Validation
+
+Configs are schema-validated when:
+- saved via API (`POST /api/brains/:brainId/config`)
+- applied from files during startup sync
+
+Invalid files are skipped (not applied to DB) and logged with validation errors.
+
 ## Best practices
 
 - Keep brain-specific rules here, not in global `USER.md`.

@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BrainConfigRepository } from '../data/repositories/brain-config.repository';
 import { logger } from '../lib/logger';
+import { validateBrainConfig } from '../lib/brain-config-validator';
 
 export class BrainConfigFileSyncService {
   constructor(
@@ -50,6 +51,17 @@ export class BrainConfigFileSyncService {
       try {
         const raw = fs.readFileSync(p, 'utf-8');
         const parsed = JSON.parse(raw || '{}');
+        const validation = validateBrainConfig(parsed);
+
+        if (!validation.valid) {
+          logger.error('Invalid brain config file; skipping DB apply', new Error(validation.errors.join('; ')), {
+            brainId,
+            path: p,
+            validationErrors: validation.errors,
+          });
+          continue;
+        }
+
         this.brainConfigRepo.set(brainId, parsed);
         logger.info('Applied brain config file to DB', { brainId, path: p });
       } catch (error) {
