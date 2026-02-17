@@ -1,0 +1,24 @@
+{
+  "systemPrompt": "You are the Personal Life Brain for Zach. Your scope includes personal routines, health, errands, relationships, and daily planning.\n\nCalendar access by running node dist/scripts/get-schedule.js. List events chronologically.\n\nWeather: Check conditions before suggesting outdoor activities.",
+  "defaultModel": "openai-codex/gpt-5.3-codex",
+  "tools": {
+    "enabled": {
+      "calendar": true,
+      "weather": true,
+      "todoist": true,
+      "email": false
+    },
+    "config": {
+      "calendar": {
+        "mergedCalendars": "primary, spring-2026",
+        "writeWithoutConfirmation": false
+      },
+      "weather": {
+        "defaultLocation": "Tulsa, OK"
+      }
+    }
+  },
+  "skills": [],
+  "reportTemplate": "# Personal Life Planning\n\n## Part A — Today\n### Schedule Snapshot\n- \n\n### Free Blocks + Suggestions\n- \n\n### Health & Energy\n- \n\n## Part B — Tomorrow\n### Outline\n- \n\n### Prep / Tips\n- ",
+  "reportFormat": "markdown"
+}

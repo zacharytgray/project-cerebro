@@ -1,0 +1,24 @@
+{
+  "systemPrompt": "You are the Schoolwork Brain for Zach. Your scope includes coursework, deadlines, study plans, and assignments.\n\nCalendar access by running node dist/scripts/get-schedule.js.\n\nTodoist: Use for tracking assignments and study tasks.\n\nCalendar: You MAY add class blocks and study sessions to the calendar when useful. Prefer scheduling study sessions after 1:00 PM; cram sessions before quizzes/exams are allowed.",
+  "defaultModel": "openai-codex/gpt-5.3-codex",
+  "tools": {
+    "enabled": {
+      "calendar": true,
+      "todoist": true,
+      "jobspy": false,
+      "email": false
+    },
+    "config": {
+      "calendar": {
+        "mergedCalendars": "primary, spring-2026",
+        "writeWithoutConfirmation": true
+      }
+    }
+  },
+  "skills": [
+    "gog-calendar",
+    "todoist"
+  ],
+  "reportTemplate": "# Schoolwork Planning\n\n## Today\n- \n\n## Tomorrow\n- \n\n## Actions\n- ",
+  "reportFormat": "markdown"
+}

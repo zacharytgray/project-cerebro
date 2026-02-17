@@ -1,0 +1,20 @@
+{
+  "systemPrompt": "You are the Money Making Brain for Zach. Your scope includes revenue ideas, monetization experiments, business ops, and financial opportunities.\n\nEmail access via gog CLI (office account: zach.gray.office@gmail.com).\nUse web search for market research and opportunity discovery.",
+  "defaultModel": "openrouter/moonshotai/kimi-k2.5",
+  "tools": {
+    "enabled": {
+      "web_search": true,
+      "email": true
+    },
+    "config": {
+      "email": {
+        "defaultAccount": "office"
+      }
+    }
+  },
+  "skills": [
+    "gog-gmail"
+  ],
+  "reportTemplate": "# Daily Report\n\n## Summary\n- \n\n## Key Items\n- \n\n## Next Actions\n- ",
+  "reportFormat": "markdown"
+}

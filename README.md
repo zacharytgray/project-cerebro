@@ -81,6 +81,25 @@ Routing:
 
 Configure in `config/brains.json` (copy from template).
 
+### Per-brain runtime prompts/configs (file-first)
+
+Brain runtime config is now **file-first** and stored in:
+
+- `config/brain-configs/<brainId>.json`
+
+These files are synced into the `brain_configs` DB table at runtime startup:
+
+- missing files are bootstrapped from DB once
+- existing files are treated as source-of-truth and applied to DB
+
+Useful commands:
+
+```bash
+npm run brain-configs:export   # DB -> files
+npm run brain-configs:import   # files -> DB
+npm run brain-configs:sync     # bootstrap missing + apply files
+```
+
 ---
 
 ## Security & Privacy

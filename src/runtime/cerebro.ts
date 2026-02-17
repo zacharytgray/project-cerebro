@@ -18,6 +18,7 @@ import {
   SchedulerService,
   TaskExecutorService,
   ReportService,
+  BrainConfigFileSyncService,
 } from '../services';
 import { DiscordAdapter, OpenClawAdapter } from '../integrations';
 import { ApiServer } from '../api/server';
@@ -68,6 +69,15 @@ export class CerebroRuntime {
 
     // Seed brains from JSON config (migration - only runs if DB is empty)
     this.brainsRepo.seedFromJson(config.brains);
+
+    // File-first brain configs: bootstrap missing files from DB, then apply files to DB.
+    const brainIds = [
+      ...config.brains.brains.map((b) => b.id),
+      config.brains.nexus.id,
+    ];
+    const brainConfigFileSync = new BrainConfigFileSyncService(this.brainConfigRepo);
+    brainConfigFileSync.bootstrapMissingFilesFromDb(brainIds);
+    brainConfigFileSync.applyFilesToDb(brainIds);
 
     // Initialize services
     this.brainService = new BrainService();

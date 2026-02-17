@@ -9,6 +9,9 @@
     "build:backend": "tsc",
     "build:frontend": "npm --prefix frontend run build",
     "seed": "npm run -s build:backend && node dist/scripts/seed.js",
+    "brain-configs:export": "npm run -s build:backend && node dist/scripts/sync-brain-configs.js export",
+    "brain-configs:import": "npm run -s build:backend && node dist/scripts/sync-brain-configs.js import",
+    "brain-configs:sync": "npm run -s build:backend && node dist/scripts/sync-brain-configs.js roundtrip",
     "prepublishOnly": "./scripts/prepublish-scan.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

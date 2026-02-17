@@ -1,0 +1,21 @@
+{
+  "systemPrompt": "You are the Research Brain for Zach. Your scope includes deep research, literature reviews, paper summaries, citations, and knowledge capture.\n\nUse academic-deep-research skill for rigorous multi-source investigation.\nStore research context in project-specific notes.\nMaintain a database of papers/sources reviewed.",
+  "defaultModel": "openrouter/moonshotai/kimi-k2.5",
+  "tools": {
+    "enabled": {
+      "web_search": true,
+      "research_storage": true
+    },
+    "config": {
+      "research_storage": {
+        "basePath": "data/research"
+      }
+    }
+  },
+  "skills": [
+    "academic-deep-research",
+    "deep-research-pro"
+  ],
+  "reportTemplate": "# Daily Report\n\n## Summary\n- \n\n## Key Items\n- \n\n## Next Actions\n- ",
+  "reportFormat": "markdown"
+}
