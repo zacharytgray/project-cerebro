@@ -56,7 +56,8 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     const announceFromExecutor = task.sendDiscordNotification !== false;
 
     if (announceFromExecutor) {
-      await this.openClawAdapter.sendMessage(notifyTarget, `▶️ **Task started:** ${task.title}`, notifyChannel);
+      // Keep executor chatter low-noise; the agent's final message is the source of truth.
+      // Start announcements are intentionally suppressed.
     }
 
     // Execute with OpenClaw
@@ -110,11 +111,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
 
     // Send completion message to Discord (if enabled)
     if (announceFromExecutor) {
-      await this.openClawAdapter.sendMessage(
-        notifyTarget,
-        `✅ **Task completed:** ${task.title}`,
-        notifyChannel
-      );
+      // Completion announcements are intentionally suppressed to avoid double messaging.
     }
 
     // Trigger report task if this task was from a recurring task with triggersReport enabled
@@ -319,9 +316,25 @@ export class OpenClawTaskExecutor implements TaskExecutor {
 
     // Only ask the agent to message Discord when notifications are enabled for this task.
     if (task.sendDiscordNotification !== false) {
-      parts.push(
-        `\n\nIMPORTANT: When finished, send a message using the message tool to ${notifyChannel} target ${notifyTarget} with a short summary.`
-      );
+      const optionalNotify = task.description?.includes('OPTIONAL_NOTIFY');
+
+      if (optionalNotify) {
+        parts.push(
+          `\n\nIMPORTANT: This task supports OPTIONAL notifications.` +
+          `\nSend ONE message using the message tool to ${notifyChannel} target ${notifyTarget} ONLY if trigger conditions are met.` +
+          `\nIf no trigger condition is met, send no message.` +
+          `\nIf you do send a message: keep it concise, actionable, and specific to the trigger condition.`
+        );
+      } else {
+        parts.push(
+          `\n\nIMPORTANT: When finished, send exactly ONE message using the message tool to ${notifyChannel} target ${notifyTarget}.` +
+          `\nMessage quality rules:` +
+          `\n- Do NOT write meta commentary about what you are about to summarize.` +
+          `\n- Include concrete outputs (decisions, scheduled blocks, due items, blockers).` +
+          `\n- If you wrote/updated a report file, include its path.` +
+          `\n- Keep concise but informative (roughly 8-15 bullets max for planning/digest tasks).`
+        );
+      }
     } else {
       parts.push(
         `\n\nIMPORTANT: Do NOT send any Discord messages for this task. Your output will be captured into a markdown report file.`
@@ -338,6 +351,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     const needsAnyContext =
       task.brainId === 'personal' ||
       task.brainId === 'school' ||
+      task.brainId === 'trainer' ||
       task.description?.includes('DAILY_DIGEST_KIND') ||
       task.description?.includes('DAILY_DIGEST_NIGHT_KIND');
 
@@ -349,10 +363,12 @@ export class OpenClawTaskExecutor implements TaskExecutor {
 
     // 1) Schedule context (only when explicitly requested by task kind)
     if (
-      task.description &&
-      (task.description.includes('PERSONAL_PLANNING_KIND') ||
-        task.description.includes('SCHOOL_PLANNING_KIND') ||
-        task.description.includes('REPORT_KIND'))
+      task.brainId === 'trainer' ||
+      (task.description &&
+        (task.description.includes('PERSONAL_PLANNING_KIND') ||
+          task.description.includes('SCHOOL_PLANNING_KIND') ||
+          task.description.includes('REPORT_KIND') ||
+          task.description.includes('TRAINER_KIND')))
     ) {
       const schedule = await this.openClawAdapter.getScheduleContext();
       blocks.push(
@@ -366,7 +382,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       const tz = 'America/Chicago';
       const now = new Date();
       const today = format(toZonedTime(now, tz), 'yyyy-MM-dd', { timeZone: tz });
-      const brainIds = ['personal', 'school', 'nexus'];
+      const brainIds = ['personal', 'school', 'trainer', 'nexus'];
       const reports = await this.reportService.getAllReportsForDate(brainIds, today);
 
       const reportPaths = brainIds
@@ -381,7 +397,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       if (reports.length === 0) {
         blocks.push(`Reports for ${today}: (none found)`);
       } else {
-        const availability = ['personal', 'school', 'nexus']
+        const availability = ['personal', 'school', 'trainer', 'nexus']
           .flatMap((brainId) => ['morning', 'night'].map((kind) => ({ brainId, kind })))
           .map(({ brainId, kind }) => {
             const found = reports.some((r) => r.brainId === brainId && r.kind === kind);

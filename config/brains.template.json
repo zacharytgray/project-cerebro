@@ -15,6 +15,14 @@
       "type": "context",
       "description": "Coursework, deadlines, study plans, assignments",
       "openClawAgentId": "school"
+    },
+    {
+      "id": "trainer",
+      "name": "Personal Trainer Brain",
+      "channelKey": "personal_trainer_brain",
+      "type": "context",
+      "description": "Workout planning, motivation, progressive overload tracking, and recovery guidance based on calendar workouts and user logs.",
+      "openClawAgentId": "personal"
     }
   ],
   "nexus": {
@@ -22,6 +30,6 @@
     "name": "Nexus (default)",
     "channelKey": "general",
     "description": "Default brain for general tasks and orchestration",
-    "openClawAgentId": "nexus"
+    "openClawAgentId": "personal"
   }
 }

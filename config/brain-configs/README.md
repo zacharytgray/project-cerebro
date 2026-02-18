@@ -12,6 +12,7 @@ Brain IDs currently used:
 - `research`
 - `money`
 - `job`
+- `trainer`
 
 ## How sync works
 
