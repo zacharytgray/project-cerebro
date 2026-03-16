@@ -5,6 +5,7 @@ import type {
   JobsResponse,
   ReportsResponse,
   BrainConfigResponse,
+  SpecSiteEngineSummaryResponse,
 } from './types';
 
 const API_BASE = '';
@@ -153,4 +154,25 @@ export const api = {
 
   // Config
   getModels: () => fetchApi<{ models: Array<{ alias: string; id: string; provider: string }> }>('/api/config/models'),
+
+  // Spec Site Engine
+  getSpecSiteEngineSummary: () => fetchApi<SpecSiteEngineSummaryResponse>('/api/spec-site-engine/summary'),
+  approveSpecSiteOutboxSend: (leadId: string, approvedBy = 'zach') =>
+    fetchApi<{ ok: boolean; lead_id: string; stage: string; updatedAt: string }>(
+      `/api/spec-site-engine/outbox/${encodeURIComponent(leadId)}/approve-send`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approvedBy }),
+      }
+    ),
+  archiveSpecSiteOutboxLead: (leadId: string, archivedBy = 'zach', reason = 'not_a_fit') =>
+    fetchApi<{ ok: boolean; lead_id: string; stage: string; updatedAt: string }>(
+      `/api/spec-site-engine/outbox/${encodeURIComponent(leadId)}/archive`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archivedBy, reason }),
+      }
+    ),
 };

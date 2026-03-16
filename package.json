@@ -42,7 +42,11 @@
     "dotenv": "^17.2.3",
     "fastify": "^5.7.4",
     "sqlite3": "^5.1.7",
+    "three": "^0.183.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/three": "^0.183.1"
   }
 }

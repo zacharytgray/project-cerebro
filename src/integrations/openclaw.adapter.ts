@@ -48,6 +48,11 @@ export class OpenClawAdapter {
       const { stdout, stderr } = await execAsync(command, {
         timeout: 600000, // 10 minute timeout
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large responses
+        env: {
+          ...process.env,
+          OPENCLAW_GATEWAY_URL: this.gatewayUrl,
+          OPENCLAW_TOKEN: this.token,
+        },
       });
 
       if (stderr) {
@@ -71,17 +76,22 @@ export class OpenClawAdapter {
         const jsonResponse = JSON.parse(stdout);
 
         // 1) Prefer agent reply payloads
-        const payloads = jsonResponse.result?.payloads;
+        // OpenClaw may return payloads either at top-level or under result.payloads
+        const payloads = jsonResponse.payloads || jsonResponse.result?.payloads;
         if (payloads && Array.isArray(payloads)) {
           const texts = payloads
             .map((p: any) => p.text?.trim())
             .filter((t: string | null) => t && t.length > 0);
 
-          // Deduplicate texts (agent sometimes sends same content multiple times)
+          // Deduplicate exact repeats only (do NOT collapse long output into a short summary)
           const uniqueTexts: string[] = [];
+          const seen = new Set<string>();
           for (const text of texts) {
-            const isDuplicate = uniqueTexts.some((seen) => seen.includes(text) || text.includes(seen));
-            if (!isDuplicate) uniqueTexts.push(text);
+            const normalized = text.trim();
+            if (!normalized) continue;
+            if (seen.has(normalized)) continue;
+            seen.add(normalized);
+            uniqueTexts.push(text);
           }
 
           if (uniqueTexts.length > 0) {

@@ -5,6 +5,7 @@ import type { Task, BrainStatus, TaskStatus } from '../../api/types';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { displayBrainLabel } from '../../utils/brainLabels';
 import { TaskRow } from './TaskRow';
 import { Skeleton } from '../ui/Skeleton';
 
@@ -32,7 +33,8 @@ export function TaskStream({
   const [filter, setFilter] = useState<TaskStatus | 'ALL'>('ALL');
 
   const getBrainName = (brainId: string) => {
-    return brains.find((b) => b.id === brainId)?.name || brainId;
+    const brain = brains.find((b) => b.id === brainId);
+    return brain ? displayBrainLabel(brain) : brainId;
   };
 
   const filteredTasks = filter === 'ALL' 
@@ -42,9 +44,9 @@ export function TaskStream({
   const filters: Array<TaskStatus | 'ALL'> = ['ALL', 'READY', 'EXECUTING', 'COMPLETED', 'FAILED'];
 
   return (
-    <Card className={className ? `flex flex-col ${className}` : 'flex flex-col'}>
+    <Card className={className ? `flex flex-col bg-slate-100/70 dark:bg-slate-950/46 border-slate-300/70 dark:border-white/10 ${className}` : 'flex flex-col bg-slate-100/70 dark:bg-slate-950/46 border-slate-300/70 dark:border-white/10'}>
       <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2 text-violet-950 dark:text-white">
           <Terminal className="w-5 h-5 text-purple-400" />
           Execution Stream
         </h2>

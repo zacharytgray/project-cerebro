@@ -16,6 +16,12 @@ export class SchedulerService {
     const now = Date.now();
     const lastExecution = task.lastExecutedAt || task.createdAt;
 
+    // If a cron expression is present, always respect it as the source of truth
+    // so manual runs do not permanently drift schedule timing.
+    if (task.cronExpression) {
+      return this.computeFromCron(task.cronExpression, now);
+    }
+
     switch (task.pattern) {
       case RecurrencePattern.DAILY:
         return this.addDays(lastExecution, 1);
@@ -27,9 +33,6 @@ export class SchedulerService {
         return this.addMonths(lastExecution, 1);
 
       case RecurrencePattern.CUSTOM:
-        if (task.cronExpression) {
-          return this.computeFromCron(task.cronExpression, lastExecution);
-        }
         throw new Error(`Custom pattern requires cronExpression`);
 
       default:
@@ -100,35 +103,54 @@ export class SchedulerService {
   }
 
   /**
-   * Compute next execution from cron expression
-   * Simple implementation - could be enhanced with a proper cron library
+   * Compute next execution from cron expression.
+   * Supports the patterns used by this app:
+   * - "m h * * *" (daily)
+   * - "m h * * d" (weekly, d=0..6)
    */
-  private computeFromCron(cronExpression: string, lastExecution: number): number {
-    // For now, just parse simple formats like "0 9 * * *" (9 AM daily)
-    // In production, use a library like 'cron-parser'
-    const parts = cronExpression.split(' ');
-    
+  private computeFromCron(cronExpression: string, fromTime: number): number {
+    const parts = cronExpression.trim().split(/\s+/);
+
     if (parts.length !== 5) {
       throw new Error(`Invalid cron expression: ${cronExpression}`);
     }
 
-    // Simple daily pattern: "minute hour * * *"
-    const minute = parseInt(parts[0], 10);
-    const hour = parseInt(parts[1], 10);
+    const [mRaw, hRaw, domRaw, monRaw, dowRaw] = parts;
+    const minute = Number(mRaw);
+    const hour = Number(hRaw);
 
-    if (isNaN(minute) || isNaN(hour)) {
+    if (Number.isNaN(minute) || Number.isNaN(hour)) {
       throw new Error(`Invalid cron expression: ${cronExpression}`);
     }
 
-    const date = new Date(lastExecution);
-    date.setHours(hour, minute, 0, 0);
-
-    // If the time has passed today, schedule for tomorrow
-    if (date.getTime() <= Date.now()) {
-      date.setDate(date.getDate() + 1);
+    // Daily cron: m h * * *
+    if (domRaw === '*' && monRaw === '*' && dowRaw === '*') {
+      const next = new Date(fromTime);
+      next.setSeconds(0, 0);
+      next.setHours(hour, minute, 0, 0);
+      if (next.getTime() <= fromTime) {
+        next.setDate(next.getDate() + 1);
+      }
+      return next.getTime();
     }
 
-    return date.getTime();
+    // Weekly cron: m h * * d
+    if (domRaw === '*' && monRaw === '*' && /^\d+$/.test(dowRaw)) {
+      const targetDow = Number(dowRaw); // 0=Sun .. 6=Sat
+      const next = new Date(fromTime);
+      next.setSeconds(0, 0);
+      next.setHours(hour, minute, 0, 0);
+
+      const delta = (targetDow - next.getDay() + 7) % 7;
+      next.setDate(next.getDate() + delta);
+      if (next.getTime() <= fromTime) {
+        next.setDate(next.getDate() + 7);
+      }
+
+      return next.getTime();
+    }
+
+    throw new Error(`Unsupported cron pattern: ${cronExpression}`);
   }
 
   /**

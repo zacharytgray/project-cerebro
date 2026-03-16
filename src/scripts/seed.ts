@@ -14,6 +14,8 @@ import { TaskRepository, RecurringTaskRepository } from '../data/repositories';
 import { computeNextExecutionFromApi } from '../api/transforms/recurring.transform';
 import { logger } from '../lib/logger';
 
+const DEFAULT_RECURRING_MODEL = 'openai-codex/gpt-5.3-codex';
+
 type SeedTask = {
   brainId: string;
   title: string;
@@ -134,7 +136,7 @@ async function main() {
       brainId: r.brainId,
       title: r.title,
       description: r.description,
-      modelOverride: r.modelOverride,
+      modelOverride: r.modelOverride || DEFAULT_RECURRING_MODEL,
       pattern,
       cronExpression,
       payload,

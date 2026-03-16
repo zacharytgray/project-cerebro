@@ -8,11 +8,11 @@ interface BadgeProps {
 
 export function Badge({ children, variant = 'default', className }: BadgeProps) {
   const variants = {
-    default: 'bg-secondary text-secondary-foreground border-secondary',
-    success: 'bg-green-900/50 text-green-300 border-green-900',
-    warning: 'bg-yellow-900/50 text-yellow-300 border-yellow-900',
-    error: 'bg-red-900/50 text-red-300 border-red-900',
-    info: 'bg-blue-900/50 text-blue-300 border-blue-900',
+    default: 'bg-slate-200/95 text-slate-800 border-slate-300 dark:bg-slate-800/70 dark:text-slate-100 dark:border-slate-700',
+    success: 'bg-emerald-200 text-emerald-950 border-emerald-400 dark:bg-emerald-900/45 dark:text-emerald-200 dark:border-emerald-700/70',
+    warning: 'bg-amber-200 text-amber-950 border-amber-400 dark:bg-amber-900/45 dark:text-amber-200 dark:border-amber-700/70',
+    error: 'bg-rose-200 text-rose-950 border-rose-400 dark:bg-rose-900/45 dark:text-rose-200 dark:border-rose-700/70',
+    info: 'bg-sky-200 text-sky-950 border-sky-400 dark:bg-sky-900/45 dark:text-sky-200 dark:border-sky-700/70',
   };
 
   return (

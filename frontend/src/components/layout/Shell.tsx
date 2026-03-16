@@ -2,15 +2,17 @@ import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { DashboardBackdrop } from '../dashboard/DashboardBackdrop';
+import { cn } from '../../utils/cn';
 import type { BrainStatus } from '../../api/types';
 
 interface ShellProps {
   brains: BrainStatus[];
-  currentView: 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile';
+  currentView: 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile' | 'spec-site-engine';
   selectedBrainId: string | null;
-  onNavigate: (view: 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile', brainId?: string) => void;
+  onNavigate: (view: 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile' | 'spec-site-engine', brainId?: string) => void;
   theme: 'light' | 'dark';
-  mode: 'light' | 'dark' | 'system';
+  mode: 'dark';
   onToggleTheme: () => void;
   children: React.ReactNode;
 }
@@ -33,16 +35,20 @@ export function Shell({
     <div
       className={
         isDark
-          ? 'h-screen overflow-hidden bg-gradient-to-br from-[#0b0e14] via-[#0d111c] to-[#0a0f1a] text-foreground'
-          : 'h-screen overflow-hidden bg-gradient-to-br from-gray-100 via-gray-50 to-white text-foreground'
+          ? 'h-screen overflow-hidden bg-slate-950/20 text-foreground'
+          : 'h-screen overflow-hidden bg-white/10 text-foreground'
       }
     >
       <div className="relative h-screen overflow-hidden">
+        <DashboardBackdrop />
         {/* Global nav toggle: always visible/clickable on every device */}
         <button
           aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
           onClick={() => setSidebarOpen((v) => !v)}
-          className="fixed left-3 top-3 z-50 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-black/40 text-white backdrop-blur hover:bg-black/55"
+          className={cn(
+            'fixed top-3 z-50 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 dark:border-white/8 bg-black/40 dark:bg-slate-950/86 text-white backdrop-blur hover:bg-black/55 dark:hover:bg-slate-950 transition-[left,transform] duration-300',
+            sidebarOpen ? 'left-[calc(16rem-2.75rem)] md:left-[calc(16rem-2.75rem)]' : 'left-3'
+          )}
         >
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -59,16 +65,15 @@ export function Shell({
         {sidebarOpen && (
           <button
             aria-label="Close sidebar backdrop"
-            className="fixed inset-0 z-30 bg-black/30"
+            className="fixed inset-0 z-30 bg-black/30 md:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
-        <div className="flex-1 min-w-0 flex flex-col h-screen">
+        <div className={cn('flex-1 min-w-0 flex flex-col h-screen transition-[margin] duration-300', sidebarOpen ? 'md:ml-64' : 'md:ml-0')}>
           <Header
             mode={mode}
             onToggleTheme={onToggleTheme}
-            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           />
 
           <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">

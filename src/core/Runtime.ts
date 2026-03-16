@@ -6,6 +6,8 @@ import * as path from 'path';
 
 dotenv.config();
 
+const DEFAULT_RECURRING_MODEL = 'openai-codex/gpt-5.3-codex';
+
 export class CerebroRuntime {
     private client: Client;
     private brains: Map<string, Brain> = new Map();
@@ -16,6 +18,10 @@ export class CerebroRuntime {
 
     public getBrains(): Brain[] {
         return Array.from(this.brains.values());
+    }
+
+    private getRecurringModelOverride(cfg: any): string {
+        return cfg?.reporting?.modelOverride || cfg?.defaultModel || DEFAULT_RECURRING_MODEL;
     }
 
     constructor() {
@@ -164,7 +170,7 @@ Location: (use local timezone). Timezone: America/Chicago.`;
                         brainName: brain.name,
                         title,
                         description,
-                        modelOverride: cfg.reporting?.modelOverride,
+                        modelOverride: this.getRecurringModelOverride(cfg),
                         scheduleType: 'DAILY',
                         scheduleConfig: JSON.stringify(scheduleConfig),
                         nextRunAt,
@@ -183,7 +189,7 @@ Location: (use local timezone). Timezone: America/Chicago.`;
                             brainName: brain.name,
                             title,
                             description,
-                            modelOverride: cfg.reporting?.modelOverride,
+                            modelOverride: this.getRecurringModelOverride(cfg),
                             scheduleType: 'DAILY',
                             scheduleConfig: JSON.stringify(scheduleConfig),
                             nextRunAt,
@@ -243,7 +249,7 @@ Rules:
                             brainName: brain.name,
                             title,
                             description,
-                            modelOverride: cfg.reporting?.modelOverride,
+                            modelOverride: this.getRecurringModelOverride(cfg),
                             scheduleType: 'DAILY',
                             scheduleConfig: JSON.stringify(scheduleConfig),
                             nextRunAt,
@@ -263,7 +269,7 @@ Rules:
                                 brainName: brain.name,
                                 title,
                                 description,
-                                modelOverride: cfg.reporting?.modelOverride,
+                                modelOverride: this.getRecurringModelOverride(cfg),
                                 scheduleType: 'DAILY',
                                 scheduleConfig: JSON.stringify(scheduleConfig),
                                 nextRunAt,
@@ -295,9 +301,12 @@ Rules:
                     const marker = `SCHOOL_PLANNING_KIND:${kind}`;
                     const title = `Schoolwork Planning (${kind})`;
                     const description = `${marker}
-1) Scan Todoist Inbox for labels @exam, @quiz, @homework, @research, @personal.
+1) Scan active Todoist school-related tasks in a LABEL-AGNOSTIC way.
+   - Do NOT rely on specific label names or @-style labels.
+   - Include tasks from Todoist Inbox and any school-relevant projects/sections.
+   - Prefer due date, project, task content, and available metadata over labels.
 2) **CALENDAR CONTEXT (pre-injected)**: The merged schedule from \`get-schedule.js\` will be included in the prompt Context. Use it to find free slots. Do not query gog manually unless the Context block is missing.
-3) Build a next-7-days timeline (today + 7d) grouped by date and label.
+3) Build a next-7-days timeline (today + 7d) grouped by date, using labels only as optional metadata when present.
 4) Auto-schedule study blocks using free slots (09:00–23:00):
    - Default: **1 study block per task** (homework/quiz/other).
    - Exams: **3 study blocks total**, spread across days before the due date.
@@ -317,7 +326,7 @@ Rules:
                             brainName: brain.name,
                             title,
                             description,
-                            modelOverride: cfg.reporting?.modelOverride,
+                            modelOverride: this.getRecurringModelOverride(cfg),
                             scheduleType: 'DAILY',
                             scheduleConfig: JSON.stringify(scheduleConfig),
                             nextRunAt,
@@ -336,7 +345,7 @@ Rules:
                                 brainName: brain.name,
                                 title,
                                 description,
-                                modelOverride: cfg.reporting?.modelOverride,
+                                modelOverride: this.getRecurringModelOverride(cfg),
                                 scheduleType: 'DAILY',
                                 scheduleConfig: JSON.stringify(scheduleConfig),
                                 nextRunAt,
@@ -381,7 +390,7 @@ Spend ~${cfg.moneySearch?.weeklyHours || 2} hours searching the web for AI money
                             brainName: brain.name,
                             title,
                             description,
-                            modelOverride: cfg.reporting?.modelOverride,
+                            modelOverride: this.getRecurringModelOverride(cfg),
                             scheduleType: 'WEEKLY',
                             scheduleConfig: JSON.stringify(scheduleConfig),
                             nextRunAt,

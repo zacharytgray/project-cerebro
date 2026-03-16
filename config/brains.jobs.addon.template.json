@@ -1,10 +1,10 @@
 {
   "job": {
     "id": "job",
-    "name": "Job Application Brain",
+    "name": "Job Application Capability",
     "channelKey": "job_application_brain",
     "type": "job",
-    "description": "Job search pipeline, applications, tracking, follow-ups",
+    "description": "Internal capability for job search pipeline work, applications, tracking, and follow-ups. Currently should be treated as dormant/experimental until refreshed.",
     "openClawAgentId": "job"
   }
 }

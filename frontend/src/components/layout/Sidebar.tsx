@@ -1,15 +1,16 @@
-import { Activity, Briefcase, User } from 'lucide-react';
+import { Activity, Briefcase, User, FolderKanban } from 'lucide-react';
 import type { BrainStatus } from '../../api/types';
 import { getBrainIcon } from '../../utils/brainIcons';
+import { displayBrainLabel } from '../../utils/brainLabels';
 import { cn } from '../../utils/cn';
 import { GradientText } from '../ui/GradientText';
 import { FileIngestion } from '../dashboard/FileIngestion';
 
 interface SidebarProps {
   brains: BrainStatus[];
-  currentView: 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile';
+  currentView: 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile' | 'spec-site-engine';
   selectedBrainId: string | null;
-  onNavigate: (view: 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile', brainId?: string) => void;
+  onNavigate: (view: 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile' | 'spec-site-engine', brainId?: string) => void;
   isOpen: boolean;
   theme: 'light' | 'dark';
 }
@@ -29,16 +30,16 @@ export function Sidebar({
     ? 'bg-blue-600/20 text-blue-200 border border-blue-500/30'
     : 'bg-blue-200/70 text-blue-900 border border-blue-500/40';
   
-  const inactiveClass = 'text-muted-foreground hover:bg-white/5 hover:shadow-md hover:-translate-y-0.5';
+  const inactiveClass = 'text-muted-foreground hover:bg-white/55 dark:hover:bg-white/5 hover:shadow-md hover:-translate-y-0.5';
 
   return (
     <aside
       className={cn(
         'fixed inset-y-0 left-0 z-40 flex w-64 flex-col gap-6',
-        'border-r backdrop-blur-xl p-6',
-        'shadow-[inset_0_0_40px_rgba(59,130,246,0.05)]',
+        'border-r backdrop-blur-2xl p-6',
+        'shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_20px_60px_rgba(15,23,42,0.08)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_20px_60px_rgba(2,6,23,0.35)]',
         'transition-transform duration-300',
-        isDark ? 'border-white/10 bg-[#0f1524]/95' : 'border-black/10 bg-white/95',
+        isDark ? 'border-white/10 bg-[#0f1524]/78' : 'border-white/60 bg-white/70',
         isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
       )}
     >
@@ -63,6 +64,16 @@ export function Sidebar({
           )}
         >
           <Activity className="w-4 h-4" /> Dashboard
+        </button>
+
+        <button
+          onClick={() => onNavigate('spec-site-engine')}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
+            currentView === 'spec-site-engine' ? activeClass : inactiveClass
+          )}
+        >
+          <FolderKanban className="w-4 h-4" /> Spec Site Engine
         </button>
 
         {jobsEnabled && (
@@ -105,7 +116,7 @@ export function Sidebar({
             )}
           >
             {getBrainIcon(brain.id, 'w-4 h-4')}
-            {brain.name}
+            <span className="text-left leading-tight break-words">{displayBrainLabel(brain)}</span>
           </button>
         ))}
 

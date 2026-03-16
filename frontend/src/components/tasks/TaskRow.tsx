@@ -37,16 +37,14 @@ export function TaskRow({ task, brainName, onClick, onExecute, onDelete }: TaskR
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6, height: 0, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }}
-      transition={{ duration: 0.14, ease: 'easeOut' }}
+      transition={{ duration: 0.1, ease: 'easeOut' }}
       className={cn(
         'p-5 rounded-2xl',
-        // Light mode: brighter cell so rows pop against the panel background
-        'bg-gradient-to-r from-white/80 to-white/70 hover:from-white/90 hover:to-white/80 border border-white/60 dark:border-white/10',
-        // Dark mode: keep the subtle blue/purple glow
-        'dark:bg-gradient-to-r dark:from-blue-600/10 dark:to-purple-600/10 dark:hover:from-blue-600/15 dark:hover:to-purple-600/15',
-        'bg-[length:200%_auto]',
-        'shadow-[0_10px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.35)]',
-        'transition-all duration-200 hover:-translate-y-0.5 animate-gradient-shift',
+        'bg-white/90 dark:bg-slate-950/26',
+        'border border-white/80 dark:border-white/10',
+        'text-foreground supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-slate-950/20',
+        'shadow-[0_10px_28px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.3)] dark:shadow-[0_14px_36px_rgba(2,6,23,0.28),inset_0_1px_0_rgba(255,255,255,0.04)]',
+        'transition-[transform,box-shadow,background-color] duration-150 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(15,23,42,0.10)] dark:hover:shadow-[0_16px_38px_rgba(2,6,23,0.32)]',
         'group'
       )}
     >

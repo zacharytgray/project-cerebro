@@ -3,6 +3,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Toggle } from '../ui/Toggle';
 import type { BrainStatus } from '../../api/types';
+import { displayBrainLabel } from '../../utils/brainLabels';
 
 interface AddTaskModalProps {
   isOpen: boolean;
@@ -98,7 +99,7 @@ export function AddTaskModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add New Task" className="max-w-4xl">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg">
+        <div className="flex items-center gap-3 p-4 rounded-2xl border border-white/45 dark:border-white/10 bg-white/45 dark:bg-white/5 backdrop-blur-md">
           <span className="text-sm">One-time Task</span>
           <Toggle
             checked={formData.isRecurring}
@@ -111,13 +112,13 @@ export function AddTaskModal({
           <div>
             <label className="text-sm font-medium block mb-2">Brain</label>
             <select
-              className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm"
+              className="w-full bg-white/62 dark:bg-white/5 border border-white/55 dark:border-white/10 rounded-xl px-3 py-2 text-sm backdrop-blur-md"
               value={formData.brainId}
               onChange={(e) => setFormData({ ...formData, brainId: e.target.value })}
             >
               {brains.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.name}
+                  {displayBrainLabel(b)}
                 </option>
               ))}
             </select>
@@ -128,7 +129,7 @@ export function AddTaskModal({
           <label className="text-sm font-medium block mb-2">Title</label>
           <input
             type="text"
-            className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm"
+            className="w-full bg-white/62 dark:bg-white/5 border border-white/55 dark:border-white/10 rounded-xl px-3 py-2 text-sm backdrop-blur-md"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             placeholder="Task title..."
@@ -139,7 +140,7 @@ export function AddTaskModal({
         <div>
           <label className="text-sm font-medium block mb-2">Description (optional)</label>
           <textarea
-            className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm min-h-[220px]"
+            className="w-full bg-white/62 dark:bg-white/5 border border-white/55 dark:border-white/10 rounded-xl px-3 py-2 text-sm min-h-[220px] backdrop-blur-md"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Task description..."
@@ -151,7 +152,7 @@ export function AddTaskModal({
             <div>
               <label className="text-sm font-medium block mb-2">Schedule Type</label>
               <select
-                className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/62 dark:bg-white/5 border border-white/55 dark:border-white/10 rounded-xl px-3 py-2 text-sm backdrop-blur-md"
                 value={formData.scheduleType}
                 onChange={(e) =>
                   setFormData({
@@ -174,7 +175,7 @@ export function AddTaskModal({
                 </label>
                 <input
                   type="number"
-                  className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm"
+                  className="w-full bg-white/62 dark:bg-white/5 border border-white/55 dark:border-white/10 rounded-xl px-3 py-2 text-sm backdrop-blur-md"
                   value={formData.intervalMinutes}
                   onChange={(e) =>
                     setFormData({ ...formData, intervalMinutes: Number(e.target.value) })
@@ -189,7 +190,7 @@ export function AddTaskModal({
                 <label className="text-sm font-medium block mb-2">Time</label>
                 <input
                   type="time"
-                  className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm"
+                  className="w-full bg-white/62 dark:bg-white/5 border border-white/55 dark:border-white/10 rounded-xl px-3 py-2 text-sm backdrop-blur-md"
                   value={formData.dailyTime}
                   onChange={(e) => setFormData({ ...formData, dailyTime: e.target.value })}
                 />
@@ -201,7 +202,7 @@ export function AddTaskModal({
                 <div>
                   <label className="text-sm font-medium block mb-2">Day of Week</label>
                   <select
-                    className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm"
+                    className="w-full bg-white/62 dark:bg-white/5 border border-white/55 dark:border-white/10 rounded-xl px-3 py-2 text-sm backdrop-blur-md"
                     value={formData.weeklyDay}
                     onChange={(e) =>
                       setFormData({ ...formData, weeklyDay: e.target.value })
@@ -220,7 +221,7 @@ export function AddTaskModal({
                   <label className="text-sm font-medium block mb-2">Time</label>
                   <input
                     type="time"
-                    className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm"
+                    className="w-full bg-white/62 dark:bg-white/5 border border-white/55 dark:border-white/10 rounded-xl px-3 py-2 text-sm backdrop-blur-md"
                     value={formData.dailyTime}
                     onChange={(e) =>
                       setFormData({ ...formData, dailyTime: e.target.value })

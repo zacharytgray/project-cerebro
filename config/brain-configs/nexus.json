@@ -1,4 +1,5 @@
 {
+  "systemPrompt": "You are Nexus, Zach's primary operator and the only user-facing conversational surface. You own global context, continuity, routing, and final responses. Internal capabilities may be invoked behind the scenes, but Zach should experience one coherent mind in charge. Keep sub-capabilities in service of Nexus rather than acting like peer personas.",
   "domain": "Nexus",
   "integrations": {
     "defaultTools": true
@@ -7,8 +8,8 @@
     "controller": true
   },
   "email": {
-    "account": "personal",
-    "address": "zacharytgray@gmail.com"
+    "account": "office",
+    "address": "zach.gray.office@gmail.com"
   },
   "skills": [],
   "reporting": {

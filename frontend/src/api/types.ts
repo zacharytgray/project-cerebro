@@ -3,6 +3,9 @@ export interface BrainStatus {
   name: string;
   status: 'IDLE' | 'EXECUTING';
   autoMode: boolean;
+  description?: string;
+  maturity?: 'active' | 'dormant' | 'experimental';
+  operationalRole?: 'primary' | 'capability';
 }
 
 export type TaskStatus = 'READY' | 'EXECUTING' | 'COMPLETED' | 'FAILED';
@@ -53,12 +56,10 @@ export interface Job {
 }
 
 export interface Report {
-  id: string;
-  brainId: string;
   date: string | null;
   kind: 'morning' | 'night' | null;
-  updatedAt: number;
-  markdown: string;
+  content: string;
+  mtime: string;
 }
 
 export interface StatusResponse {
@@ -83,6 +84,53 @@ export interface ReportsResponse {
 
 export interface BrainConfigResponse {
   config: string;
+}
+
+export interface SpecSiteEngineSummaryResponse {
+  counts: {
+    backlog: number;
+    qualified: number;
+    in_progress: number;
+    outbox: number;
+    sent: number;
+    responded: number;
+    archived: number;
+  };
+  latestOutbox: Array<{
+    lead_id: string;
+    business_name: string;
+    city: string;
+    state: string;
+    website_score: number | null;
+    updated_at: string | null;
+    preview_url: string | null;
+    screenshot_paths: string[];
+    site_dir: string | null;
+    outreach_draft_path: string | null;
+    email: {
+      recipient: string;
+      subject: string;
+      body: string;
+    };
+  }>;
+  latestSent: Array<{
+    lead_id: string;
+    business_name: string;
+    city: string;
+    state: string;
+    website_score: number | null;
+    updated_at: string | null;
+    preview_url: string | null;
+    screenshot_paths: string[];
+    site_dir: string | null;
+    outreach_draft_path: string | null;
+    email: {
+      recipient: string;
+      subject: string;
+      body: string;
+    };
+  }>;
+  updatedAt: string;
 }
 
 export interface ModelAlias {

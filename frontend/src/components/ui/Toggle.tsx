@@ -17,9 +17,9 @@ export function Toggle({ checked, onChange, disabled, className }: ToggleProps) 
         if (!disabled) onChange(!checked);
       }}
       className={cn(
-        'w-11 h-6 flex items-center rounded-full p-1',
-        'transition-all duration-200',
-        checked ? 'bg-blue-500' : 'bg-gray-700',
+        'w-11 h-6 flex items-center rounded-full p-1 border border-black/10 dark:border-white/10',
+        'transition-all duration-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]',
+        checked ? 'bg-blue-500' : 'bg-slate-300 dark:bg-gray-700',
         disabled && 'opacity-50 cursor-not-allowed',
         !disabled && 'hover:shadow-lg',
         className

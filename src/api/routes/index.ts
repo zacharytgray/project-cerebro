@@ -13,3 +13,4 @@ export * from './upload.routes';
 export * from './config.routes';
 export * from './job-applications.routes';
 export * from './job-profile.routes';
+export * from './spec-site-engine.routes';

@@ -2,6 +2,11 @@
  * Task executor implementation using OpenClaw agents
  */
 
+import { exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { promisify } from 'util';
 import { logger } from '../lib/logger';
 import { Task } from '../domain/types';
 import { TaskExecutor } from '../services/task-executor.service';
@@ -9,6 +14,37 @@ import { OpenClawAdapter, DiscordAdapter } from '../integrations';
 import { BrainConfigRepository, TaskRepository, RecurringTaskRepository } from '../data/repositories';
 import { ReportService } from '../services';
 import { format, toZonedTime } from 'date-fns-tz';
+
+const OFFICE_EMAIL = 'zach.gray.office@gmail.com';
+const BLOCKED_PERSONAL_EMAIL = 'zacharytgray@gmail.com';
+const execAsync = promisify(exec);
+
+function resolveTodoistPath(): string {
+  if (process.env.TODOIST_CLI_PATH && process.env.TODOIST_CLI_PATH.trim()) {
+    return process.env.TODOIST_CLI_PATH.trim();
+  }
+
+  const home = os.homedir();
+  const candidates = [
+    '/home/linuxbrew/.linuxbrew/bin/todoist',
+    path.join(home, '.linuxbrew', 'bin', 'todoist'),
+    path.join(home, '.npm-global', 'bin', 'todoist'),
+    '/usr/local/bin/todoist',
+    '/usr/bin/todoist',
+    'todoist',
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate === 'todoist') return candidate;
+    try {
+      if (fs.existsSync(candidate)) return candidate;
+    } catch {
+      // ignore
+    }
+  }
+
+  return 'todoist';
+}
 
 export class OpenClawTaskExecutor implements TaskExecutor {
   constructor(
@@ -42,6 +78,9 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     // Build the prompt
     const scheduleContext = await this.getScheduleContext(task);
     const prompt = this.buildPrompt(task, description, notifyChannel, notifyTarget, scheduleContext, brainConfigData);
+    const executorDeliversNotification = this.shouldExecutorDeliverNotification(task);
+
+    this.enforceEmailPolicy(task, prompt, brainConfigData);
 
     logger.info('Executing task with OpenClaw', {
       taskId: task.id,
@@ -67,6 +106,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       prompt,
       thinking: 'low',
     });
+    output = this.normalizeCapabilityOutput(task, output);
 
     // Some agent workspaces can fail with provider-side schema errors before doing any real work
     // (example seen: Invalid 'input[73].name' string too long). If that happens on non-nexus brains,
@@ -86,6 +126,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
           prompt,
           thinking: 'low',
         });
+        output = this.normalizeCapabilityOutput(task, output);
       }
     }
 
@@ -110,7 +151,10 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     await this.writeReportIfNeeded(task, output);
 
     // Send completion message to Discord (if enabled)
-    if (announceFromExecutor) {
+    if (announceFromExecutor && executorDeliversNotification) {
+      const message = this.buildExecutorNotificationMessage(task, output);
+      await this.openClawAdapter.sendMessage(notifyTarget, message, notifyChannel);
+    } else if (announceFromExecutor) {
       // Completion announcements are intentionally suppressed to avoid double messaging.
     }
 
@@ -250,7 +294,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     const parts: string[] = [];
 
     const systemPrompt = brainConfig.systemPrompt || brainDescription;
-    parts.push(`You are executing a task for the brain with this context:`);
+    parts.push(`You are executing a task for an internal capability under Nexus with this context:`);
     parts.push(`\nSystem Prompt: ${systemPrompt}`);
 
     // Tools and skills
@@ -271,11 +315,18 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       parts.push(`\nSkills: ${JSON.stringify(skills, null, 2)}`);
     }
 
+    parts.push(`\nEmail Safety Policy (hard rule):`);
+    parts.push(`\n- Allowed sender account for outbound email: office (${OFFICE_EMAIL})`);
+    parts.push(`\n- Forbidden sender account/address: personal (${BLOCKED_PERSONAL_EMAIL})`);
+    parts.push(`\n- If a task asks to send from personal, refuse and explain policy violation.`);
+
     parts.push(`\nYour task is: ${task.title}`);
 
     if (task.description) {
       parts.push(`\nTask Details: ${task.description}`);
     }
+
+    parts.push(this.buildDelegationContractInstructions(task));
 
     // Enforce deterministic sectioning for planning reports so digest can parse reliably.
     if (task.description?.includes('PERSONAL_PLANNING_KIND')) {
@@ -296,7 +347,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
         `- The "Reports for <date>" context above is the source of truth.\n` +
         `- Do NOT claim files are missing if report content is present in context.\n` +
         `- Do NOT run filesystem checks.\n` +
-        `- If reports are present, aggregate them directly and cite the brain+kind headers provided.\n` +
+        `- If reports are present, aggregate them directly and cite the capability+kind headers provided.\n` +
         `- Only say "none found" when the context explicitly says: Reports for <date>: (none found).`
       );
     }
@@ -318,7 +369,19 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     if (task.sendDiscordNotification !== false) {
       const optionalNotify = task.description?.includes('OPTIONAL_NOTIFY');
 
-      if (optionalNotify) {
+      if (this.shouldExecutorDeliverNotification(task)) {
+        parts.push(
+          `\n\nIMPORTANT: Do NOT send any Discord messages yourself for this task.` +
+          `\nThe executor will deliver the final notification.` +
+          `\nYour job is to output the final digest content only.` +
+          `\nNever reply with NO_REPLY for this task.` +
+          `\nMessage quality rules:` +
+          `\n- Do NOT write meta commentary about what you are about to summarize.` +
+          `\n- Include concrete outputs (decisions, scheduled blocks, due items, blockers).` +
+          `\n- If the source reports contain no concrete outputs, say that plainly and concisely.` +
+          `\n- Keep concise but informative (roughly 8-15 bullets max for planning/digest tasks).`
+        );
+      } else if (optionalNotify) {
         parts.push(
           `\n\nIMPORTANT: This task supports OPTIONAL notifications.` +
           `\nSend ONE message using the message tool to ${notifyChannel} target ${notifyTarget} ONLY if trigger conditions are met.` +
@@ -328,6 +391,7 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       } else {
         parts.push(
           `\n\nIMPORTANT: When finished, send exactly ONE message using the message tool to ${notifyChannel} target ${notifyTarget}.` +
+          `\nDo not reply with NO_REPLY unless you have already successfully sent the message tool call.` +
           `\nMessage quality rules:` +
           `\n- Do NOT write meta commentary about what you are about to summarize.` +
           `\n- Include concrete outputs (decisions, scheduled blocks, due items, blockers).` +
@@ -342,6 +406,172 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     }
 
     return parts.join('');
+  }
+
+  private buildDelegationContractInstructions(task: Task): string {
+    const isNexus = task.brainId === 'nexus';
+    const isDigest = this.shouldExecutorDeliverNotification(task);
+
+    if (isNexus || isDigest) {
+      return (
+        `\n\nNEXUS OUTPUT CONTRACT:` +
+        `\n- You are preparing the final integrated answer for Nexus.` +
+        `\n- Prioritize crisp synthesis over internal process narration.` +
+        `\n- Use concrete findings, decisions, blockers, and next actions.` +
+        `\n- Do not mention sub-agents unless operationally necessary for debugging.`
+      );
+    }
+
+    return (
+      `\n\nDELEGATION RETURN CONTRACT (required):` +
+      `\nReturn your result using these exact sections so Nexus can absorb it cleanly:` +
+      `\n## Summary` +
+      `\n- What you concluded or produced` +
+      `\n## Facts Learned` +
+      `\n- Key factual findings discovered during execution` +
+      `\n## Actions Taken` +
+      `\n- Edits made, files written, reports updated, services restarted, or "- None"` +
+      `\n## Artifacts` +
+      `\n- Paths, task IDs, report files, message IDs, URLs, or "- None"` +
+      `\n## Blockers / Risks` +
+      `\n- Remaining issues, uncertainty, constraints, or "- None"` +
+      `\n## Recommended Next Steps` +
+      `\n- What Nexus should do next, or "- None"` +
+      `\n## Confidence` +
+      `\n- High / Medium / Low with one short reason` +
+      `\nKeep sections concise and grounded.`
+    );
+  }
+
+  private normalizeCapabilityOutput(task: Task, output: string): string {
+    const trimmed = (output || '').trim();
+    if (!trimmed) return trimmed;
+
+    if (task.brainId === 'nexus' || this.shouldExecutorDeliverNotification(task)) {
+      return trimmed;
+    }
+
+    const hasContractSections =
+      trimmed.includes('## Summary') &&
+      trimmed.includes('## Facts Learned') &&
+      trimmed.includes('## Actions Taken') &&
+      trimmed.includes('## Artifacts') &&
+      trimmed.includes('## Blockers / Risks') &&
+      trimmed.includes('## Recommended Next Steps') &&
+      trimmed.includes('## Confidence');
+
+    if (hasContractSections) {
+      return trimmed;
+    }
+
+    return [
+      '## Summary',
+      '- Returned useful output, but it did not follow the full delegation contract exactly.',
+      '',
+      '## Facts Learned',
+      ...trimmed.split('\n').map((line) => (line.trim() ? `- ${line.replace(/^[-*]\s*/, '')}` : '-')).slice(0, 12),
+      '',
+      '## Actions Taken',
+      '- None explicitly reported.',
+      '',
+      '## Artifacts',
+      '- None explicitly reported.',
+      '',
+      '## Blockers / Risks',
+      '- Output format did not follow the required contract exactly.',
+      '',
+      '## Recommended Next Steps',
+      '- If this capability is reused, tighten prompt compliance or post-process more aggressively.',
+      '',
+      '## Confidence',
+      '- Medium - content appears useful, but structure had to be normalized by the executor.',
+    ].join('\n');
+  }
+
+  private shouldExecutorDeliverNotification(task: Task): boolean {
+    const desc = task.description || '';
+    return desc.includes('DAILY_DIGEST_KIND') || desc.includes('DAILY_DIGEST_NIGHT_KIND');
+  }
+
+  private buildExecutorNotificationMessage(task: Task, output: string): string {
+    const trimmed = (output || '').trim();
+
+    if (
+      trimmed &&
+      trimmed !== 'NO_REPLY' &&
+      !trimmed.startsWith('(no agent output)') &&
+      trimmed !== '(no agent output)'
+    ) {
+      return trimmed;
+    }
+
+    const tz = 'America/Chicago';
+    const today = format(toZonedTime(new Date(), tz), 'yyyy-MM-dd', { timeZone: tz });
+    const kind = (task.description || '').includes('DAILY_DIGEST_NIGHT_KIND') ? 'night' : 'morning';
+    const reportPath = `data/${task.brainId}/reports/${today}-${kind}.md`;
+
+    return [
+      `Daily Digest — ${today}`,
+      '',
+      '- Personal, School, and Nexus source reports ran, but they did not contain usable digest content.',
+      '- No concrete decisions, scheduled blocks, due items, or blockers were captured in the source outputs.',
+      `- Stored report: ${reportPath}`,
+      '- Action needed: fix upstream planning/report generation or rerun the source reports before the next digest.',
+    ].join('\n');
+  }
+
+  private enforceEmailPolicy(task: Task, prompt: string, brainConfig: Record<string, any>): void {
+    const promptLower = prompt.toLowerCase();
+    const taskText = `${task.title}\n${task.description || ''}`;
+    const looksLikeEmailAction =
+      /\b(send|reply|draft|compose)\b/i.test(taskText) &&
+      /\b(email|gmail|outreach|mail)\b/i.test(taskText);
+    const referencesBlockedPersonal = promptLower.includes(BLOCKED_PERSONAL_EMAIL.toLowerCase());
+
+    const configuredDefaultAccount = brainConfig?.tools?.config?.email?.defaultAccount;
+    const configuredLegacyAccount = brainConfig?.email?.account;
+    const configuredLegacyAddress = brainConfig?.email?.address;
+
+    if (configuredDefaultAccount === 'personal') {
+      throw new Error(
+        `Email policy violation: brain ${task.brainId} configured with forbidden defaultAccount=personal. Allowed sender is office (${OFFICE_EMAIL}).`
+      );
+    }
+
+    if (typeof configuredLegacyAddress === 'string' && configuredLegacyAddress.toLowerCase() === BLOCKED_PERSONAL_EMAIL.toLowerCase()) {
+      throw new Error(
+        `Email policy violation: brain ${task.brainId} configured with forbidden personal sender address (${BLOCKED_PERSONAL_EMAIL}).`
+      );
+    }
+
+    if (configuredLegacyAccount === 'personal') {
+      throw new Error(
+        `Email policy violation: brain ${task.brainId} configured with legacy email.account=personal. Allowed sender is office (${OFFICE_EMAIL}).`
+      );
+    }
+
+    if (looksLikeEmailAction && referencesBlockedPersonal) {
+      throw new Error(
+        `Email policy violation: task ${task.id} references forbidden personal sender (${BLOCKED_PERSONAL_EMAIL}). Only office sender (${OFFICE_EMAIL}) is allowed.`
+      );
+    }
+
+    const isMoneySpecSiteTask =
+      task.brainId === 'money' &&
+      /spec[-\s]?site|outbox|local business website/i.test(`${task.title}\n${task.description || ''}`);
+
+    if (isMoneySpecSiteTask) {
+      const explicitlyAsksToSendEmail = /\bsend\b[\s\S]{0,80}\b(email|gmail|outreach)\b/i.test(
+        `${task.title}\n${task.description || ''}`
+      );
+      const allowsOutboxOnly = /outbox/i.test(`${task.title}\n${task.description || ''}`);
+
+      if (explicitlyAsksToSendEmail && !allowsOutboxOnly) {
+        throw new Error(
+          `Policy violation: money/spec-site tasks are outbox-only and cannot send email directly. Use manual send from Project Cerebro dashboard.`
+        );
+      }
+    }
   }
 
   /**
@@ -376,7 +606,19 @@ export class OpenClawTaskExecutor implements TaskExecutor {
       );
     }
 
-    // 2) Digest context: today's reports across brains (only when explicitly requested)
+    // 2) Todoist context for school planning/report tasks
+    if (
+      task.brainId === 'school' &&
+      task.description &&
+      (task.description.includes('SCHOOL_PLANNING_KIND') || task.description.includes('REPORT_KIND'))
+    ) {
+      const todoistContext = await this.getTodoistContext(task);
+      if (todoistContext) {
+        blocks.push(todoistContext);
+      }
+    }
+
+    // 3) Digest context: today's reports across brains (only when explicitly requested)
     // Digest brain removed; Nexus can run digest tasks when the task includes DAILY_DIGEST_KIND.
     if (task.description?.includes('DAILY_DIGEST_KIND') || task.description?.includes('DAILY_DIGEST_NIGHT_KIND')) {
       const tz = 'America/Chicago';
@@ -422,5 +664,98 @@ export class OpenClawTaskExecutor implements TaskExecutor {
     if (blocks.length === 0) return '';
 
     return `\n\nContext:\n\n${blocks.join('\n\n---\n\n')}`;
+  }
+
+  private async getTodoistContext(task: Task): Promise<string> {
+    try {
+      const todoistPath = resolveTodoistPath();
+      const env = {
+        ...process.env,
+        PATH: `${path.dirname(todoistPath)}:${process.env.PATH || '/usr/local/bin:/usr/bin:/bin'}`,
+      };
+      const [{ stdout: tasksStdout }, { stdout: projectsStdout }, { stdout: labelsStdout }] = await Promise.all([
+        execAsync(`${todoistPath} tasks --all --json`, { maxBuffer: 10 * 1024 * 1024, env }),
+        execAsync(`${todoistPath} projects --json`, { maxBuffer: 2 * 1024 * 1024, env }),
+        execAsync(`${todoistPath} labels --json`, { maxBuffer: 2 * 1024 * 1024, env }),
+      ]);
+
+      const rawTasks = JSON.parse(tasksStdout || '[]');
+      const rawProjects = JSON.parse(projectsStdout || '[]');
+      const rawLabels = JSON.parse(labelsStdout || '[]');
+
+      const projectNameById = new Map<string, string>(
+        rawProjects.map((p: any) => [String(p.id), String(p.name || p.id)])
+      );
+      const labelNameById = new Map<string, string>(
+        rawLabels.map((l: any) => [String(l.id), String(l.name || l.id)])
+      );
+
+      const schoolLabelNames = new Set(['homework', 'research', 'exam', 'quiz']);
+      const schoolKeywords = /\b(alg|algorithm|bio|bioinformatics|exam|quiz|homework|assignment|project|presentation|class|course|study|grade|gradebook|ta|lecture|lab|midterm|final)\b/i;
+      const personalKeywords = /\b(allowance|dad|mom|grocer|bank|doctor|dentist|rent|bill|call|text)\b/i;
+
+      const tasks = rawTasks
+        .filter((t: any) => !t.checked && !t.isDeleted)
+        .map((t: any) => {
+          const labelNames = Array.isArray(t.labels)
+            ? t.labels.map((label: any) => labelNameById.get(String(label)) || String(label))
+            : [];
+          const projectName = projectNameById.get(String(t.projectId)) || String(t.projectId || 'Unknown');
+          const textBlob = `${t.content || ''}\n${t.description || ''}`;
+          const hasSchoolLabel = labelNames.some((name: string) => schoolLabelNames.has(name.toLowerCase()));
+          const hasSchoolKeyword = schoolKeywords.test(textBlob);
+          const looksPersonal = personalKeywords.test(textBlob);
+          const inboxWithDueDate = projectName.toLowerCase() === 'inbox' && !!t.due?.date;
+          const projectLooksSchool = /\b(school|class|course|study|homework|assignment|exam|quiz|research)\b/i.test(projectName);
+
+          return {
+            content: String(t.content || '').trim(),
+            description: String(t.description || '').trim(),
+            dueDate: t.due?.date ? String(t.due.date) : null,
+            dueString: t.due?.string ? String(t.due.string) : null,
+            projectName,
+            labelNames,
+            hasSchoolLabel,
+            hasSchoolKeyword,
+            projectLooksSchool,
+            inboxWithDueDate,
+            looksPersonal,
+          };
+        })
+        .filter((t: any) => (t.hasSchoolLabel || t.hasSchoolKeyword || t.projectLooksSchool || t.inboxWithDueDate) && !t.looksPersonal)
+        .sort((a: any, b: any) => {
+          const aDue = a.dueDate || '9999-12-31';
+          const bDue = b.dueDate || '9999-12-31';
+          return aDue.localeCompare(bDue) || a.content.localeCompare(b.content);
+        });
+
+      const limited = tasks.slice(0, 25);
+      const lines = limited.map((t: any) => {
+        const duePart = t.dueDate ? `due ${t.dueDate}` : 'no due date';
+        const labelPart = t.labelNames.length > 0 ? ` | labels: ${t.labelNames.join(', ')}` : '';
+        const descPart = t.description ? `\n  notes: ${t.description.slice(0, 240)}` : '';
+        return `- ${t.content} (${duePart} | project: ${t.projectName}${labelPart})${descPart}`;
+      });
+
+      const summary = [
+        `Todoist school-task snapshot (${limited.length} shown of ${tasks.length} matched active tasks):`,
+        `- Filtering is label-agnostic: tasks may match by due date, project, labels, or school-related keywords.`,
+        `- Do NOT say Todoist data was missing if tasks are listed below.`,
+        ...lines,
+      ];
+
+      if (tasks.length === 0) {
+        return `Todoist school-task snapshot:\n- No active school-related Todoist tasks matched the current heuristic filter.`;
+      }
+
+      return summary.join('\n');
+    } catch (error) {
+      logger.warn('Failed to get Todoist context', {
+        taskId: task.id,
+        brainId: task.brainId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return 'WARNING: Failed to retrieve Todoist context.';
+    }
   }
 }

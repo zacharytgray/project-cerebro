@@ -6,12 +6,15 @@ import { DatabaseConnection } from '../database';
 import { logger } from '../../lib/logger';
 import { DatabaseError } from '../../lib/errors';
 
+export type CapabilityMaturity = 'active' | 'dormant' | 'experimental';
+
 export interface BrainRecord {
   id: string;
   name: string;
   channelKey: string;
   type: 'context' | 'job' | 'nexus';
   description: string;
+  maturity: CapabilityMaturity;
   openClawAgentId?: string;
   discordChannelId?: string;
   enabled: boolean;
@@ -25,6 +28,7 @@ export interface CreateBrainInput {
   channelKey: string;
   type?: 'context' | 'job' | 'nexus';
   description?: string;
+  maturity?: CapabilityMaturity;
   openClawAgentId?: string;
   discordChannelId?: string;
   enabled?: boolean;
@@ -33,6 +37,13 @@ export interface CreateBrainInput {
 export class BrainsRepository {
   constructor(private db: DatabaseConnection) {}
 
+  private inferMaturity(id: string, description?: string): CapabilityMaturity {
+    const text = `${id} ${description || ''}`.toLowerCase();
+    if (text.includes('dormant')) return 'dormant';
+    if (text.includes('experimental')) return 'experimental';
+    return 'active';
+  }
+
   /**
    * Get all brains
    */
@@ -40,7 +51,7 @@ export class BrainsRepository {
     try {
       const stmt = this.db.getDb().prepare('SELECT * FROM brains ORDER BY name');
       const rows = stmt.all() as any[];
-      return rows.map(this.mapRow);
+      return rows.map((row) => this.mapRow(row));
     } catch (error) {
       logger.error('Failed to get all brains', error as Error);
       throw new DatabaseError('Failed to get all brains');
@@ -197,6 +208,7 @@ export class BrainsRepository {
       channelKey: row.channelKey,
       type: row.type,
       description: row.description,
+      maturity: this.inferMaturity(row.id, row.description),
       openClawAgentId: row.openClawAgentId,
       discordChannelId: row.discordChannelId,
       enabled: !!row.enabled,

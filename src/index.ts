@@ -100,7 +100,7 @@ async function main() {
           id: 'nexus',
           name: 'Nexus',
           type: BrainType.CONTEXT,
-          description: 'Main system interface and command routing',
+          description: 'Primary user-facing orchestrator. Holds global context, routes work to internal capabilities, and returns one coherent response.',
           discordChannelId: nexusTarget.target,
           openClawAgentId: config.brains.nexus.openClawAgentId || 'nexus',
         },

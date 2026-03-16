@@ -89,6 +89,8 @@ Invalid files are skipped (not applied to DB) and logged with validation errors.
 
 - Keep brain-specific rules here, not in global `USER.md`.
 - Keep global personal preferences in OpenClaw workspace docs (`USER.md`, `SOUL.md`).
+- Prefer a **Nexus-first** mental model: these configs define internal capabilities more than separate user-facing personas.
+- Use descriptions/prompts that make it clear when a module is active, dormant, or experimental.
 - Commit changes to these files with clear messages (they are policy changes).
 - Prefer small edits and test with one manual recurring run before relying on schedule.
 

@@ -28,6 +28,8 @@ export interface BrainConfig {
   agentConfig?: Record<string, any>;
 }
 
+export type CapabilityMaturity = 'active' | 'dormant' | 'experimental';
+
 export interface BrainState {
   id: string;
   name: string;
@@ -37,6 +39,8 @@ export interface BrainState {
   description: string;
   discordChannelId: string;
   openClawAgentId?: string;
+  maturity?: CapabilityMaturity;
+  operationalRole?: 'primary' | 'capability';
 }
 
 export interface IBrain {

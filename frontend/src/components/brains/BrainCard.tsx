@@ -6,6 +6,7 @@ import { Toggle } from '../ui/Toggle';
 import { Button } from '../ui/Button';
 import { PulseIndicator } from '../ui/PulseIndicator';
 import { getBrainIcon, brainColors } from '../../utils/brainIcons';
+import { displayBrainLabel } from '../../utils/brainLabels';
 
 interface BrainCardProps {
   brain: BrainStatus;
@@ -17,6 +18,11 @@ interface BrainCardProps {
 export function BrainCard({ brain, onToggle, onRun, onClick }: BrainCardProps) {
   const isExecuting = brain.status === 'EXECUTING';
   const iconColor = brainColors[brain.id] || 'text-gray-400';
+  const maturity = brain.maturity || 'active';
+  const maturityTone =
+    maturity === 'dormant' ? 'text-amber-200 border-amber-400/30 bg-amber-500/10' :
+    maturity === 'experimental' ? 'text-fuchsia-200 border-fuchsia-400/30 bg-fuchsia-500/10' :
+    'text-sky-200 border-sky-400/30 bg-sky-500/10';
 
   return (
     <GlowCard
@@ -33,18 +39,26 @@ export function BrainCard({ brain, onToggle, onRun, onClick }: BrainCardProps) {
             {getBrainIcon(brain.id)}
           </div>
           <div>
-            <h3 className="font-semibold flex items-center gap-2">
-              {brain.name}
+            <h3 className="font-semibold flex items-center gap-2 leading-tight break-words">
+              {displayBrainLabel(brain)}
               {isExecuting && <PulseIndicator active size="sm" color="green" />}
             </h3>
             <p className="text-xs text-muted-foreground">{brain.id}</p>
+            <p className="text-xs text-muted-foreground">{brain.operationalRole === 'primary' ? 'Primary operator' : 'Specialist brain'}</p>
           </div>
         </div>
         
-        <Badge variant={isExecuting ? 'success' : 'default'}>
-          {brain.status}
-        </Badge>
+        <div className="flex items-center gap-2 shrink-0">
+          <Badge variant={isExecuting ? 'success' : 'default'}>
+            {brain.status}
+          </Badge>
+          <span className={`text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border ${maturityTone}`}>
+            {maturity}
+          </span>
+        </div>
       </div>
+
+      <p className="text-xs text-muted-foreground mb-4 line-clamp-2">{brain.description || 'No description available.'}</p>
 
       <div className="flex items-center justify-between gap-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2">

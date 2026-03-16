@@ -13,6 +13,8 @@ import {
   ApiRecurringTask 
 } from '../transforms/recurring.transform';
 
+const DEFAULT_RECURRING_MODEL = 'openai-codex/gpt-5.3-codex';
+
 export function registerRecurringRoutes(
   server: FastifyInstance,
   recurringRepo: RecurringTaskRepository,
@@ -105,7 +107,7 @@ export function registerRecurringRoutes(
         pattern: pattern as any,
         cronExpression,
         payload,
-        modelOverride: body.modelOverride,
+        modelOverride: body.modelOverride || DEFAULT_RECURRING_MODEL,
         nextExecutionAt,
       };
 

@@ -3,6 +3,7 @@ import { Upload, X, FileText, Check } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import type { BrainStatus } from '../../api/types';
+import { displayBrainLabel } from '../../utils/brainLabels';
 
 interface UploadFile {
   id: string;
@@ -109,7 +110,8 @@ export function FileIngestion({ brains, defaultBrainId, variant = 'default' }: F
     setFiles(prev => prev.filter(f => f.status !== 'done'));
   };
 
-  const selectedBrainName = brains.find(b => b.id === selectedBrainId)?.name || selectedBrainId;
+  const selectedBrain = brains.find(b => b.id === selectedBrainId);
+  const selectedBrainName = selectedBrain ? displayBrainLabel(selectedBrain) : selectedBrainId;
 
   const isSidebar = variant === 'sidebar';
 
@@ -128,13 +130,13 @@ export function FileIngestion({ brains, defaultBrainId, variant = 'default' }: F
         <select
           value={selectedBrainId}
           onChange={(e) => setSelectedBrainId(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-secondary"
+          className="w-full px-3 py-2 rounded-xl border border-white/55 dark:border-white/10 bg-white/62 dark:bg-white/5 backdrop-blur-md"
           disabled={isUploading}
         >
-          <option value="nexus">Nexus (Default)</option>
+          <option value="nexus">Nexus (Default Brain)</option>
           {brains.filter(b => b.id !== 'nexus').map(brain => (
             <option key={brain.id} value={brain.id}>
-              {brain.name}
+              {displayBrainLabel(brain)}
             </option>
           ))}
         </select>

@@ -2,34 +2,34 @@
   "brains": [
     {
       "id": "personal",
-      "name": "Personal Life Brain",
+      "name": "Personal Planning Capability",
       "channelKey": "personal_life_brain",
       "type": "context",
-      "description": "Personal life, routines, health, errands, relationships. Calendar access is optional and configured via env vars (see README).",
+      "description": "Internal capability for personal life planning, routines, health, errands, and relationship logistics. Intended to be orchestrated by Nexus rather than used as a separate persona.",
       "openClawAgentId": "personal"
     },
     {
       "id": "school",
-      "name": "Schoolwork Brain",
+      "name": "Schoolwork Capability",
       "channelKey": "schoolwork_brain",
       "type": "context",
-      "description": "Coursework, deadlines, study plans, assignments",
+      "description": "Internal capability for coursework, deadlines, study plans, grading, and assignment planning. Intended to be orchestrated by Nexus.",
       "openClawAgentId": "school"
     },
     {
       "id": "trainer",
-      "name": "Personal Trainer Brain",
+      "name": "Trainer Capability",
       "channelKey": "personal_trainer_brain",
       "type": "context",
-      "description": "Workout planning, motivation, progressive overload tracking, and recovery guidance based on calendar workouts and user logs.",
+      "description": "Internal capability for workout planning, motivation, progressive overload tracking, and recovery guidance. Intended to support Nexus rather than act as a separate persona.",
       "openClawAgentId": "personal"
     }
   ],
   "nexus": {
     "id": "nexus",
-    "name": "Nexus (default)",
+    "name": "Nexus",
     "channelKey": "general",
-    "description": "Default brain for general tasks and orchestration",
+    "description": "Primary user-facing orchestrator. Holds global context, routes work to internal capabilities, and returns one coherent response.",
     "openClawAgentId": "personal"
   }
 }

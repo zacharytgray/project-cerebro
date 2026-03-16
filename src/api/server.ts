@@ -22,6 +22,7 @@ import {
   registerBrainsCrudRoutes,
   registerJobApplicationsRoutes,
   registerJobProfileRoutes,
+  registerSpecSiteEngineRoutes,
 } from './routes';
 import { BrainService, ReportService, TaskExecutorService } from '../services';
 import {
@@ -118,7 +119,7 @@ export class ApiServer {
    * Register all routes
    */
   private registerRoutes(): void {
-    registerStatusRoutes(this.server, this.deps.brainService, this.deps.taskRepo);
+    registerStatusRoutes(this.server, this.deps.brainService, this.deps.taskRepo, this.deps.brainsRepo);
     registerBrainRoutes(this.server, this.deps.brainService);
     registerTaskRoutes(this.server, this.deps.taskRepo, this.deps.taskExecutor);
     registerRecurringRoutes(this.server, this.deps.recurringRepo, this.deps.taskRepo, this.deps.taskExecutor);
@@ -129,6 +130,7 @@ export class ApiServer {
     registerBrainsCrudRoutes(this.server, this.deps.brainsRepo);
     registerJobApplicationsRoutes(this.server, this.deps.jobApplicationsRepo);
     registerJobProfileRoutes(this.server);
+    registerSpecSiteEngineRoutes(this.server);
 
     logger.info('API routes registered');
   }

@@ -1,8 +1,8 @@
+import { useState } from 'react';
 import { Card } from '../ui/Card';
 import type { Report } from '../../api/types';
 import { Skeleton } from '../ui/Skeleton';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { ReportModal } from './ReportModal';
 
 interface ReportViewerProps {
   reports: Report[];
@@ -11,7 +11,10 @@ interface ReportViewerProps {
 }
 
 export function ReportViewer({ reports, loading, onRefresh }: ReportViewerProps) {
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+
   return (
+    <>
     <Card>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold">Recent Reports</h2>
@@ -34,24 +37,22 @@ export function ReportViewer({ reports, loading, onRefresh }: ReportViewerProps)
         <p className="text-xs text-muted-foreground">No reports found.</p>
       )}
 
-      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+      <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
         {reports.map((r) => (
-          <div
-            key={r.id}
-            className="border border-border rounded-lg p-3 bg-secondary/20"
+          <button
+            key={`${r.date}-${r.kind}-${r.mtime}`}
+            onClick={() => setSelectedReport(r)}
+            className="w-full text-left rounded-2xl border border-white/45 dark:border-white/10 bg-white/45 dark:bg-white/5 px-4 py-3 backdrop-blur-md hover:bg-white/65 dark:hover:bg-white/10 transition-colors"
           >
-            <div className="text-xs text-muted-foreground mb-2">
-              {r.date || 'Unknown date'} • {r.kind || 'report'} •{' '}
-              {new Date(r.updatedAt).toLocaleString()}
+            <div className="text-sm font-medium truncate">{r.date || 'Unknown date'} · {r.kind || 'report'}</div>
+            <div className="text-xs text-muted-foreground mt-1 truncate">
+              {new Date(r.mtime).toLocaleString()}
             </div>
-            <div className="prose prose-invert prose-sm max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {r.markdown}
-              </ReactMarkdown>
-            </div>
-          </div>
+          </button>
         ))}
       </div>
     </Card>
+    <ReportModal report={selectedReport} isOpen={!!selectedReport} onClose={() => setSelectedReport(null)} />
+    </>
   );
 }

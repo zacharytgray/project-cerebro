@@ -4,6 +4,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { BrainDetailPage } from './pages/BrainDetailPage';
 import { JobApplicationsPage } from './pages/JobApplicationsPage';
 import { JobProfilePage } from './pages/JobProfilePage';
+import { SpecSiteEnginePage } from './pages/SpecSiteEnginePage';
 import { useBrains } from './hooks/useBrains';
 import { useTasks } from './hooks/useTasks';
 import { useRecurring } from './hooks/useRecurring';
@@ -11,7 +12,7 @@ import { useTheme } from './hooks/useTheme';
 // api removed
 // ModelAlias removed
 
-type View = 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile';
+type View = 'dashboard' | 'brain-detail' | 'job-applications' | 'job-profile' | 'spec-site-engine';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -49,6 +50,8 @@ export default function App() {
       setCurrentView(jobsEnabled ? 'job-applications' : 'dashboard');
     } else if (view === 'job-profile') {
       setCurrentView(jobsEnabled ? 'job-profile' : 'dashboard');
+    } else if (view === 'spec-site-engine') {
+      setCurrentView('spec-site-engine');
     } else {
       setCurrentView(view);
     }
@@ -111,6 +114,8 @@ export default function App() {
       {jobsEnabled && currentView === 'job-applications' && <JobApplicationsPage />}
 
       {jobsEnabled && currentView === 'job-profile' && <JobProfilePage />}
+
+      {currentView === 'spec-site-engine' && <SpecSiteEnginePage />}
     </Shell>
   );
 }
