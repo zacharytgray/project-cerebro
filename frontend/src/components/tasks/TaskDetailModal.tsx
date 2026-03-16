@@ -5,6 +5,7 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import type { Task, BrainStatus } from '../../api/types';
+import { displayBrainLabel } from '../../utils/brainLabels';
 import { formatDateTime } from '../../utils/format';
 
 interface TaskDetailModalProps {
@@ -76,11 +77,11 @@ export function TaskDetailModal({
             onChange={(e) =>
               setEditingTask({ ...editingTask, brainId: e.target.value })
             }
-            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+            className="w-full mt-1 px-3 py-2 rounded-xl border border-white/55 dark:border-white/10 bg-white/62 dark:bg-white/5 backdrop-blur-md"
           >
             {brains.map((brain) => (
               <option key={brain.id} value={brain.id}>
-                {brain.name}
+                {displayBrainLabel(brain)}
               </option>
             ))}
           </select>
@@ -107,14 +108,14 @@ export function TaskDetailModal({
               setEditingTask({ ...editingTask, description: e.target.value })
             }
             placeholder="Task description"
-            className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary min-h-[220px]"
+            className="w-full mt-1 px-3 py-2 rounded-xl border border-white/55 dark:border-white/10 bg-white/62 dark:bg-white/5 min-h-[220px] backdrop-blur-md"
           />
         </div>
 
         {/* Model selection removed */}
 
         {/* Discord Notification Toggle */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+        <div className="flex items-center justify-between p-4 rounded-2xl border border-white/45 dark:border-white/10 bg-white/45 dark:bg-white/5 backdrop-blur-md">
           <div>
             <label className="text-sm font-medium">Send Discord Notification</label>
             <p className="text-xs text-muted-foreground">
@@ -145,7 +146,7 @@ export function TaskDetailModal({
         </div>
 
         {/* Status & Created (read-only) */}
-        <div className="grid grid-cols-2 gap-4 p-3 rounded-lg bg-secondary/30">
+        <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl border border-white/55 dark:border-white/10 bg-white/62 dark:bg-white/5 backdrop-blur-md">
           <div>
             <label className="text-xs text-muted-foreground">Status</label>
             <div className="mt-1">
@@ -177,7 +178,7 @@ export function TaskDetailModal({
         {task.status === 'COMPLETED' && task.output && (
           <div>
             <label className="text-xs text-muted-foreground">Output</label>
-            <div className="mt-1 p-3 rounded-lg bg-secondary/30 max-h-[200px] overflow-y-auto">
+            <div className="mt-1 p-4 rounded-2xl border border-white/45 dark:border-white/10 bg-white/45 dark:bg-white/5 max-h-[200px] overflow-y-auto backdrop-blur-md">
               <pre className="text-sm whitespace-pre-wrap font-mono text-xs">
                 {task.output}
               </pre>

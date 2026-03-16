@@ -253,7 +253,7 @@ export function RecurringTasksPage({
             <select
               value={newTask.brainId}
               onChange={(e) => setNewTask({ ...newTask, brainId: e.target.value })}
-              className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+              className="w-full mt-1 px-3 py-2 rounded-xl border border-white/55 dark:border-white/10 bg-white/62 dark:bg-white/5 backdrop-blur-md"
             >
               <option value="">Select a brain...</option>
               {brains.map((brain) => (
@@ -387,7 +387,7 @@ export function RecurringTasksPage({
                 onChange={(e) =>
                   setEditingTask({ ...editingTask, brainId: e.target.value })
                 }
-                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-white/55 dark:border-white/10 bg-white/62 dark:bg-white/5 backdrop-blur-md"
               >
                 {brains.map((brain) => (
                   <option key={brain.id} value={brain.id}>

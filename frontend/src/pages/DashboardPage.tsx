@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Plus, Repeat } from 'lucide-react';
 import type { BrainStatus, Task, RecurringTask } from '../api/types';
 import { SummaryCards } from '../components/dashboard/SummaryCards';
+import { SystemsOnlinePill } from '../components/dashboard/SystemsOnlinePill';
 import { TaskStream } from '../components/tasks/TaskStream';
 import { RecurringTaskRow } from '../components/tasks/RecurringTaskRow';
 import { TaskDetailModal } from '../components/tasks/TaskDetailModal';
@@ -193,9 +194,19 @@ export function DashboardPage({
   }, [brains]);
 
   const orderedBrains = [...brains].sort((a, b) => {
+    const aPrimary = a.operationalRole === 'primary';
+    const bPrimary = b.operationalRole === 'primary';
+    if (aPrimary !== bPrimary) return aPrimary ? -1 : 1;
+
     const aExec = a.status === 'EXECUTING';
     const bExec = b.status === 'EXECUTING';
     if (aExec !== bExec) return aExec ? -1 : 1;
+
+    const maturityRank = { active: 0, experimental: 1, dormant: 2 } as const;
+    const ar = maturityRank[(a.maturity || 'active') as keyof typeof maturityRank] ?? 0;
+    const br = maturityRank[(b.maturity || 'active') as keyof typeof maturityRank] ?? 0;
+    if (ar !== br) return ar - br;
+
     const ai = baselineOrderRef.current.get(a.id) ?? 9999;
     const bi = baselineOrderRef.current.get(b.id) ?? 9999;
     return ai - bi;
@@ -281,36 +292,44 @@ export function DashboardPage({
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
+    <div className="relative p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 overflow-hidden">
       {/* Header */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-            <GradientText>Project Cerebro</GradientText>
-          </h1>
-          <p className="text-muted-foreground">Autonomous AI Brain Control Center</p>
-        </div>
-        <Button
+      <header className="relative overflow-hidden rounded-3xl border border-violet-200/70 dark:border-white/10 bg-white/60 dark:bg-slate-950/45 p-5 sm:p-6 lg:p-8 shadow-[0_18px_50px_rgba(76,29,149,0.08)] dark:shadow-[0_0_60px_rgba(59,130,246,0.08)] backdrop-blur-xl">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.55),transparent_30%),radial-gradient(circle_at_75%_25%,rgba(196,181,253,0.20),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.28),transparent_42%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(96,165,250,0.18),transparent_32%),radial-gradient(circle_at_75%_25%,rgba(168,85,247,0.16),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.04),transparent_40%)]" />
+        <div className="relative flex flex-col gap-4 lg:gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-4">
+            <SystemsOnlinePill />
+            <div>
+              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold mb-2 lg:mb-3 tracking-tight">
+                <GradientText gradient="from-violet-700 via-fuchsia-600 to-sky-600 dark:from-sky-300 dark:via-cyan-200 dark:to-violet-300">Project Cerebro</GradientText>
+              </h1>
+              <p className="max-w-2xl text-xs sm:text-sm lg:text-base text-violet-950/80 dark:text-slate-300/90">
+                Autonomous task runtime and operations dashboard.
+              </p>
+            </div>
+          </div>
+          <Button
           variant="primary"
           size="lg"
           onClick={() => setIsAddTaskOpen(true)}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 shadow-[0_0_24px_rgba(59,130,246,0.2)]"
         >
           <Plus className="w-5 h-5" />
           Add Task
         </Button>
+        </div>
       </header>
 
       {/* Summary Cards */}
       <SummaryCards brains={brains} tasks={tasks} />
 
-      {/* Brains Strip */}
+      {/* Brain Strip */}
       <div className="space-y-3">
-        <div className="flex items-end justify-between">
-          <h2 className="text-xl font-bold">Brains</h2>
+        <div className="flex items-end justify-between gap-4">
+          <h2 className="text-xl font-bold">Nexus + Brains</h2>
           <p className="hidden sm:block text-xs text-muted-foreground">Scroll →</p>
         </div>
-        <div className="flex gap-4 overflow-x-auto overflow-y-visible pb-4 pt-2 px-3">
+        <div className="flex gap-4 overflow-x-auto overflow-y-visible pb-4 pt-2 px-1 [scrollbar-width:thin]">
           {orderedBrains.map((brain: any) => (
             <BrainTile
               key={brain.id}
@@ -377,11 +396,11 @@ export function DashboardPage({
           style={useTwoPaneLayout ? { flexBasis: `${100 - splitPct}%` } : undefined}
         >
           <Card className={cn(
-            'flex flex-col p-4 sm:p-6 bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift',
+            'flex flex-col p-4 sm:p-6 bg-slate-100/70 dark:bg-slate-950/46 border-slate-300/70 dark:border-white/10 bg-gradient-to-br from-blue-600/10 to-purple-600/10 dark:from-blue-600/5 dark:to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift',
             useTwoPaneLayout ? 'h-[680px]' : 'h-[520px] sm:h-[600px]'
           )}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-violet-950 dark:text-white">
               <Repeat className="w-5 h-5 text-purple-400" />
               Recurring Tasks
             </h2>
@@ -468,7 +487,7 @@ export function DashboardPage({
             <select
               value={newRecurring.brainId}
               onChange={(e) => setNewRecurring({ ...newRecurring, brainId: e.target.value })}
-              className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+              className="w-full mt-1 px-3 py-2 rounded-xl border border-white/55 dark:border-white/10 bg-white/62 dark:bg-white/5 backdrop-blur-md"
             >
               <option value="">Select brain...</option>
               {brains.map((b) => (
@@ -584,7 +603,7 @@ export function DashboardPage({
               <select
                 value={editingRecurring.brainId}
                 onChange={(e) => setEditingRecurring({ ...editingRecurring, brainId: e.target.value })}
-                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-secondary"
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-white/55 dark:border-white/10 bg-white/62 dark:bg-white/5 backdrop-blur-md"
               >
                 {brains.map((brain) => (
                   <option key={brain.id} value={brain.id}>

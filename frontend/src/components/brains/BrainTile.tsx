@@ -6,6 +6,7 @@ import { Toggle } from '../ui/Toggle';
 import { Button } from '../ui/Button';
 import { PulseIndicator } from '../ui/PulseIndicator';
 import { getBrainIcon, brainColors } from '../../utils/brainIcons';
+import { displayBrainLabel } from '../../utils/brainLabels';
 import { cn } from '../../utils/cn';
 
 interface BrainTileProps {
@@ -19,8 +20,13 @@ interface BrainTileProps {
 export function BrainTile({ brain, onToggle, onRun, onClick, className }: BrainTileProps) {
   const isExecuting = brain.status === 'EXECUTING';
   const iconColor = brainColors[brain.id] || 'text-gray-400';
+  const maturity = brain.maturity || 'active';
 
   const displayStatus = isExecuting ? 'ACTIVE' : brain.status;
+  const maturityTone =
+    maturity === 'dormant' ? 'text-amber-200 border-amber-400/30 bg-amber-500/10' :
+    maturity === 'experimental' ? 'text-fuchsia-200 border-fuchsia-400/30 bg-fuchsia-500/10' :
+    'text-sky-200 border-sky-400/30 bg-sky-500/10';
 
   return (
     <GlowCard
@@ -28,36 +34,45 @@ export function BrainTile({ brain, onToggle, onRun, onClick, className }: BrainT
       animate={isExecuting}
       glowColor={isExecuting ? 'rgba(34, 197, 94, 0.45)' : 'rgba(59, 130, 246, 0.25)'}
       className={cn(
-        'relative group min-w-[260px] sm:min-w-[320px] max-w-[420px]',
-        'bg-gradient-to-r from-blue-600/5 to-purple-600/5 bg-[length:200%_auto] animate-gradient-shift',
+        'relative group shrink-0 w-[255px] sm:w-[272px] lg:w-[285px] min-h-[248px]',
         className
       )}
     >
+      <div className="flex h-full flex-col">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={cn('p-2 rounded-xl bg-secondary shrink-0', iconColor)}>
+          <div className={cn('p-2 rounded-xl bg-white/5 border border-white/10 shrink-0', iconColor)}>
             {getBrainIcon(brain.id, 'w-5 h-5')}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold truncate">{brain.name}</h3>
+              <h3 className="font-semibold text-sm sm:text-base leading-tight line-clamp-2 break-words pr-1">{displayBrainLabel(brain)}</h3>
               {isExecuting && <PulseIndicator active size="sm" color="green" />}
             </div>
-            <p className="text-xs text-muted-foreground truncate">{brain.id}</p>
+            <p className="text-[11px] text-white/55 truncate">{brain.id}</p>
           </div>
         </div>
 
-        <Badge variant={isExecuting ? 'success' : 'default'} className={cn('shrink-0', isExecuting && 'text-green-100')}>
-          {displayStatus}
-        </Badge>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <Badge variant={isExecuting ? 'success' : 'default'} className="shrink-0">
+            {displayStatus}
+          </Badge>
+          <span className={cn('text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border font-semibold', maturityTone)}>
+            {maturity}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-3 flex-1 min-h-0">
+        <p className="text-[11px] leading-5 text-white/65 line-clamp-4 min-h-[5.4rem]">{brain.description || 'No description available.'}</p>
       </div>
 
       <div
-        className="mt-4 flex items-center justify-between gap-3"
+        className="mt-auto pt-4 flex items-center justify-between gap-2"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Auto</span>
+          <span className="text-xs text-white/65">Auto</span>
           <Toggle checked={brain.autoMode} onChange={(enabled) => onToggle(brain.id, enabled)} />
         </div>
 
@@ -68,11 +83,12 @@ export function BrainTile({ brain, onToggle, onRun, onClick, className }: BrainT
             e.stopPropagation();
             onRun(brain.id);
           }}
-          className="flex items-center gap-2 rounded-full bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10"
+          className="flex items-center gap-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs px-2.5 text-white/80"
         >
           <Play className="w-3.5 h-3.5" />
           Force Run
         </Button>
+      </div>
       </div>
     </GlowCard>
   );

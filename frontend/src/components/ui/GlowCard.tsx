@@ -18,14 +18,16 @@ export function GlowCard({
 }: GlowCardProps) {
   return (
     <motion.div
-      whileHover={{ scale: 1.01, y: -1 }}
-      transition={{ duration: 0.12, ease: 'easeOut' }}
+      whileHover={{ y: -1 }}
+      transition={{ duration: 0.1, ease: 'easeOut' }}
       className={cn(
-        'bg-white/90 dark:bg-white/5',
-        'border border-black/10 dark:border-white/10',
-        'text-foreground rounded-xl p-6',
-        'backdrop-blur',
-        'hover:shadow-[0_0_30px_' + glowColor + ']',
+        'bg-slate-950/46',
+        'border border-white/10',
+        'text-white rounded-2xl p-5',
+        'backdrop-blur-xl supports-[backdrop-filter]:bg-slate-950/44',
+        'shadow-[0_14px_36px_rgba(2,6,23,0.28),inset_0_1px_0_rgba(255,255,255,0.04)]',
+        'transition-[transform,box-shadow,background-color] duration-150',
+        'hover:shadow-[0_16px_38px_rgba(2,6,23,0.32)]',
         animate && 'animate-glow-pulse',
         onClick && 'cursor-pointer',
         className
@@ -33,7 +35,7 @@ export function GlowCard({
       onClick={onClick}
       style={{
         boxShadow: animate
-          ? `0 0 20px ${glowColor}`
+          ? `0 0 14px ${glowColor}`
           : undefined,
       }}
     >

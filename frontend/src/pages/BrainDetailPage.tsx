@@ -76,11 +76,11 @@ export function BrainDetailPage({ brain, onBack, onToggle }: BrainDetailPageProp
           <Card>
             <h2 className="text-lg font-semibold mb-6">Core Automation</h2>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg border border-border">
+              <div className="flex items-center justify-between p-4 rounded-2xl border border-slate-300/70 dark:border-white/10 bg-slate-100/70 dark:bg-slate-950/46 backdrop-blur-xl">
                 <div>
                   <div className="font-medium">Autonomous Execution</div>
                   <div className="text-sm text-muted-foreground">
-                    Allow this brain to pull and execute tasks automatically
+                    Allow this brain to pull and execute tasks automatically under Nexus
                   </div>
                 </div>
                 <Toggle
@@ -110,26 +110,39 @@ export function BrainDetailPage({ brain, onBack, onToggle }: BrainDetailPageProp
           />
 
           {/* Metadata */}
-          <Card className="bg-blue-600/5 border-blue-600/20">
+          <Card className="bg-slate-100/70 dark:bg-slate-950/46 border-slate-300/70 dark:border-white/10">
             <h2 className="text-sm font-bold uppercase tracking-wider text-blue-400 mb-2">
               Metadata
             </h2>
             <div className="text-xs space-y-2 font-mono">
-              <div className="flex justify-between border-b border-white/5 pb-2">
+              <div className="flex justify-between border-b border-slate-300/60 dark:border-white/10 pb-2">
                 <span className="text-muted-foreground">ID:</span>
                 <span>{brain.id}</span>
               </div>
-              <div className="flex justify-between border-b border-white/5 pb-2">
+              <div className="flex justify-between border-b border-slate-300/60 dark:border-white/10 pb-2">
                 <span className="text-muted-foreground">Status:</span>
                 <span className={brain.status === 'EXECUTING' ? 'text-green-400' : ''}>
                   {brain.status}
                 </span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between border-b border-slate-300/60 dark:border-white/10 pb-2">
+                <span className="text-muted-foreground">Role:</span>
+                <span>{brain.operationalRole === 'primary' ? 'Primary operator' : 'Specialist brain'}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-300/60 dark:border-white/10 pb-2">
+                <span className="text-muted-foreground">Maturity:</span>
+                <span className={brain.maturity === 'dormant' ? 'text-amber-400' : brain.maturity === 'experimental' ? 'text-fuchsia-400' : 'text-sky-400'}>
+                  {brain.maturity || 'active'}
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-slate-300/60 dark:border-white/10 pb-2">
                 <span className="text-muted-foreground">Auto Mode:</span>
                 <span className={brain.autoMode ? 'text-green-400' : 'text-gray-400'}>
                   {brain.autoMode ? 'Enabled' : 'Disabled'}
                 </span>
+              </div>
+              <div className="pt-2 text-[11px] text-muted-foreground leading-relaxed">
+                {brain.description || 'No description available.'}
               </div>
             </div>
           </Card>
